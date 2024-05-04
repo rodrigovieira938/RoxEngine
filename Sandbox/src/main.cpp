@@ -1,5 +1,5 @@
-#include <iostream>
+#include <RoxEngine/core/Engine.hpp>
 
 int main(int, char**){
-    std::cout << "Hello, from RoxEngine!\n";
+    return RoxEngine::Engine::Get()->Run();
 }

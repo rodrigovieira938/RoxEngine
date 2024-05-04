@@ -2,5 +2,5 @@ file(GLOB_RECURSE sandbox_src
     "src/*.cpp" "src/*.h"
 )
 
-add_executable(Sandbox ${sandbox_src})
-target_link_libraries(Sandbox RoxEngine)
+add_executable(sandbox ${sandbox_src})
+target_link_libraries(sandbox roxengine)
