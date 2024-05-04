@@ -1,3 +1,4 @@
+#include "RoxEngine/profiler/gpu_profiler.hpp"
 #include "RoxEngine/profiler/profiler.hpp"
 #include "RoxEngine/renderer/VertexArray.hpp"
 #include "glad/gl.h"
@@ -11,6 +12,10 @@ namespace RoxEngine::GL {
     GraphicsContext::GraphicsContext() {
         PROFILER_FUNCTION();
         gladLoadGL(glfwGetProcAddress);
+        #ifdef ENABLE_PROFILER
+        gladSetGLPreCallback(RoxEngine::Profiler::glad_prefunc);
+        gladSetGLPostCallback(RoxEngine::Profiler::glad_posfunc);
+        #endif
     }
     GraphicsContext::~GraphicsContext() {
         PROFILER_FUNCTION();

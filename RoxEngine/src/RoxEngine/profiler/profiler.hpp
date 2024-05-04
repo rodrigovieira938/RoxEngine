@@ -22,6 +22,7 @@
 	#endif
 
     #include <RoxEngine/profiler/cpu_profiler.hpp>
+	#include <RoxEngine/profiler/gpu_profiler.hpp>
 
     #define PROFILER_BEGIN_SESSION(name) ::RoxEngine::Profiler::Instrumentor::Get().BeginSession(name)
 	#define PROFILER_END_SESSION() ::RoxEngine::Profiler::Instrumentor::Get().EndSession()

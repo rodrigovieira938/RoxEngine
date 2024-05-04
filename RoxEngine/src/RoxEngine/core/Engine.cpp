@@ -1,9 +1,9 @@
 #include "Engine.hpp"
 #include "RoxEngine/profiler/cpu_profiler.hpp"
 #include "RoxEngine/renderer/GraphicsContext.hpp"
+#include <RoxEngine/profiler/profiler.hpp>
 #include <GLFW/glfw3.h>
 #include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
-#include <RoxEngine/profiler/profiler.hpp>
 #include <iostream>
 
 namespace RoxEngine {
