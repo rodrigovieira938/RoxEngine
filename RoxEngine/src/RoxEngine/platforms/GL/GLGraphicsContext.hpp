@@ -9,5 +9,6 @@ namespace RoxEngine::GL {
 
         void VClearColor(float r,float g,float b,float a = 1.0);
         void VClearScreen(ClearScreenMask bufferBits);
+        void VDraw(Ref<VertexArray>, uint32_t indexCount);
     };
 }
