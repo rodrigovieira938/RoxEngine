@@ -6,6 +6,7 @@
 namespace RoxEngine::GLFW {
     Window::Window() {
         mWindow = glfwCreateWindow(600, 600, "RoxEngine - APP", nullptr, nullptr);
+        glfwMakeContextCurrent(GET_WINDOW);
     }
     Window::~Window() {
         glfwDestroyWindow(GET_WINDOW);
