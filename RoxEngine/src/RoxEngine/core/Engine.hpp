@@ -8,8 +8,11 @@ namespace RoxEngine {
         static Engine* Get();
         //TODO: Make this return an error
         int Run();
+        inline Ref<Window> GetWindow() {return mWindow;};
     private:
         Ref<Window> mWindow;
+
+        void DrawDebugInfo();
 
         Engine() = default;
     };

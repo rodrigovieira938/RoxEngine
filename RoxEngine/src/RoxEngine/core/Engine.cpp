@@ -1,6 +1,8 @@
 #include "Engine.hpp"
+#include "RoxEngine/imgui/imgui.hpp"
 #include "RoxEngine/profiler/cpu_profiler.hpp"
 #include "RoxEngine/renderer/GraphicsContext.hpp"
+#include "imgui.h"
 #include <RoxEngine/profiler/profiler.hpp>
 #include <GLFW/glfw3.h>
 #include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
@@ -18,9 +20,8 @@ namespace RoxEngine {
         if(!glfwInit()) return 1;
         mWindow = CreateRef<GLFW::Window>();
         GraphicsContext::Init(RendererApi::OPENGL);
-
         GraphicsContext::ClearColor(100.0/255.0,149.0/255.0,237.0/255.0);
-
+        ImGuiLayer::Init();
         auto va = VertexArray::Create();
         {
             float vertices[] = {
@@ -45,15 +46,27 @@ namespace RoxEngine {
         while(mWindow->IsOpen()) {
             PROFILER_SCOPE("Frame");
             mWindow->PollEvents();
+            ImGuiLayer::NewFrame();
             GraphicsContext::ClearScreen();
             GraphicsContext::Draw(va, va->GetIndexBuffer()->GetCount());
+            DrawDebugInfo();
+            ImGuiLayer::Render();
             glfwSwapBuffers((GLFWwindow*)((GLFW::Window*)mWindow.get())->mWindow);
         }
         va.reset();
+        ImGuiLayer::Shutdown();
         GraphicsContext::Shutdown();
         glfwTerminate();
         delete sEngine;
         PROFILER_END_SESSION();
         return 0; // OK
+    }
+    void Engine::DrawDebugInfo() {
+        if(ImGui::Begin("Window 1")) {
+            ImGui::End();
+        }
+        if(ImGui::Begin("Window 2")) {
+            ImGui::End();
+        }
     }
 }
