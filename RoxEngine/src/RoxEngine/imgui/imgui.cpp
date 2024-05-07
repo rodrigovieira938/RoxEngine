@@ -35,7 +35,7 @@ namespace RoxEngine {
             const char* glsl_version = "#version 130";
         #endif
 
-        ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)std::static_pointer_cast<GLFW::Window>(Engine::Get()->GetWindow())->mWindow, true);
+        ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)std::static_pointer_cast<GLFW::Window>(Engine::Get()->GetWindow())->mWindow, false);
         bool a = ImGui_ImplOpenGL3_Init(glsl_version);
     }
     void ImGuiLayer::NewFrame() {
