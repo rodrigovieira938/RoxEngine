@@ -8,7 +8,21 @@
 #include <RoxEngine/platforms/GL/GLVertexArray.hpp>
 #include <RoxEngine/platforms/GL/GLBuffer.hpp>
 #include <memory>
+#include <RoxEngine/platforms/GL/GLShader.hpp>
 namespace RoxEngine::GL {
+    void GLAPIENTRY 
+    MessageCallback( GLenum source,
+                     GLenum type,
+                     GLuint id,
+                     GLenum severity,
+                     GLsizei length,
+                     const GLchar* message,
+                     const void* userParam )
+    {
+        fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+           ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
+             type, severity, message );
+    }
     GraphicsContext::GraphicsContext() {
         PROFILER_FUNCTION();
         gladLoadGL(glfwGetProcAddress);
@@ -16,6 +30,8 @@ namespace RoxEngine::GL {
         gladSetGLPreCallback(RoxEngine::Profiler::glad_prefunc);
         gladSetGLPostCallback(RoxEngine::Profiler::glad_posfunc);
         #endif
+        glEnable(GL_DEBUG_OUTPUT);
+        glDebugMessageCallback(MessageCallback, 0);
     }
     GraphicsContext::~GraphicsContext() {
         PROFILER_FUNCTION();
@@ -34,6 +50,9 @@ namespace RoxEngine::GL {
         if (bufferBits & ClearScreen::STENCIL) 
             mask |= GL_STENCIL_BUFFER_BIT;
         glClear(mask);
+    }
+    void GraphicsContext::VUseShader(Ref<::RoxEngine::Shader> shader) {
+        glUseProgram(std::static_pointer_cast<GL::Shader>(shader)->mID);
     }
     void GraphicsContext::VDraw(Ref<::RoxEngine::VertexArray> va, uint32_t indexCount) {
         auto glva = std::static_pointer_cast<VertexArray>(va);

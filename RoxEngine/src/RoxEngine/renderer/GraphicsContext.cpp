@@ -21,6 +21,10 @@ namespace RoxEngine{
         PROFILER_FUNCTION();
         sContext->VClearScreen(bufferBits);
     }
+    void GraphicsContext::UseShader(Ref<Shader> shader) {
+        PROFILER_FUNCTION();
+        sContext->VUseShader(shader);
+    }
     void GraphicsContext::Draw(Ref<VertexArray> va, uint32_t indexCount) {
         PROFILER_FUNCTION();
         sContext->VDraw(va, indexCount);

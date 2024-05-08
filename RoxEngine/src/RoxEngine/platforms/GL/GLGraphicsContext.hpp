@@ -7,8 +7,9 @@ namespace RoxEngine::GL {
         GraphicsContext();
         ~GraphicsContext();
 
-        void VClearColor(float r,float g,float b,float a = 1.0);
-        void VClearScreen(ClearScreenMask bufferBits);
-        void VDraw(Ref<VertexArray>, uint32_t indexCount);
+        virtual void VClearColor(float r,float g,float b,float a = 1.0) final;
+        virtual void VClearScreen(ClearScreenMask bufferBits) final;
+        virtual void VUseShader(Ref<::RoxEngine::Shader> shader) final;
+        virtual void VDraw(Ref<VertexArray>, uint32_t indexCount) final;
     };
 }

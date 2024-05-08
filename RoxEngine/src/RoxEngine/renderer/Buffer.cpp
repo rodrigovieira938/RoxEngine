@@ -37,4 +37,15 @@ namespace RoxEngine {
         }
         return nullptr;
     }
+    std::shared_ptr<Framebuffer> Framebuffer::Create(uint32_t width, uint32_t height, const std::vector<FramebufferColorTexFormat>& attachments, FramebufferDepthTexFormat depthFormat) {
+        PROFILER_FUNCTION();
+        switch(GraphicsContext::GetAPI()) {
+        case RendererApi::OPENGL:
+            return CreateRef<GL::Framebuffer>(width,height,attachments,depthFormat);
+        default:
+            //TODO: Assert
+            break;
+        }
+        return nullptr;
+    }
 }

@@ -127,4 +127,30 @@ namespace RoxEngine {
 
 		static Ref<IndexBuffer> Create(uint32_t* indices, size_t count);
 	};
+	enum class FramebufferColorTexFormat {
+		R8,
+		RG8,
+		RGB8,
+		RGBA8,
+		R16,
+		RG16,
+		RGB16,
+		RGBA16,
+		R32,
+		RG32,
+		RGB32,
+		RGBA32,
+	};
+	enum class FramebufferDepthTexFormat {
+		D32F,
+		D32FS8U,
+		D24UNS8U,
+	};
+	class Framebuffer
+	{
+	public:
+		static std::shared_ptr<Framebuffer> Create(uint32_t width, uint32_t height, const std::vector<FramebufferColorTexFormat>& attachments, FramebufferDepthTexFormat depthFormat);
+		virtual std::pair<int,int> GetSize() = 0;
+		virtual ~Framebuffer() = default;
+	};
 }

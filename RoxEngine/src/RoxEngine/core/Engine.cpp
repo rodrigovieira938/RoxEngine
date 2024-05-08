@@ -7,6 +7,7 @@
 #include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
 #include <RoxEngine/input/Input.hpp>
 #include <iostream>
+#include "RoxEngine/renderer/Shader.hpp"
 
 namespace RoxEngine {
     static Engine* sEngine = nullptr;
@@ -23,6 +24,22 @@ namespace RoxEngine {
         GraphicsContext::ClearColor(100.0/255.0,149.0/255.0,237.0/255.0);
         ImGuiLayer::Init();
         Input::Init();
+        auto fb = Framebuffer::Create(800, 800, {FramebufferColorTexFormat::RGB32}, FramebufferDepthTexFormat::D24UNS8U);
+        auto shader = Shader::Create(R"(#version 330 core
+            layout (location = 0) in vec3 aPos;
+            
+            void main()
+            {
+                gl_Position = vec4(aPos, 1.0); // see how we directly give a vec3 to vec4's constructor
+            }
+        )",R"(#version 330 core
+            out vec4 FragColor;
+ 
+            void main()
+            {
+                FragColor = vec4(1,0,0,1);
+            } 
+        )");
         auto va = VertexArray::Create();
         {
             float vertices[] = {
@@ -51,13 +68,15 @@ namespace RoxEngine {
             if(Input::GetKeyState(Key::W) != KeyState::NONE)
                 std::cout << "W KEY action: " << (int)Input::GetKeyState(Key::W) << std::endl;
 
-            ImGuiLayer::NewFrame();
             GraphicsContext::ClearScreen();
+            GraphicsContext::UseShader(shader);
             GraphicsContext::Draw(va, va->GetIndexBuffer()->GetCount());
+            ImGuiLayer::NewFrame();
             DrawDebugInfo();
             ImGuiLayer::Render();
             glfwSwapBuffers((GLFWwindow*)((GLFW::Window*)mWindow.get())->mWindow);
         }
+        fb.reset();
         va.reset();
         Input::Shutdown();
         ImGuiLayer::Shutdown();

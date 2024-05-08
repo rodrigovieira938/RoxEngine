@@ -48,7 +48,6 @@ namespace RoxEngine {
         int display_w, display_h;
         glfwGetFramebufferSize((GLFWwindow*)std::static_pointer_cast<GLFW::Window>(Engine::Get()->GetWindow())->mWindow, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
