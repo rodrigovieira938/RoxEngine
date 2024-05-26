@@ -10,6 +10,6 @@ namespace RoxEngine::GL {
         virtual void VClearColor(float r,float g,float b,float a = 1.0) final;
         virtual void VClearScreen(ClearScreenMask bufferBits) final;
         virtual void VUseShader(Ref<::RoxEngine::Shader> shader) final;
-        virtual void VDraw(Ref<VertexArray>, uint32_t indexCount) final;
+        virtual void VDraw(Ref<VertexArray>, size_t indexCount) final;
     };
 }

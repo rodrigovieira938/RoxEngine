@@ -25,7 +25,7 @@ namespace RoxEngine{
         PROFILER_FUNCTION();
         sContext->VUseShader(shader);
     }
-    void GraphicsContext::Draw(Ref<VertexArray> va, uint32_t indexCount) {
+    void GraphicsContext::Draw(Ref<VertexArray> va, size_t indexCount) {
         PROFILER_FUNCTION();
         sContext->VDraw(va, indexCount);
     }

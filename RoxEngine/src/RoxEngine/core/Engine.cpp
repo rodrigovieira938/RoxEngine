@@ -21,7 +21,7 @@ namespace RoxEngine {
         if(!glfwInit()) return 1;
         mWindow = CreateRef<GLFW::Window>();
         GraphicsContext::Init(RendererApi::OPENGL);
-        GraphicsContext::ClearColor(100.0/255.0,149.0/255.0,237.0/255.0);
+        GraphicsContext::ClearColor(100.0f/255.0f,149.0f/255.0f,237.0f/255.0f);
         ImGuiLayer::Init();
         Input::Init();
         game->Init();
@@ -34,7 +34,7 @@ namespace RoxEngine {
             ImGuiLayer::NewFrame();
             DrawDebugInfo();
             ImGuiLayer::Render();
-            glfwSwapBuffers((GLFWwindow*)((GLFW::Window*)mWindow.get())->mWindow);
+            glfwSwapBuffers(static_cast<GLFWwindow*>(std::static_pointer_cast<GLFW::Window>(mWindow)->mWindow));
         }
         game.reset();
         Input::Shutdown();

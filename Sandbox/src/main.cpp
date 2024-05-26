@@ -6,15 +6,19 @@
 #include <RoxEngine/core/Engine.hpp>
 #include <RoxEngine/renderer/GraphicsContext.hpp>
 #include <iostream>
+#include <filesystem>
 using namespace RoxEngine;
 
-struct TestGame final : public Game{
+struct TestGame final : public Game {
     Ref<VertexArray> va;
     Ref<Shader> shader;
     Ref<Framebuffer> fb;
-    void Init() {
+    ~TestGame() override { std::cout << "GOODBYE!\n"; }
+
+    void Init() override {
         std::cout << "HelloWorld!\n";
-        va = VertexArray::Create();
+
+    	va = VertexArray::Create();
         {
             float vertices[] = {
                 -.5,-.5,.0,
@@ -51,16 +55,15 @@ struct TestGame final : public Game{
             } 
         )");
     }
-    void Update() {
+    void Update() override {
         if(Input::GetKeyState(Key::W) != KeyState::NONE)
-                std::cout << "W KEY action: " << (int)Input::GetKeyState(Key::W) << std::endl;
+                std::cout << "W KEY action: " << static_cast<int>(Input::GetKeyState(Key::W)) << "\n";
     }
-    void Render() {
+    void Render() override {
         GraphicsContext::ClearScreen();
         GraphicsContext::UseShader(shader);
         GraphicsContext::Draw(va, va->GetIndexBuffer()->GetCount());
     }
-    ~TestGame() {std::cout << "GOODBYE!\n";}
 };
 
 using namespace RoxEngine;

@@ -23,6 +23,9 @@ _deps
 # Built Visual Studio Code Extensions
 *.vsix
 
+.vs
+out
+
 build
 
 #clangd

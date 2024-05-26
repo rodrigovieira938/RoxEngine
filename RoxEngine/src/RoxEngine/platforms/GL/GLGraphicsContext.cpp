@@ -54,10 +54,10 @@ namespace RoxEngine::GL {
     void GraphicsContext::VUseShader(Ref<::RoxEngine::Shader> shader) {
         glUseProgram(std::static_pointer_cast<GL::Shader>(shader)->mID);
     }
-    void GraphicsContext::VDraw(Ref<::RoxEngine::VertexArray> va, uint32_t indexCount) {
+    void GraphicsContext::VDraw(Ref<::RoxEngine::VertexArray> va, size_t indexCount) {
         auto glva = std::static_pointer_cast<VertexArray>(va);
         glBindVertexArray(glva->mID);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, std::static_pointer_cast<IndexBuffer>(glva->mIB)->mID);
-        glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, static_cast<int>(indexCount), GL_UNSIGNED_INT, nullptr);
     }
 }

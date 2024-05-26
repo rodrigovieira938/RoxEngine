@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include "RoxEngine/utils/Memory.h"
 
 namespace RoxEngine {

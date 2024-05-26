@@ -23,7 +23,7 @@ namespace RoxEngine {
         static void ClearColor(float r,float g,float b,float a = 1.0);
         static void ClearScreen(ClearScreenMask bufferBits = ClearScreen::COLOR | ClearScreen::DEPTH | ClearScreen::STENCIL);
         static void UseShader(Ref<Shader> shader);
-        static void Draw(Ref<VertexArray> va, uint32_t indexCount);
+        static void Draw(Ref<VertexArray> va, size_t indexCount);
         //TODO: add common commands that the renderer api should do e.g: Draw, clear color, etc...
     protected:
         GraphicsContext() = default;
@@ -37,6 +37,6 @@ namespace RoxEngine {
         virtual void VClearColor(float r,float g,float b,float a = 1.0) = 0;
         virtual void VClearScreen(ClearScreenMask bufferBits) = 0;
         virtual void VUseShader(Ref<Shader> shader) = 0;
-        virtual void VDraw(Ref<VertexArray> va, uint32_t indexCount) = 0;
+        virtual void VDraw(Ref<VertexArray> va, size_t indexCount) = 0;
     };
 }
