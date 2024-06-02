@@ -7,6 +7,9 @@
 #include <RoxEngine/renderer/GraphicsContext.hpp>
 #include <iostream>
 #include <filesystem>
+#include <slang/slang.h>
+#include <slang/slang-com-ptr.h>
+
 using namespace RoxEngine;
 
 struct TestGame final : public Game {
@@ -67,6 +70,6 @@ struct TestGame final : public Game {
 };
 
 using namespace RoxEngine;
-int main(int, char**){
+int main(int, char**) {
     return Engine::Get()->Run(CreateScope<TestGame>());
 }
