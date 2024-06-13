@@ -10,6 +10,8 @@
 #include <slang/slang.h>
 #include <slang/slang-com-ptr.h>
 
+#include "RoxEngine/filesystem/Filesystem.hpp"
+
 using namespace RoxEngine;
 
 struct TestGame final : public Game {
@@ -57,6 +59,11 @@ struct TestGame final : public Game {
                 FragColor = vec4(1,0,0,1);
             } 
         )");
+        if(FileSystem::Exists("res://test.txt"))
+        {
+			std::string content = FileSystem::ReadTextFile("res://test.txt");
+			std::cout << "res://test.txt contents = \"" << content << "\"\n";
+        }
     }
     void Update() override {
         if(Input::GetKeyState(Key::W) != KeyState::NONE)
