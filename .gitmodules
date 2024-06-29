@@ -4,3 +4,6 @@
 [submodule "Vendor/imgui"]
 	path = Vendor/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "Vendor/flecs"]
+	path = Vendor/flecs
+	url = https://github.com/SanderMertens/flecs.git
