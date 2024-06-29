@@ -18,11 +18,7 @@ struct TestGame final : public Game {
     Ref<VertexArray> va;
     Ref<Shader> shader;
     Ref<Framebuffer> fb;
-    ~TestGame() override { std::cout << "GOODBYE!\n"; }
-
     void Init() override {
-        std::cout << "HelloWorld!\n";
-
     	va = VertexArray::Create();
         {
             float vertices[] = {

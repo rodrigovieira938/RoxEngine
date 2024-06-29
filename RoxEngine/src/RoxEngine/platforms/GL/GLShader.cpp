@@ -25,13 +25,13 @@ namespace RoxEngine::GL {
         GLint hasCompiled;
         // Character array to store error message in
         char infoLog[1024];
-        if (type != "PROGRAM")
+        if (std::strcmp(type,"PROGRAM") != 0)
         {
             glGetShaderiv(shader, GL_COMPILE_STATUS, &hasCompiled);
             if (hasCompiled == GL_FALSE)
             {
-                glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "SHADER_COMPILATION_ERROR for:" << type << "\n" << infoLog << std::endl;
+                glGetShaderInfoLog(shader, 1024, nullptr, infoLog);
+                std::cout << "SHADER_COMPILATION_ERROR for:" << type << "\n" << infoLog << "\n";
             }
         }
         else
@@ -39,8 +39,8 @@ namespace RoxEngine::GL {
             glGetProgramiv(shader, GL_LINK_STATUS, &hasCompiled);
             if (hasCompiled == GL_FALSE)
             {
-                glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "SHADER_LINKING_ERROR for:" << type << "\n" << infoLog << std::endl;
+                glGetProgramInfoLog(shader, 1024, nullptr, infoLog);
+                std::cout << "SHADER_LINKING_ERROR for:" << type << "\n" << infoLog << "\n";
             }
         }
     }
@@ -50,16 +50,16 @@ namespace RoxEngine::GL {
 	    const char* fragmentSource = fragmentSrc.c_str();
         GLuint vertexShader = 0, fragmentShader = 0;
         mID = glCreateProgram();
-        if(vertexSrc != "") {
+        if(!vertexSrc.empty()) {
             vertexShader = glCreateShader(GL_VERTEX_SHADER);
-            glShaderSource(vertexShader, 1, &vertexSource, NULL);
+            glShaderSource(vertexShader, 1, &vertexSource, nullptr);
             glCompileShader(vertexShader);
             compileErrors(vertexShader, "VERTEX");
             glAttachShader(mID, vertexShader);
         }
-        if(fragmentSrc != "") {
+        if(!fragmentSrc.empty()) {
             fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-            glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
+            glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
             glCompileShader(fragmentShader);
             compileErrors(fragmentShader, "FRAGMENT");
             glAttachShader(mID, fragmentShader);
@@ -67,8 +67,10 @@ namespace RoxEngine::GL {
         glLinkProgram(mID);
         compileErrors(mID, "PROGRAM");
 
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
+        if (vertexShader != 0)
+            glDeleteShader(vertexShader);
+        if (fragmentShader != 0)
+            glDeleteShader(fragmentShader);
     }
     Shader::~Shader() {
         glDeleteProgram(mID);
