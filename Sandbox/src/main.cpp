@@ -9,8 +9,8 @@
 #include <filesystem>
 #include <slang/slang.h>
 #include <slang/slang-com-ptr.h>
-
 #include "RoxEngine/filesystem/Filesystem.hpp"
+#include <RoxEngine/scene/Scene.hpp>
 
 using namespace RoxEngine;
 
@@ -18,7 +18,19 @@ struct TestGame final : public Game {
     Ref<VertexArray> va;
     Ref<Shader> shader;
     Ref<Framebuffer> fb;
+    
+    struct TestComponent { std::string a = "First!"; };
     void Init() override {
+        Scene s;
+        Entity e = s.CreateEntity();
+        std::cout << e.HasComponent<TestComponent>() << "\n";
+        e.AddComponent<TestComponent>({});
+        std::cout << e.GetComponent<TestComponent>().a << "\n";
+        e.GetComponent<TestComponent>().a = "Second!";
+    	std::cout << e.GetComponent<TestComponent>().a << "\n";
+        e.RemoveComponent<TestComponent>();
+        std::cout << e.AddComponent<TestComponent>({ "Third!" }).a << "\n";
+
     	va = VertexArray::Create();
         {
             float vertices[] = {
@@ -72,7 +84,12 @@ struct TestGame final : public Game {
     }
 };
 
-using namespace RoxEngine;
+Scope<Game> CreateGame()
+{
+    return CreateScope<TestGame>();
+}
+
+//todo: move constructor to the engine project
 int main(int, char**) {
-    return Engine::Get()->Run(CreateScope<TestGame>());
+    return Engine::Get()->Run(CreateGame());
 }
