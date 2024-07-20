@@ -11,25 +11,31 @@
 #include <slang/slang-com-ptr.h>
 #include "RoxEngine/filesystem/Filesystem.hpp"
 #include <RoxEngine/scene/Scene.hpp>
-
+#include "ShaderExplorer.hpp"
 using namespace RoxEngine;
 
 struct TestGame final : public Game {
     Ref<VertexArray> va;
     Ref<Shader> shader;
     Ref<Framebuffer> fb;
-    
+    ShaderExplorer shader_explorer;
+
+
     struct TestComponent { std::string a = "First!"; };
+
     void Init() override {
-        Scene s;
+    	Scene s;
         Entity e = s.CreateEntity();
-        std::cout << e.HasComponent<TestComponent>() << "\n";
+        std::cout << std::boolalpha << e.HasComponent<TestComponent>() << "\n";
         e.AddComponent<TestComponent>({});
+        std::cout << std::boolalpha << e.HasComponent<TestComponent>() << "\n";
         std::cout << e.GetComponent<TestComponent>().a << "\n";
         e.GetComponent<TestComponent>().a = "Second!";
     	std::cout << e.GetComponent<TestComponent>().a << "\n";
         e.RemoveComponent<TestComponent>();
         std::cout << e.AddComponent<TestComponent>({ "Third!" }).a << "\n";
+        e.RemoveComponent<TestComponent>();
+    	std::cout << std::boolalpha << e.HasComponent<TestComponent>() << "\n";
 
     	va = VertexArray::Create();
         {
@@ -81,6 +87,8 @@ struct TestGame final : public Game {
         GraphicsContext::ClearScreen();
         GraphicsContext::UseShader(shader);
         GraphicsContext::Draw(va, va->GetIndexBuffer()->GetCount());
+
+        shader_explorer.Render();
     }
 };
 

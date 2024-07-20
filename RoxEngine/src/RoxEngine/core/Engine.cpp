@@ -36,8 +36,8 @@ namespace RoxEngine {
             Input::Update();
             mWindow->PollEvents();
             game->Update();
-            game->Render();
             ImGuiLayer::NewFrame();
+            game->Render();
             DrawDebugInfo();
             ImGuiLayer::Render();
             glfwSwapBuffers(static_cast<GLFWwindow*>(std::static_pointer_cast<GLFW::Window>(mWindow)->mWindow));
@@ -52,11 +52,6 @@ namespace RoxEngine {
         return 0; // OK
     }
     void Engine::DrawDebugInfo() {
-        if(ImGui::Begin("Window 1")) {
-        }
-        ImGui::End();
-        if(ImGui::Begin("Window 2")) {
-        }
-        ImGui::End();
+        mWindow = mWindow;
     }
 }
