@@ -4,9 +4,12 @@
 namespace RoxEngine::GL {
     class Shader final : public ::RoxEngine::Shader {
     public:
-        Shader(const std::string& vertexSrc, const std::string& fragmentSrc);
-        virtual ~Shader() final;
+        //TODO: add preprocessor support
+        Shader(const std::string& src, const std::string& module_name, const EntryPointInfo& entry_point);
+        Shader(const std::string& path,const EntryPointInfo& entry_point);
 
-        uint32_t mID;
+    	virtual ~Shader() final;
+
+        uint32_t mID = 0;
     };
 }

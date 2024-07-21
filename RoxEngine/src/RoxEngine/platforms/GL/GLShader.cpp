@@ -1,77 +1,146 @@
 #include "GLShader.hpp"
 #include <glad/gl.h>
-#include <fstream>
 #include <iostream>
+#include <RoxEngine/filesystem/Filesystem.hpp>
+
+#include "slang-com-ptr.h"
+
 namespace RoxEngine::GL {
+    GLuint CreateProgram(const char* vertexSource, const char* fragmentSource) {
+        std::cout << vertexSource << "\n\n" << fragmentSource << "\n";
 
-    std::string get_file_contents(const std::string&  filename)
+        const GLuint id = glCreateProgram();
+        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(vertexShader, 1, &vertexSource, nullptr);
+        glCompileShader(vertexShader);
+    	glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
+        glCompileShader(fragmentShader);
+
+
+    	glAttachShader(id, vertexShader);
+        glAttachShader(id, fragmentShader);
+        glLinkProgram(id);
+
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+
+        return id;
+    }
+
+    Slang::ComPtr<slang::IGlobalSession> sGlobalSession = nullptr;
+    Slang::ComPtr<slang::ISession> sSession = nullptr;
+
+    void initSlang()
     {
-        std::ifstream in(filename, std::ios::binary);
-        if (in)
+        if (!sGlobalSession)
         {
-            std::string contents;
-            in.seekg(0, std::ios::end);
-            contents.resize(in.tellg());
-            in.seekg(0, std::ios::beg);
-            in.read(&contents[0], contents.size());
-            in.close();
-            return(contents);
+            //TODO: deal with SlangResults
+
+            slang::createGlobalSession(sGlobalSession.writeRef());
+
+            slang::SessionDesc session_desc;
+            {
+                static slang::TargetDesc targets[] = {
+                    {
+                            sizeof(slang::TargetDesc),
+                            SLANG_GLSL,
+                            SLANG_PROFILE_UNKNOWN,
+                            kDefaultTargetFlags,
+                            SLANG_FLOATING_POINT_MODE_DEFAULT,
+                            SLANG_LINE_DIRECTIVE_MODE_DEFAULT,
+                            false,
+                            nullptr,
+                            0,
+                    }
+                };
+                targets[0].profile = sGlobalSession->findProfile("glsl_450");
+
+                session_desc.targets = targets;
+                session_desc.targetCount = sizeof(slang::TargetDesc) / sizeof(targets);
+            }
+
+            sGlobalSession->createSession(session_desc, sSession.writeRef());
         }
-        throw(errno);
     }
-    void compileErrors(unsigned int shader, const char* type)
+
+    GLuint CompileModule(const Slang::ComPtr<slang::IModule>& module, const Shader::EntryPointInfo& entry_point)
     {
-        // Stores status of compilation
-        GLint hasCompiled;
-        // Character array to store error message in
-        char infoLog[1024];
-        if (std::strcmp(type,"PROGRAM") != 0)
+        Slang::ComPtr<slang::IEntryPoint> vertex_entrypoint = nullptr;
+        Slang::ComPtr<slang::IEntryPoint> fragment_entrypoint = nullptr;
+        //TODO: make the roxengine.slang module with default entry points
+        if (module->findEntryPointByName(entry_point.vertex_main, vertex_entrypoint.writeRef()))
+            module->findEntryPointByName("default_vertex_main", vertex_entrypoint.writeRef());
+        if (module->findEntryPointByName(entry_point.fragment_main, fragment_entrypoint.writeRef()))
+            module->findEntryPointByName("default_fragment_main", fragment_entrypoint.writeRef());
+
+        slang::IComponentType* components[] = { module, vertex_entrypoint, fragment_entrypoint };
+
+        Slang::ComPtr<slang::IComponentType> program;
+        sSession->createCompositeComponentType(components, 3, program.writeRef());
+
+    	Slang::ComPtr<slang::IBlob> diagnosticBlob = nullptr;
+        Slang::ComPtr<slang::IComponentType> linkedProgram = nullptr;
+        program->link(linkedProgram.writeRef(), diagnosticBlob.writeRef());
+
+        if (diagnosticBlob)
         {
-            glGetShaderiv(shader, GL_COMPILE_STATUS, &hasCompiled);
-            if (hasCompiled == GL_FALSE)
-            {
-                glGetShaderInfoLog(shader, 1024, nullptr, infoLog);
-                std::cout << "SHADER_COMPILATION_ERROR for:" << type << "\n" << infoLog << "\n";
-            }
+            std::cout << static_cast<const char*>(diagnosticBlob->getBufferPointer()) << "\n";
+            return 0;
         }
-        else
+
+        Slang::ComPtr<slang::IBlob> vertex_diagnostic, fragment_diagnostic;
+        Slang::ComPtr<slang::IBlob> vertex_code, fragment_code;
+
+
+        linkedProgram->getEntryPointCode(0, 0, vertex_code.writeRef(), vertex_diagnostic.writeRef());
+        linkedProgram->getEntryPointCode(1, 0, fragment_code.writeRef(), fragment_diagnostic.writeRef());
+
+        if (vertex_diagnostic || fragment_diagnostic)
         {
-            glGetProgramiv(shader, GL_LINK_STATUS, &hasCompiled);
-            if (hasCompiled == GL_FALSE)
-            {
-                glGetProgramInfoLog(shader, 1024, nullptr, infoLog);
-                std::cout << "SHADER_LINKING_ERROR for:" << type << "\n" << infoLog << "\n";
-            }
+            if (vertex_diagnostic)
+                std::cout << "VERTEX SHADER ERROR: " << static_cast<const char*>(vertex_diagnostic->getBufferPointer()) << "\n";
+            if (fragment_diagnostic)
+                std::cout << "FRAGMENT SHADER ERROR: " << static_cast<const char*>(fragment_diagnostic->getBufferPointer()) << "\n";
+            return 0;
         }
+
+        return CreateProgram(
+            static_cast<const char*>(vertex_code->getBufferPointer()),
+            static_cast<const char*>(fragment_code->getBufferPointer()));
     }
 
-    Shader::Shader(const std::string& vertexSrc, const std::string& fragmentSrc) {
-        const char* vertexSource = vertexSrc.c_str();
-	    const char* fragmentSource = fragmentSrc.c_str();
-        GLuint vertexShader = 0, fragmentShader = 0;
-        mID = glCreateProgram();
-        if(!vertexSrc.empty()) {
-            vertexShader = glCreateShader(GL_VERTEX_SHADER);
-            glShaderSource(vertexShader, 1, &vertexSource, nullptr);
-            glCompileShader(vertexShader);
-            compileErrors(vertexShader, "VERTEX");
-            glAttachShader(mID, vertexShader);
-        }
-        if(!fragmentSrc.empty()) {
-            fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-            glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
-            glCompileShader(fragmentShader);
-            compileErrors(fragmentShader, "FRAGMENT");
-            glAttachShader(mID, fragmentShader);
-        }
-        glLinkProgram(mID);
-        compileErrors(mID, "PROGRAM");
+    Shader::Shader(const std::string& src, const std::string& module_name, const EntryPointInfo& entry_point)
+    {
+        initSlang();
+        Slang::ComPtr<slang::IBlob> diagnostics;
+        Slang::ComPtr<slang::IModule> module;
 
-        if (vertexShader != 0)
-            glDeleteShader(vertexShader);
-        if (fragmentShader != 0)
-            glDeleteShader(fragmentShader);
+    	module = sSession->loadModuleFromSourceString(module_name.c_str(), "", src.c_str(), diagnostics.writeRef());
+        if (diagnostics)
+        {
+            std::cout << static_cast<const char*>(diagnostics->getBufferPointer()) << "\n";
+            return;
+        }
+        mID = CompileModule(module, entry_point);
     }
+
+    Shader::Shader(const std::string& path, const EntryPointInfo& entry_point)
+    {
+        initSlang();
+        std::string src = FileSystem::ReadTextFile(path);
+
+        Slang::ComPtr<slang::IBlob> diagnostics;
+        Slang::ComPtr<slang::IModule> module;
+        module = sSession->loadModuleFromSourceString(FileSystem::GetFileName(path).c_str(), path.c_str(), src.c_str(), diagnostics.writeRef());
+        if (diagnostics)
+        {
+            std::cout << static_cast<const char*>(diagnostics->getBufferPointer()) << "\n";
+            return;
+        }
+        mID = CompileModule(module, entry_point);
+    }
+
     Shader::~Shader() {
         glDeleteProgram(mID);
     }

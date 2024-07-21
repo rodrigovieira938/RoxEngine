@@ -18,6 +18,20 @@ namespace RoxEngine::FileSystem {
 		}
 		return fs::exists(fs::path(path));
 	}
+
+	std::string GetFileName(const std::string& path, bool with_extension)
+	{
+		fs::path fspath = fs::path(path);
+		if(IsResourcePath(path))
+		{
+			fspath = std::string(resourcesFolder + std::string(path.begin() + 5, path.end()));
+		}
+
+		if (with_extension)
+			return fspath.filename().generic_string();
+		return fspath.stem().generic_string();
+	}
+
 	size_t GetFileSize(const std::string& path)
 	{
 		std::ifstream file(path, std::ios::ate | std::ios::binary);

@@ -11,15 +11,12 @@
 #include <slang/slang-com-ptr.h>
 #include "RoxEngine/filesystem/Filesystem.hpp"
 #include <RoxEngine/scene/Scene.hpp>
-#include "ShaderExplorer.hpp"
 using namespace RoxEngine;
 
 struct TestGame final : public Game {
     Ref<VertexArray> va;
     Ref<Shader> shader;
     Ref<Framebuffer> fb;
-    ShaderExplorer shader_explorer;
-
 
     struct TestComponent { std::string a = "First!"; };
 
@@ -58,21 +55,7 @@ struct TestGame final : public Game {
             va->SetIndexBuffer(ib);
         }
         fb = Framebuffer::Create(800, 800, {FramebufferColorTexFormat::RGB32}, FramebufferDepthTexFormat::D24UNS8U);
-        shader = Shader::Create(R"(#version 330 core
-            layout (location = 0) in vec3 aPos;
-            
-            void main()
-            {
-                gl_Position = vec4(aPos, 1.0); // see how we directly give a vec3 to vec4's constructor
-            }
-        )",R"(#version 330 core
-            out vec4 FragColor;
-
-            void main()
-            {
-                FragColor = vec4(1,0,0,1);
-            } 
-        )");
+        shader = Shader::Create("res://shaders/basic.slang");
         if(FileSystem::Exists("res://test.txt"))
         {
 			std::string content = FileSystem::ReadTextFile("res://test.txt");
@@ -87,8 +70,6 @@ struct TestGame final : public Game {
         GraphicsContext::ClearScreen();
         GraphicsContext::UseShader(shader);
         GraphicsContext::Draw(va, va->GetIndexBuffer()->GetCount());
-
-        shader_explorer.Render();
     }
 };
 
