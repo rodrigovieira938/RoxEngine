@@ -55,7 +55,7 @@ struct TestGame final : public Game {
             va->SetIndexBuffer(ib);
         }
         fb = Framebuffer::Create(800, 800, {FramebufferColorTexFormat::RGB32}, FramebufferDepthTexFormat::D24UNS8U);
-        shader = Shader::Create("res://shaders/basic.slang");
+        shader = Shader::Create("res://shaders/basic.slang", Shader::EntryPointInfo{"basic_vmain", "basic_fmain"});
         if(FileSystem::Exists("res://test.txt"))
         {
 			std::string content = FileSystem::ReadTextFile("res://test.txt");

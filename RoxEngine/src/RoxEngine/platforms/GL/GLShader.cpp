@@ -31,6 +31,74 @@ namespace RoxEngine::GL {
     Slang::ComPtr<slang::IGlobalSession> sGlobalSession = nullptr;
     Slang::ComPtr<slang::ISession> sSession = nullptr;
 
+    class StringBlob final: public slang::IBlob
+    {
+    public:
+        StringBlob(std::string&& content) : mContent(std::move(content)) {}
+        virtual ~StringBlob() = default;
+        SLANG_NO_THROW SlangResult queryInterface(const SlangUUID& uuid, void** outObject) override { return SLANG_FAIL; }
+        SLANG_NO_THROW uint32_t addRef() override
+        {
+	        return mRefCount++;
+        }
+        SLANG_NO_THROW uint32_t release() override
+        {
+            mRefCount--;
+            if (mRefCount == 0)
+            {
+                delete this;
+            }
+            return 1;
+        }
+        SLANG_NO_THROW const void* getBufferPointer()  override { return mContent.data(); }
+        SLANG_NO_THROW size_t getBufferSize() override { return mContent.size(); }
+
+    private:
+        std::string mContent;
+        uint32_t mRefCount = 1;
+    };
+
+    struct slangfs final : public ISlangFileSystem
+    {
+    public:
+        virtual ~slangfs() = default;
+        SLANG_NO_THROW SlangResult queryInterface(const SlangUUID& uuid, void** outObject) override { return SLANG_FAIL; }
+        SLANG_NO_THROW void* castAs(const SlangUUID& guid) override
+	    {
+            if (guid == ISlangUnknown::getTypeGuid() ||
+                guid == ISlangFileSystem::getTypeGuid())
+            {
+                return static_cast<ISlangFileSystem*>(this);
+            }
+            if (guid == ISlangCastable::getTypeGuid())
+            {
+                return static_cast<ISlangCastable*>(this);
+            }
+            return nullptr;
+	    }
+        SLANG_NO_THROW uint32_t addRef() override { return mRefCount++; }
+        SLANG_NO_THROW uint32_t release() override
+        {
+            mRefCount--;
+            if (mRefCount == 0)
+            {
+                delete this;
+            }
+            return 1;
+        }
+        SLANG_NO_THROW SlangResult loadFile(const char* path, ISlangBlob** outBlob) override
+	    {
+            if(!FileSystem::Exists(path))
+				return SLANG_E_NOT_FOUND;
+            *outBlob = new StringBlob(FileSystem::ReadTextFile(path));
+            return SLANG_OK;
+	    }
+
+        
+    private:
+        uint32_t mRefCount = 1;
+    };
+
     void initSlang()
     {
         if (!sGlobalSession)
@@ -58,6 +126,15 @@ namespace RoxEngine::GL {
 
                 session_desc.targets = targets;
                 session_desc.targetCount = sizeof(slang::TargetDesc) / sizeof(targets);
+
+                session_desc.fileSystem = new slangfs();
+
+                static const char* const search_paths[] = {
+                    "" //allow for absolute include path
+                };
+
+                session_desc.searchPaths = search_paths;
+                session_desc.searchPathCount = 1;
             }
 
             sGlobalSession->createSession(session_desc, sSession.writeRef());
@@ -78,7 +155,6 @@ namespace RoxEngine::GL {
 
         Slang::ComPtr<slang::IComponentType> program;
         sSession->createCompositeComponentType(components, 3, program.writeRef());
-
     	Slang::ComPtr<slang::IBlob> diagnosticBlob = nullptr;
         Slang::ComPtr<slang::IComponentType> linkedProgram = nullptr;
         program->link(linkedProgram.writeRef(), diagnosticBlob.writeRef());
@@ -132,7 +208,8 @@ namespace RoxEngine::GL {
 
         Slang::ComPtr<slang::IBlob> diagnostics;
         Slang::ComPtr<slang::IModule> module;
-        module = sSession->loadModuleFromSourceString(FileSystem::GetFileName(path).c_str(), path.c_str(), src.c_str(), diagnostics.writeRef());
+        std::string module_name = FileSystem::GetFileName(path,false);
+        module = sSession->loadModuleFromSourceString(module_name.c_str(), path.c_str(), src.c_str(), diagnostics.writeRef());
         if (diagnostics)
         {
             std::cout << static_cast<const char*>(diagnostics->getBufferPointer()) << "\n";

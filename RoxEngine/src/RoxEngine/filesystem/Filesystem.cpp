@@ -14,7 +14,7 @@ namespace RoxEngine::FileSystem {
 	{
 		if (IsResourcePath(path))
 		{
-			return fs::exists(fs::canonical(std::string(resourcesFolder + std::string(path.begin() + 5, path.end()))));
+			return fs::exists(std::string(resourcesFolder + std::string(path.begin() + 5, path.end())));
 		}
 		return fs::exists(fs::path(path));
 	}
