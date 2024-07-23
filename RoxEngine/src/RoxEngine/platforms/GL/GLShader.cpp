@@ -198,7 +198,8 @@ namespace RoxEngine::GL {
             std::cout << static_cast<const char*>(diagnostics->getBufferPointer()) << "\n";
             return;
         }
-        mID = CompileModule(module, entry_point);
+
+    	mID = CompileModule(module, entry_point);
     }
 
     Shader::Shader(const std::string& path, const EntryPointInfo& entry_point)
@@ -216,6 +217,93 @@ namespace RoxEngine::GL {
             return;
         }
         mID = CompileModule(module, entry_point);
+        slang::ProgramLayout* layout = module->getLayout();
+        for(int i = 0; i < layout->getParameterCount(); i++)
+        {
+            slang::VariableLayoutReflection* var = layout->getParameterByIndex(i);
+            slang::TypeLayoutReflection* type_layout = var->getTypeLayout();
+            slang::TypeReflection* type_reflection = var->getType();
+            //TODO: support more types of buffers
+            if (type_reflection->getKind() != slang::TypeReflection::Kind::ConstantBuffer) 
+                continue;
+			std::unordered_map<std::string, UniformBuffer::DataType> desc;
+			auto inner_type = type_reflection->getElementType();
+        	auto inner_type_layout = type_layout->getElementTypeLayout();
+        	for(int x = 0; x < inner_type->getFieldCount(); x++)
+            {
+                slang::VariableReflection* field = inner_type->getFieldByIndex(x);
+                slang::VariableLayoutReflection* field_layout = inner_type_layout->getFieldByIndex(x);
+				slang::TypeReflection* field_type_reflection = field->getType();
+                slang::TypeLayoutReflection* field_type_layout = field_layout->getTypeLayout();
+                slang::TypeReflection::Kind kind = field_type_reflection->getKind();
+				//TODO: add support for structs
+                //TODO: use a switch instead of ifs
+                static auto slang_scalar_type_to_kind = [](slang::TypeReflection::ScalarType type) -> auto {
+                    switch (type)
+                    {
+                    case slang::TypeReflection::None:
+                    case slang::TypeReflection::Void:
+                    case slang::TypeReflection::Int64:
+                    case slang::TypeReflection::UInt64:
+                        break; //Unsupported or unneded types
+                    case slang::TypeReflection::Bool: //In gl bools are int32;
+                    case slang::TypeReflection::Float16:
+                        return UniformBuffer::DataType::Kind::HALF;
+                    case slang::TypeReflection::Float32:
+                        return UniformBuffer::DataType::Kind::FLOAT;
+                    case slang::TypeReflection::Float64:
+                        return UniformBuffer::DataType::Kind::DOUBLE;
+                    case slang::TypeReflection::Int8:
+                        return UniformBuffer::DataType::Kind::INT8;
+                    case slang::TypeReflection::UInt8:
+                        return UniformBuffer::DataType::Kind::UINT8;
+                    case slang::TypeReflection::Int16:
+                        return UniformBuffer::DataType::Kind::INT16;
+                    case slang::TypeReflection::UInt16:
+                        return UniformBuffer::DataType::Kind::UINT16;
+                    case slang::TypeReflection::Int32:
+                        return UniformBuffer::DataType::Kind::INT32;
+                    case slang::TypeReflection::UInt32:
+                        return UniformBuffer::DataType::Kind::UINT32;
+                    }
+                    return UniformBuffer::DataType::Kind::INT32;
+                    };
+
+				if (kind == slang::TypeReflection::Kind::Scalar)
+                {
+                    slang::TypeReflection::ScalarType scalar_type = field_type_reflection->getScalarType();
+                    desc[field->getName()] = {
+                        slang_scalar_type_to_kind(scalar_type),
+                        field_layout->getOffset()
+                    };
+                }
+                if(kind == slang::TypeReflection::Kind::Array)
+                {
+                    auto element_type = field_type_reflection->getElementType();
+                    auto scalar_type = element_type->getScalarType();
+                	//TODO: add recursion of type like float[][]
+                	if(scalar_type != slang::TypeReflection::None)
+                	{
+                        desc[field->getName()] = {
+                            UniformBuffer::DataType::Kind::ARRAY,
+                            field_layout->getOffset(),
+                            static_cast<size_t>(field_type_layout->getAlignment()),
+                            slang_scalar_type_to_kind(scalar_type),
+                            static_cast<uint32_t>(field_type_reflection->getElementCount())
+                        };
+                	}
+                }
+                if (kind == slang::TypeReflection::Kind::Vector)
+                {
+
+                }
+                if (kind == slang::TypeReflection::Kind::Matrix)
+                {
+
+                }
+            }
+        	mUbos[var->getName()] = new UniformBuffer(inner_type_layout->getSize(),var->getBindingIndex(), std::move(desc));
+        }
     }
 
     Shader::~Shader() {

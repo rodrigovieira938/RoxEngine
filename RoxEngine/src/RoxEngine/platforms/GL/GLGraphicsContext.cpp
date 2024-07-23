@@ -53,7 +53,13 @@ namespace RoxEngine::GL {
         glClear(mask);
     }
     void GraphicsContext::VUseShader(Ref<::RoxEngine::Shader> shader) {
-        glUseProgram(std::static_pointer_cast<GL::Shader>(shader)->mID);
+        auto glshader = std::static_pointer_cast<GL::Shader>(shader);
+    	glUseProgram(glshader->mID);
+    	for(auto&& [name, ubo] : glshader->mUbos)
+        {
+            ubo->update();
+            glBindBufferBase(GL_UNIFORM_BUFFER, ubo->mBinding, ubo->mId);
+        }
     }
     void GraphicsContext::VDraw(Ref<::RoxEngine::VertexArray> va, size_t indexCount) {
         auto glva = std::static_pointer_cast<VertexArray>(va);

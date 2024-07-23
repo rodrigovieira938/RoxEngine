@@ -1,6 +1,9 @@
 #pragma once
 #include "RoxEngine/renderer/Shader.hpp"
+#include <RoxEngine/platforms/GL/GLUniformBuffer.hpp>
 #include <cstdint>
+#include <unordered_map>
+
 namespace RoxEngine::GL {
     class Shader final : public ::RoxEngine::Shader {
     public:
@@ -10,6 +13,7 @@ namespace RoxEngine::GL {
 
     	virtual ~Shader() final;
 
+        std::unordered_map<std::string,GL::UniformBuffer*> mUbos;
         uint32_t mID = 0;
     };
 }

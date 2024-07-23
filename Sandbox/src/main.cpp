@@ -11,6 +11,7 @@
 #include <slang/slang-com-ptr.h>
 #include "RoxEngine/filesystem/Filesystem.hpp"
 #include <RoxEngine/scene/Scene.hpp>
+#include "RoxEngine/platforms/GL/GLShader.hpp"
 using namespace RoxEngine;
 
 struct TestGame final : public Game {
@@ -61,6 +62,24 @@ struct TestGame final : public Game {
 			std::string content = FileSystem::ReadTextFile("res://test.txt");
 			std::cout << "res://test.txt contents = \"" << content << "\"\n";
         }
+
+        auto glshader = std::static_pointer_cast<GL::Shader>(shader);
+        auto ubo = glshader->mUbos["Uniforms"];
+        ubo->Set("input1", 2u);
+
+        float color[12]= {
+            255.f / 255.f,
+            0,0,0, //padding
+        	223.f / 255.f,
+            0,0,0, //padding
+        	214.f / 255.f,
+            0,0,0 //padding
+        };
+        struct Uniforms {
+            int input1, _padding1[3];       // offset 0
+            int colors[3];    // offset 16
+        };
+        ubo->Set("color", color,sizeof(float)*12);
     }
     void Update() override {
         if(Input::GetKeyState(Key::W) != KeyState::NONE)
