@@ -10,11 +10,13 @@
 #include "RoxEngine/filesystem/Filesystem.hpp"
 #include <RoxEngine/scene/Scene.hpp>
 #include "RoxEngine/platforms/GL/GLShader.hpp"
+#include "RoxEngine/renderer/Material.hpp"
 using namespace RoxEngine;
 
 struct TestGame final : public Game {
     Ref<VertexArray> va;
     Ref<Shader> shader;
+    Ref<Material> material;
     Ref<Framebuffer> fb;
 
     struct TestComponent { std::string a = "First!"; };
@@ -54,31 +56,33 @@ struct TestGame final : public Game {
             va->SetIndexBuffer(ib);
         }
         fb = Framebuffer::Create(800, 800, {FramebufferColorTexFormat::RGB32}, FramebufferDepthTexFormat::D24UNS8U);
-        shader = Shader::Create("res://shaders/basic.slang", Shader::EntryPointInfo{"basic_vmain", "basic_fmain"});
+        shader = Shader::Create("res://shaders/basic.slang");
+        material = Material::Create(shader, Material::EntryPointInfo{ "basic_vmain", "basic_fmain" });
         if(FileSystem::Exists("res://test.txt"))
         {
 			std::string content = FileSystem::ReadTextFile("res://test.txt");
 			std::cout << "res://test.txt contents = \"" << content << "\"\n";
         }
 
-        auto glshader = std::static_pointer_cast<GL::Shader>(shader);
-        auto ubo = glshader->mUbos["Uniforms"];
-       
-        float color[3]= {
-            255.f / 255.f,
-        	223.f / 255.f,
-        	214.f / 255.f,
-        };
+        auto ubo = material->GetUbo("Uniforms");
+        if(ubo)
+        {
+            float color[3] = {
+	           255.f / 255.f,
+	           223.f / 255.f,
+	           214.f / 255.f,
+            };
 
-        float matrix[4 * 4] = {
-            1,0,0,0,
-            0,1,0,0,
-            0,0,1,0,
-            0,0,0,1
-        };
+            float matrix[4 * 4] = {
+                1,0,0,0,
+                0,1,0,0,
+                0,0,1,0,
+                0,0,0,1
+            };
 
-        ubo->Set("color", color,sizeof(float)*3);
-        ubo->Set("matrix", matrix, sizeof(float) * 4 * 4);
+            ubo->Set("color", color, sizeof(float) * 3);
+            ubo->Set("matrix", matrix, sizeof(float) * 4 * 4);
+        }
     }
     void Update() override {
         if(Input::GetKeyState(Key::W) != KeyState::NONE)
@@ -86,7 +90,7 @@ struct TestGame final : public Game {
     }
     void Render() override {
         GraphicsContext::ClearScreen();
-        GraphicsContext::UseShader(shader);
+        GraphicsContext::UseMaterial(material);
         GraphicsContext::Draw(va, va->GetIndexBuffer()->GetCount());
     }
 };

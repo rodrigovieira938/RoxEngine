@@ -3,16 +3,20 @@
 #include <RoxEngine/platforms/GL/GLUniformBuffer.hpp>
 #include <cstdint>
 #include <unordered_map>
+#include "include/slang-com-ptr.h"
+namespace slang
+{
+	struct IModule;
+}
 
 namespace RoxEngine::GL {
     class Shader final : public ::RoxEngine::Shader {
     public:
         //TODO: add preprocessor support
-        Shader(const std::string& src, const std::string& module_name, const EntryPointInfo& entry_point);
-        Shader(const std::string& path,const EntryPointInfo& entry_point);
-    	virtual ~Shader() final;
+        Shader(const std::string& src, const std::string& module_name);
+        Shader(const std::string& path);
+    	virtual ~Shader() final = default;
 
-        std::unordered_map<std::string,GL::UniformBuffer*> mUbos;
-        uint32_t mID = 0;
+        Slang::ComPtr<slang::IModule> mModule;
     };
 }

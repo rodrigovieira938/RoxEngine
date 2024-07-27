@@ -9,6 +9,9 @@
 #include <RoxEngine/platforms/GL/GLBuffer.hpp>
 #include <memory>
 #include <RoxEngine/platforms/GL/GLShader.hpp>
+
+#include "GLMaterial.hpp"
+
 namespace RoxEngine::GL {
     void GLAPIENTRY 
     MessageCallback( GLenum source,
@@ -52,13 +55,15 @@ namespace RoxEngine::GL {
             mask |= GL_STENCIL_BUFFER_BIT;
         glClear(mask);
     }
-    void GraphicsContext::VUseShader(Ref<::RoxEngine::Shader> shader) {
-        auto glshader = std::static_pointer_cast<GL::Shader>(shader);
-    	glUseProgram(glshader->mID);
-    	for(auto&& [name, ubo] : glshader->mUbos)
+    void GraphicsContext::VUseMaterial(Ref<::RoxEngine::Material> material) {
+        auto glmaterial = std::static_pointer_cast<GL::Material>(material);
+    	glUseProgram(glmaterial->mID);
+    	for(auto ubo : glmaterial->mUbos)
         {
-            ubo->update();
-            glBindBufferBase(GL_UNIFORM_BUFFER, ubo->mBinding, ubo->mId);
+            auto glubo = std::static_pointer_cast<UniformBuffer>(ubo);
+
+            glubo->update();
+            glBindBufferBase(GL_UNIFORM_BUFFER, glubo->mBinding, glubo->mId);
         }
     }
     void GraphicsContext::VDraw(Ref<::RoxEngine::VertexArray> va, size_t indexCount) {
