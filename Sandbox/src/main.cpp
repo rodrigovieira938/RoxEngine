@@ -11,6 +11,7 @@
 #include <RoxEngine/scene/Scene.hpp>
 #include "RoxEngine/platforms/GL/GLShader.hpp"
 #include "RoxEngine/renderer/Material.hpp"
+#include <glm/glm.hpp>
 using namespace RoxEngine;
 
 struct TestGame final : public Game {
@@ -66,21 +67,11 @@ struct TestGame final : public Game {
 
         if(auto ubo = material->GetUbo("Uniforms"))
         {
-            float color[3] = {
-	           255.f / 255.f,
-	           223.f / 255.f,
-	           214.f / 255.f,
-            };
+            glm::vec3 color = { 255.f / 255.f,223.f / 255.f,214.f / 255.f, };
+            glm::mat4 matrix = glm::mat4(1.f);
 
-            float matrix[4 * 4] = {
-                1,0,0,0,
-                0,1,0,0,
-                0,0,1,0,
-                0,0,0,1
-            };
-
-            ubo->Set("color", color, sizeof(float) * 3);
-            ubo->Set("matrix", matrix, sizeof(float) * 4 * 4);
+            ubo->Set("color", &color.x, sizeof(glm::vec3));
+            ubo->Set("matrix", &matrix[0][0], sizeof(glm::mat4));
         }
     }
     void Update() override {

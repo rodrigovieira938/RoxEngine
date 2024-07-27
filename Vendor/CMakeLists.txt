@@ -18,7 +18,7 @@ set(SLANG_ENABLE_SLANG_GLSLANG OFF)
 set(SLANG_ENABLE_TESTS FALSE)
 set(SLANG_LIB_TYPE STATIC)
 add_subdirectory(slang)
-
+add_subdirectory(glm)
 macro (install)
   _install(${ARGV})
 endmacro(install)
