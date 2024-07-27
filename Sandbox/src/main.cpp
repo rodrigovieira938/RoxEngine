@@ -64,8 +64,7 @@ struct TestGame final : public Game {
 			std::cout << "res://test.txt contents = \"" << content << "\"\n";
         }
 
-        auto ubo = material->GetUbo("Uniforms");
-        if(ubo)
+        if(auto ubo = material->GetUbo("Uniforms"))
         {
             float color[3] = {
 	           255.f / 255.f,

@@ -10,3 +10,6 @@
 [submodule "Vendor/slang"]
 	path = Vendor/slang
 	url = https://github.com/shader-slang/slang.git
+[submodule "Vendor/glm"]
+	path = Vendor/glm
+	url = https://github.com/g-truc/glm.git
