@@ -1,3 +1,6 @@
+macro (install)
+endmacro ()
+
 add_subdirectory(glad)
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" OFF)
@@ -15,3 +18,7 @@ set(SLANG_ENABLE_SLANG_GLSLANG OFF)
 set(SLANG_ENABLE_TESTS FALSE)
 set(SLANG_LIB_TYPE STATIC)
 add_subdirectory(slang)
+
+macro (install)
+  _install(${ARGV})
+endmacro(install)
