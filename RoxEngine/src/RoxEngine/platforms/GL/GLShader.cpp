@@ -3,8 +3,8 @@
 #include <iostream>
 #include <RoxEngine/filesystem/Filesystem.hpp>
 
-#include "slang-com-ptr.h"
-#include "slang.h"
+#include <slang/include/slang.h>
+#include <slang/include/slang-com-ptr.h>
 
 namespace RoxEngine::GL {
     void compileErrors(unsigned int shader, const char* type)

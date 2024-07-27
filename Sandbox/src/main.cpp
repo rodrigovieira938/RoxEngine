@@ -7,8 +7,6 @@
 #include <RoxEngine/renderer/GraphicsContext.hpp>
 #include <iostream>
 #include <filesystem>
-#include <slang/slang.h>
-#include <slang/slang-com-ptr.h>
 #include "RoxEngine/filesystem/Filesystem.hpp"
 #include <RoxEngine/scene/Scene.hpp>
 #include "RoxEngine/platforms/GL/GLShader.hpp"
