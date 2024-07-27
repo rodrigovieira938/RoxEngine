@@ -4,8 +4,34 @@
 #include <RoxEngine/filesystem/Filesystem.hpp>
 
 #include "slang-com-ptr.h"
+#include "slang.h"
 
 namespace RoxEngine::GL {
+    void compileErrors(unsigned int shader, const char* type)
+    {
+        // Stores status of compilation
+        GLint hasCompiled;
+        // Character array to store error message in
+        char infoLog[1024];
+        if (std::strcmp(type, "PROGRAM") != 0)
+        {
+            glGetShaderiv(shader, GL_COMPILE_STATUS, &hasCompiled);
+            if (hasCompiled == GL_FALSE)
+            {
+                glGetShaderInfoLog(shader, 1024, nullptr, infoLog);
+                std::cout << "SHADER_COMPILATION_ERROR for:" << type << "\n" << infoLog << "\n";
+            }
+        }
+        else
+        {
+            glGetProgramiv(shader, GL_LINK_STATUS, &hasCompiled);
+            if (hasCompiled == GL_FALSE)
+            {
+                glGetProgramInfoLog(shader, 1024, nullptr, infoLog);
+                std::cout << "SHADER_LINKING_ERROR for:" << type << "\n" << infoLog << "\n";
+            }
+        }
+    }
     GLuint CreateProgram(const char* vertexSource, const char* fragmentSource) {
         std::cout << vertexSource << "\n\n" << fragmentSource << "\n";
 
@@ -14,13 +40,15 @@ namespace RoxEngine::GL {
     	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(vertexShader, 1, &vertexSource, nullptr);
         glCompileShader(vertexShader);
+        compileErrors(vertexShader, "VERTEX");
     	glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
         glCompileShader(fragmentShader);
-
+        compileErrors(vertexShader, "VERTEX");
 
     	glAttachShader(id, vertexShader);
         glAttachShader(id, fragmentShader);
         glLinkProgram(id);
+        compileErrors(id, "PROGRAM");
 
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
@@ -185,6 +213,202 @@ namespace RoxEngine::GL {
             static_cast<const char*>(vertex_code->getBufferPointer()),
             static_cast<const char*>(fragment_code->getBufferPointer()));
     }
+    UniformBuffer::DataType::Kind slang_scalar_type_to_kind(slang::TypeReflection::ScalarType type) {
+        switch (type)
+        {
+        case slang::TypeReflection::None:
+        case slang::TypeReflection::Void:
+        case slang::TypeReflection::Int64:
+        case slang::TypeReflection::UInt64:
+            break; //Unsupported or unneded types
+        case slang::TypeReflection::Bool: //In gl bools are int32;
+        case slang::TypeReflection::Float16:
+            return UniformBuffer::DataType::Kind::HALF;
+        case slang::TypeReflection::Float32:
+            return UniformBuffer::DataType::Kind::FLOAT;
+        case slang::TypeReflection::Float64:
+            return UniformBuffer::DataType::Kind::DOUBLE;
+        case slang::TypeReflection::Int8:
+            return UniformBuffer::DataType::Kind::INT8;
+        case slang::TypeReflection::UInt8:
+            return UniformBuffer::DataType::Kind::UINT8;
+        case slang::TypeReflection::Int16:
+            return UniformBuffer::DataType::Kind::INT16;
+        case slang::TypeReflection::UInt16:
+            return UniformBuffer::DataType::Kind::UINT16;
+        case slang::TypeReflection::Int32:
+            return UniformBuffer::DataType::Kind::INT32;
+        case slang::TypeReflection::UInt32:
+            return UniformBuffer::DataType::Kind::UINT32;
+        }
+        return UniformBuffer::DataType::Kind::INT32;
+        };
+
+    void BakeScalar(const std::string& parent, std::unordered_map<std::string, UniformBuffer::DataType>& desc, slang::ProgramLayout* layout, slang::VariableReflection* field, slang::VariableLayoutReflection* field_layout)
+    {
+        slang::TypeReflection* field_type_reflection = field->getType();
+        slang::TypeLayoutReflection* field_type_layout = field_layout->getTypeLayout();
+        slang::TypeReflection::ScalarType scalar_type = field_type_reflection->getScalarType();
+        char const* name = field->getName();
+    	desc[parent.empty()?name:parent + "."+name] = {
+            slang_scalar_type_to_kind(scalar_type),
+            field_layout->getOffset()
+        };
+    }
+    void BakeArray(const std::string& parent, std::unordered_map<std::string, UniformBuffer::DataType>& desc, slang::ProgramLayout* layout, slang::VariableReflection* field, slang::VariableLayoutReflection* field_layout)
+    {
+        slang::TypeReflection* field_type_reflection = field->getType();
+        slang::TypeLayoutReflection* field_type_layout = field_layout->getTypeLayout();
+        auto element_type = field_type_reflection->getElementType();
+        auto element_type_layout = field_type_layout->getElementTypeLayout();
+    	std::vector<size_t> dimensions = { field_type_reflection->getElementCount() };
+    	while(element_type->getKind() == slang::TypeReflection::Kind::Array)
+        {
+            dimensions.push_back(element_type->getElementCount());
+            element_type = element_type->getElementType();
+            element_type_layout = field_type_layout->getElementTypeLayout();
+        }
+        auto scalarType = element_type->getScalarType();
+        size_t alignment = static_cast<size_t>(field_type_layout->getAlignment());
+        size_t size = element_type_layout->getSize();
+        size_t truesize = size;
+        size_t a = field_type_layout->getSize();
+        if (alignment != 0) 
+			truesize = (size + alignment - 1) & ~(alignment - 1);
+
+    	UniformBuffer::DataType elementDataType = {
+            (scalarType != slang::TypeReflection::None)?slang_scalar_type_to_kind(scalarType):UniformBuffer::DataType::Kind::STRUCT,
+            static_cast<size_t>(field_layout->getOffset()),
+            0,
+            truesize,
+        };
+
+        desc[field->getName()] = {
+            UniformBuffer::DataType::Kind::ARRAY,
+        	static_cast<size_t>(field_layout->getOffset()),
+            0,
+            truesize,
+            (scalarType != slang::TypeReflection::None) ? slang_scalar_type_to_kind(scalarType) : UniformBuffer::DataType::Kind::STRUCT,
+            static_cast<uint32_t>(dimensions[0])
+        };
+        for (size_t level = 0; level < dimensions.size(); level++) {
+            size_t innerTotalLevels = dimensions.size() - level;
+            size_t numCombinations = 1;
+
+
+            auto datatype = elementDataType;
+            if(level > 0)
+            {
+                datatype.innerKind = datatype.kind;
+                datatype.kind = RoxEngine::UniformBuffer::DataType::ARRAY;
+                datatype.rowsize = static_cast<uint32_t>(dimensions[dimensions.size() - level]);
+            }
+
+        	for (size_t i = 0; i < innerTotalLevels; ++i) {
+                numCombinations *= dimensions[i];
+            }
+
+            std::vector<size_t> currentCombination(innerTotalLevels, 0);
+
+            for (size_t comb = 0; comb < numCombinations; ++comb) {
+                std::string name = field->getName();
+            	for (size_t i = 0; i < innerTotalLevels; ++i) {
+                    name += "[" + std::to_string(currentCombination[i]) + "]";
+                }
+
+                desc[name] = datatype;
+                datatype.offset += datatype.item_offset;
+                //Todo: add struct fields\
+
+            	for (size_t i = innerTotalLevels; i > 0; --i) {
+                    if (currentCombination[i - 1]++ < dimensions[i - 1]-1) {
+                        break;
+                    }
+                    currentCombination[i - 1] = 0;
+                }
+            }
+        }
+    }
+    void BakeMatrix(const std::string& parent, std::unordered_map<std::string, UniformBuffer::DataType>& desc, slang::ProgramLayout* layout, slang::VariableReflection* field, slang::VariableLayoutReflection* field_layout)
+    {
+        slang::TypeReflection* field_type_reflection = field->getType();
+        slang::TypeLayoutReflection* field_type_layout = field_layout->getTypeLayout();
+        auto element_type = field_type_reflection->getElementType();
+        auto scalar_type = element_type->getScalarType();
+        if (scalar_type != slang::TypeReflection::None)
+        {
+            desc[field->getName()] = {
+                UniformBuffer::DataType::Kind::MATRIX,
+                field_layout->getOffset(),
+                static_cast<size_t>(field_type_layout->getAlignment()),
+                0,
+                slang_scalar_type_to_kind(scalar_type),
+                static_cast<uint32_t>(field_type_reflection->getRowCount()),
+                static_cast<uint32_t>(field_type_reflection->getColumnCount())
+            };
+        }
+    }
+    void BakeVector(const std::string& parent, std::unordered_map<std::string, UniformBuffer::DataType>& desc, slang::ProgramLayout* layout, slang::VariableReflection* field, slang::VariableLayoutReflection* field_layout)
+    {
+        slang::TypeReflection* field_type_reflection = field->getType();
+        slang::TypeLayoutReflection* field_type_layout = field_layout->getTypeLayout();
+
+        auto element_type = field_type_reflection->getElementType();
+        auto scalar_type = element_type->getScalarType();
+        if (scalar_type != slang::TypeReflection::None)
+        {
+            desc[field->getName()] = {
+                UniformBuffer::DataType::Kind::VECTOR,
+                field_layout->getOffset(),
+                static_cast<size_t>(field_type_layout->getAlignment()),
+                0,
+                slang_scalar_type_to_kind(scalar_type),
+                static_cast<uint32_t>(field_type_reflection->getElementCount()),
+            };
+        }
+    }
+	void BakeReflection(const std::string& parent, std::unordered_map<std::string, UniformBuffer::DataType>& desc, slang::ProgramLayout* layout, slang::VariableReflection* field, slang::VariableLayoutReflection* field_layout)
+    {
+        slang::TypeReflection* field_type_reflection = field->getType();
+        slang::TypeLayoutReflection* field_type_layout = field_layout->getTypeLayout();
+        slang::TypeReflection::Kind kind = field_type_reflection->getKind();
+        //TODO: add support for structs
+        //TODO: use a switch instead of ifs
+
+        switch (kind)
+        {
+        
+        case slang::TypeReflection::Kind::Struct:
+	        break;
+        case slang::TypeReflection::Kind::Array:
+            BakeArray("", desc, layout, field, field_layout);
+	        break;
+        case slang::TypeReflection::Kind::Matrix:
+            BakeMatrix("", desc, layout, field, field_layout);
+	        break;
+        case slang::TypeReflection::Kind::Vector:
+            BakeVector("", desc, layout, field, field_layout);
+	        break;
+        case slang::TypeReflection::Kind::Scalar:
+            BakeScalar("", desc, layout, field, field_layout);
+	        break;
+        case slang::TypeReflection::Kind::None:
+        case slang::TypeReflection::Kind::ConstantBuffer:
+        case slang::TypeReflection::Kind::Resource:
+        case slang::TypeReflection::Kind::SamplerState:
+        case slang::TypeReflection::Kind::TextureBuffer:
+        case slang::TypeReflection::Kind::ShaderStorageBuffer:
+        case slang::TypeReflection::Kind::ParameterBlock:
+        case slang::TypeReflection::Kind::GenericTypeParameter:
+        case slang::TypeReflection::Kind::Interface:
+        case slang::TypeReflection::Kind::OutputStream:
+        case slang::TypeReflection::Kind::Specialized:
+        case slang::TypeReflection::Kind::Feedback:
+        case slang::TypeReflection::Kind::Pointer:
+	        break;
+        }
+    }
+
 
     Shader::Shader(const std::string& src, const std::string& module_name, const EntryPointInfo& entry_point)
     {
@@ -223,6 +447,7 @@ namespace RoxEngine::GL {
             slang::VariableLayoutReflection* var = layout->getParameterByIndex(i);
             slang::TypeLayoutReflection* type_layout = var->getTypeLayout();
             slang::TypeReflection* type_reflection = var->getType();
+
             //TODO: support more types of buffers
             if (type_reflection->getKind() != slang::TypeReflection::Kind::ConstantBuffer) 
                 continue;
@@ -233,74 +458,7 @@ namespace RoxEngine::GL {
             {
                 slang::VariableReflection* field = inner_type->getFieldByIndex(x);
                 slang::VariableLayoutReflection* field_layout = inner_type_layout->getFieldByIndex(x);
-				slang::TypeReflection* field_type_reflection = field->getType();
-                slang::TypeLayoutReflection* field_type_layout = field_layout->getTypeLayout();
-                slang::TypeReflection::Kind kind = field_type_reflection->getKind();
-				//TODO: add support for structs
-                //TODO: use a switch instead of ifs
-                static auto slang_scalar_type_to_kind = [](slang::TypeReflection::ScalarType type) -> auto {
-                    switch (type)
-                    {
-                    case slang::TypeReflection::None:
-                    case slang::TypeReflection::Void:
-                    case slang::TypeReflection::Int64:
-                    case slang::TypeReflection::UInt64:
-                        break; //Unsupported or unneded types
-                    case slang::TypeReflection::Bool: //In gl bools are int32;
-                    case slang::TypeReflection::Float16:
-                        return UniformBuffer::DataType::Kind::HALF;
-                    case slang::TypeReflection::Float32:
-                        return UniformBuffer::DataType::Kind::FLOAT;
-                    case slang::TypeReflection::Float64:
-                        return UniformBuffer::DataType::Kind::DOUBLE;
-                    case slang::TypeReflection::Int8:
-                        return UniformBuffer::DataType::Kind::INT8;
-                    case slang::TypeReflection::UInt8:
-                        return UniformBuffer::DataType::Kind::UINT8;
-                    case slang::TypeReflection::Int16:
-                        return UniformBuffer::DataType::Kind::INT16;
-                    case slang::TypeReflection::UInt16:
-                        return UniformBuffer::DataType::Kind::UINT16;
-                    case slang::TypeReflection::Int32:
-                        return UniformBuffer::DataType::Kind::INT32;
-                    case slang::TypeReflection::UInt32:
-                        return UniformBuffer::DataType::Kind::UINT32;
-                    }
-                    return UniformBuffer::DataType::Kind::INT32;
-                    };
-
-				if (kind == slang::TypeReflection::Kind::Scalar)
-                {
-                    slang::TypeReflection::ScalarType scalar_type = field_type_reflection->getScalarType();
-                    desc[field->getName()] = {
-                        slang_scalar_type_to_kind(scalar_type),
-                        field_layout->getOffset()
-                    };
-                }
-                if(kind == slang::TypeReflection::Kind::Array)
-                {
-                    auto element_type = field_type_reflection->getElementType();
-                    auto scalar_type = element_type->getScalarType();
-                	//TODO: add recursion of type like float[][]
-                	if(scalar_type != slang::TypeReflection::None)
-                	{
-                        desc[field->getName()] = {
-                            UniformBuffer::DataType::Kind::ARRAY,
-                            field_layout->getOffset(),
-                            static_cast<size_t>(field_type_layout->getAlignment()),
-                            slang_scalar_type_to_kind(scalar_type),
-                            static_cast<uint32_t>(field_type_reflection->getElementCount())
-                        };
-                	}
-                }
-                if (kind == slang::TypeReflection::Kind::Vector)
-                {
-
-                }
-                if (kind == slang::TypeReflection::Kind::Matrix)
-                {
-
-                }
+                BakeReflection("", desc, layout, field, field_layout);
             }
         	mUbos[var->getName()] = new UniformBuffer(inner_type_layout->getSize(),var->getBindingIndex(), std::move(desc));
         }
@@ -309,4 +467,5 @@ namespace RoxEngine::GL {
     Shader::~Shader() {
         glDeleteProgram(mID);
     }
+
 }

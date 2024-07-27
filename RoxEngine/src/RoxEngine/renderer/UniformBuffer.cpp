@@ -8,8 +8,7 @@ namespace RoxEngine
 		{
 			case ARRAY:
 			{
-				auto innerSize = GetSize(innerKind);
-				return (innerSize + alignment - innerSize) * rowsize;
+				return item_offset * rowsize;
 			}
 			case MATRIX:
 				return GetSize(innerKind) * rowsize * colsize;
@@ -49,6 +48,7 @@ namespace RoxEngine
 		case STRUCT:
 			return 0;
 		}
+		return 0;
 	}
 
 	bool UniformBuffer::DataType::IsScalar() const

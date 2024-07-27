@@ -103,12 +103,15 @@ namespace RoxEngine::GL {
 
 	bool UniformBuffer::Set(const std::string& name, void* data, size_t size)
 	{
-		mSize;
 		auto it = mDesc.find(name);
 		if (it == mDesc.end()) return false;
 		auto& elem = it->second;
-		if (size != elem.GetSize())
+		auto siz2e = elem.GetSize();
+		if (size != siz2e)
+		{
 			return false;
+			
+		}
 		std::memcpy(static_cast<uint8_t*>(mData) + elem.offset, data, size);
 		mChanged = true;
 		return true;

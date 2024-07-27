@@ -65,21 +65,22 @@ struct TestGame final : public Game {
 
         auto glshader = std::static_pointer_cast<GL::Shader>(shader);
         auto ubo = glshader->mUbos["Uniforms"];
-        ubo->Set("input1", 2u);
-
-        float color[12]= {
+       
+        float color[3]= {
             255.f / 255.f,
-            0,0,0, //padding
         	223.f / 255.f,
-            0,0,0, //padding
         	214.f / 255.f,
-            0,0,0 //padding
         };
-        struct Uniforms {
-            int input1, _padding1[3];       // offset 0
-            int colors[3];    // offset 16
+
+        float matrix[4 * 4] = {
+            1,0,0,0,
+            0,1,0,0,
+            0,0,1,0,
+            0,0,0,1
         };
-        ubo->Set("color", color,sizeof(float)*12);
+
+        ubo->Set("color", color,sizeof(float)*3);
+        ubo->Set("matrix", matrix, sizeof(float) * 4 * 4);
     }
     void Update() override {
         if(Input::GetKeyState(Key::W) != KeyState::NONE)

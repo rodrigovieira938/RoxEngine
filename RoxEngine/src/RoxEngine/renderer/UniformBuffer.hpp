@@ -36,6 +36,7 @@ namespace RoxEngine {
 
 			Kind kind;
 			size_t offset, alignment = 0;
+			size_t item_offset = 0; // offset between items in arrays already aligned
 			Kind innerKind;		  //For vectors, arrays and matrix
 			uint32_t rowsize = 1; //For vectors, arrays and matrix
 			uint32_t colsize = 1; //For matrix
