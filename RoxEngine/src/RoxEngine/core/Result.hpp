@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+#include "type_traits.hpp"
+
 namespace RoxEngine {
 	struct IError {
 		virtual ~IError() = default;
@@ -22,6 +24,8 @@ namespace RoxEngine {
 	template<typename Error, typename Value>
 	class Result {
 	public:
+		using underlying_type = typename get_smart_ptr_underlying_type<Value>::type;
+
 		static_assert(std::is_base_of<IError, Error>(), "Result<Error,...> must inherit from IError");
 		static_assert(!std::is_same<Error, Value>(), "Result<Error, Value> must not be the same");
 		Result(const Error& error) : mIsError(true), mError(error) {}
@@ -37,8 +41,12 @@ namespace RoxEngine {
 		Error& GetError() const { return mError; }
 		Value& GetValue() const { return mValue; }
 
-		Value* operator ->()
+		underlying_type* operator ->()
 		{
+			if constexpr (is_smart_pointer<Value>::value)
+			{
+				return mValue.get();
+			}
 			//TODO: panic (unrecoverable)
 			return &mValue;
 		}
