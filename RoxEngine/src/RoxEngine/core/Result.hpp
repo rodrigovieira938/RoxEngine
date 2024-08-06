@@ -21,6 +21,37 @@ namespace RoxEngine {
 		std::string mMessage;
 	};
 
+
+	template<typename T>
+	//Default implementation of ResultDeref
+	struct ResultDeref
+	{
+		using type = T;
+
+		static type* get(T* val) { return val; }
+	};
+
+	template<typename U>
+	struct ResultDeref<std::shared_ptr<U>>
+	{
+		using type = U;
+
+		static type* get(std::shared_ptr<U>* val) { return val->get(); }
+	};
+	template<typename U>
+	struct ResultDeref<std::unique_ptr<U>>
+	{
+		using type = U;
+
+		static type* get(std::unique_ptr<U>* val) { return val->get(); }
+	};
+	template<typename U>
+	struct ResultDeref<std::weak_ptr<U>>
+	{
+		using type = U;
+
+		static type* get(std::weak_ptr<U>* val) { return val->get(); }
+	};
 	template<typename Error, typename Value>
 	class Result {
 	public:
@@ -41,14 +72,9 @@ namespace RoxEngine {
 		Error& GetError() const { return mError; }
 		Value& GetValue() const { return mValue; }
 
-		underlying_type* operator ->()
-		{
-			if constexpr (is_smart_pointer<Value>::value)
-			{
-				return mValue.get();
-			}
-			//TODO: panic (unrecoverable)
-			return &mValue;
+		typename ResultDeref<Value>::type* operator ->() {
+			//TODO: panic (unrecoverable) if error
+			return ResultDeref<Value>::get();
 		}
 	private:
 		bool mIsError;
