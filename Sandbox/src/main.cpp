@@ -14,6 +14,8 @@
 #include <glm/glm.hpp>
 using namespace RoxEngine;
 
+import roxengine;
+
 struct TestGame final : public Game {
     Ref<VertexArray> va;
     Ref<Shader> shader;
