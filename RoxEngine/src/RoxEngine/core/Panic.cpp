@@ -30,4 +30,8 @@ namespace RoxEngine {
 			exit(sPanicHandler(error));
 		exit(sLocalPanicHandler(error));
 	}
+	inline void Panic(const IError& error)
+	{
+		Panic(error);
+	}
 }
