@@ -1,5 +1,4 @@
-#include "UniformBuffer.hpp"
-
+module roxengine;
 namespace RoxEngine
 {
 	size_t UniformBuffer::DataType::GetSize() const

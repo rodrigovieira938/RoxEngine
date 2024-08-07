@@ -1,6 +1,6 @@
-#include "imgui.hpp"
-#include "RoxEngine/platforms/GLFW/GLFWWindow.hpp"
-#include <RoxEngine/core/Engine.hpp>
+module;
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include <glad/gl.h>
 #include <imgui/backends/imgui_impl_opengl3.cpp>
 #include <imgui/backends/imgui_impl_glfw.cpp>
 #include <imgui/imgui_draw.cpp>
@@ -8,6 +8,8 @@
 #include <imgui/imgui_widgets.cpp>
 #include <imgui/imgui.cpp>
 #include <imgui/misc/cpp/imgui_stdlib.cpp>
+#include <memory>
+module roxengine;
 
 namespace RoxEngine {
     void ImGuiLayer::Init() {

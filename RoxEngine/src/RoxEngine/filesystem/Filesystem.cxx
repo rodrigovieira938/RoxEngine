@@ -1,8 +1,9 @@
-#pragma once
+module;
 #include <string>
-#include <RoxEngine/core/Buffer.h>
+export module roxengine:filesystem;
+import :utils;
 
-namespace RoxEngine::FileSystem {
+export namespace RoxEngine::FileSystem {
 	bool IsResourcePath(const std::string& path);
 	bool Exists(const std::string& path);
 

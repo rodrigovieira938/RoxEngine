@@ -1,8 +1,8 @@
-#pragma once
+module;
 #include <string>
-#include "RoxEngine/utils/Memory.h"
-
-namespace RoxEngine {
+export module roxengine:renderer_shader;
+import :utils;
+export namespace RoxEngine {
     class Shader {
     public:
     	static Ref<Shader> Create(const std::string& src, const std::string& module_name);

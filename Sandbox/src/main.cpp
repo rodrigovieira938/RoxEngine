@@ -1,20 +1,10 @@
-#include "RoxEngine/input/Input.hpp"
-#include "RoxEngine/renderer/Buffer.hpp"
-#include "RoxEngine/renderer/Shader.hpp"
-#include "RoxEngine/renderer/VertexArray.hpp"
-#include "RoxEngine/utils/Memory.h"
-#include <RoxEngine/core/Engine.hpp>
-#include <RoxEngine/renderer/GraphicsContext.hpp>
 #include <iostream>
 #include <filesystem>
-#include "RoxEngine/filesystem/Filesystem.hpp"
-#include <RoxEngine/scene/Scene.hpp>
-#include "RoxEngine/platforms/GL/GLShader.hpp"
-#include "RoxEngine/renderer/Material.hpp"
+
 #include <glm/glm.hpp>
-using namespace RoxEngine;
 
 import roxengine;
+using namespace RoxEngine;
 
 struct TestGame final : public Game {
     Ref<VertexArray> va;
@@ -25,7 +15,8 @@ struct TestGame final : public Game {
     struct TestComponent { std::string a = "First!"; };
 
     void Init() override {
-    	Scene s;
+        // Asserts because of c++ wrapper (internal linkage of static variables) TODO: make own c++ wrapper
+    	/*Scene s;
         Entity e = s.CreateEntity();
         std::cout << std::boolalpha << e.HasComponent<TestComponent>() << "\n";
         e.AddComponent<TestComponent>({});
@@ -37,6 +28,7 @@ struct TestGame final : public Game {
         std::cout << e.AddComponent<TestComponent>({ "Third!" }).a << "\n";
         e.RemoveComponent<TestComponent>();
     	std::cout << std::boolalpha << e.HasComponent<TestComponent>() << "\n";
+		*/
 
     	va = VertexArray::Create();
         {

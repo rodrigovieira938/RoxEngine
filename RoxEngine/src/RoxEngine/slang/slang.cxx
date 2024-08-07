@@ -1,11 +1,11 @@
-#pragma once
+module;
 #include <string>
-
 #include "include/slang-com-ptr.h"
 #include "include/slang.h"
+export module roxengine:slang;
 
 namespace RoxEngine {
-    class SlangLayer
+    export class SlangLayer
     {
     public:
         class stringblob final : public slang::IBlob

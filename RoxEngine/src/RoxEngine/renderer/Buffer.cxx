@@ -1,37 +1,20 @@
-#pragma once
-#include <RoxEngine/utils/Memory.h>
+module;
 #include <memory>
 #include <string>
-#include <assert.h>
+#include <cassert>
 #include <vector>
+export module roxengine:renderer_buffers;
+import :utils;
 
 namespace RoxEngine {
-    enum class ShaderDataType
+    export enum class ShaderDataType
 	{
 		None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool
 	};
 
-	static uint32_t ShaderDataTypeSize(ShaderDataType type)
-	{
-		switch (type)
-		{
-			case ShaderDataType::Float:    return 4;
-			case ShaderDataType::Float2:   return 4 * 2;
-			case ShaderDataType::Float3:   return 4 * 3;
-			case ShaderDataType::Float4:   return 4 * 4;
-			case ShaderDataType::Mat3:     return 4 * 3 * 3;
-			case ShaderDataType::Mat4:     return 4 * 4 * 4;
-			case ShaderDataType::Int:      return 4;
-			case ShaderDataType::Int2:     return 4 * 2;
-			case ShaderDataType::Int3:     return 4 * 3;
-			case ShaderDataType::Int4:     return 4 * 4;
-			case ShaderDataType::Bool:     return 1;
-            default: assert(false && "Unknown ShaderDataType!");
-		}
-		return 0;
-	}
+	uint32_t ShaderDataTypeSize(ShaderDataType type);
 
-	struct BufferElement
+	export struct BufferElement
 	{
 		std::string Name;
 		ShaderDataType Type;
@@ -67,7 +50,7 @@ namespace RoxEngine {
 		}
 	};
 
-	class BufferLayout
+	export class BufferLayout
 	{
 	public:
 		BufferLayout() {}
@@ -102,7 +85,7 @@ namespace RoxEngine {
 		uint32_t mStride = 0;
 	};
 
-	class VertexBuffer
+	export class VertexBuffer
 	{
 	public:
 		virtual ~VertexBuffer() = default;
@@ -117,7 +100,7 @@ namespace RoxEngine {
 	};
 
 	// Currently only support 32-bit index buffers
-	class IndexBuffer
+	export class IndexBuffer
 	{
 	public:
 		virtual ~IndexBuffer() = default;
@@ -127,7 +110,7 @@ namespace RoxEngine {
 
 		static Ref<IndexBuffer> Create(uint32_t* indices, size_t count);
 	};
-	enum class FramebufferColorTexFormat {
+	export enum class FramebufferColorTexFormat {
 		R8,
 		RG8,
 		RGB8,
@@ -141,12 +124,12 @@ namespace RoxEngine {
 		RGB32,
 		RGBA32,
 	};
-	enum class FramebufferDepthTexFormat {
+	export enum class FramebufferDepthTexFormat {
 		D32F,
 		D32FS8U,
 		D24UNS8U,
 	};
-	class Framebuffer
+	export class Framebuffer
 	{
 	public:
 		static std::shared_ptr<Framebuffer> Create(uint32_t width, uint32_t height, const std::vector<FramebufferColorTexFormat>& attachments, FramebufferDepthTexFormat depthFormat);

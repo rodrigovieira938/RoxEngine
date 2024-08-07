@@ -1,14 +1,8 @@
-#include "Engine.hpp"
-#include "RoxEngine/imgui/imgui.hpp"
-#include "RoxEngine/renderer/GraphicsContext.hpp"
-#include "imgui.h"
-#include <RoxEngine/profiler/profiler.hpp>
+module;
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
-#include <RoxEngine/input/Input.hpp>
-#include <iostream>
-#include "RoxEngine/renderer/Shader.hpp"
-
+#include "RoxEngine/profiler/profiler.hpp"
+module roxengine;
 namespace RoxEngine {
     static Engine* sEngine = nullptr;
     Engine* Engine::Get() {

@@ -1,7 +1,6 @@
-#include "Material.hpp"
+module;
 #include <RoxEngine/profiler/profiler.hpp>
-#include <RoxEngine/renderer/GraphicsContext.hpp>
-#include <RoxEngine/platforms/GL/GLMaterial.hpp>
+module roxengine;
 
 namespace RoxEngine{
 	Ref<Material> Material::Create(const Ref<Shader>& shader, const EntryPointInfo& info, const char* link_time_constants)

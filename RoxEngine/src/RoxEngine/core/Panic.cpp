@@ -1,6 +1,8 @@
-#include "Panic.hpp"
-#include <RoxEngine/core/Result.hpp>
+module;
 #include <iostream>
+#include <functional>
+module roxengine;
+import :errors;
 
 namespace RoxEngine {
 

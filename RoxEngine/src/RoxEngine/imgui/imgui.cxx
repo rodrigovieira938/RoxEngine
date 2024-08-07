@@ -1,8 +1,8 @@
-#pragma once
+module;
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui/imgui.h>
-
-namespace RoxEngine {
+export module roxengine:imgui;
+export namespace RoxEngine {
     class ImGuiLayer {
     private:
         friend class Engine;

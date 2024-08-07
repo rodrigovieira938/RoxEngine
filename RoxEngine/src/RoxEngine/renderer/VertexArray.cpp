@@ -1,7 +1,6 @@
-#include "VertexArray.hpp"
+module;
 #include "RoxEngine/profiler/profiler.hpp"
-#include <RoxEngine/platforms/GL/GLVertexArray.hpp>
-#include <RoxEngine/renderer/GraphicsContext.hpp>
+module roxengine;
 
 namespace RoxEngine {
     std::shared_ptr<VertexArray> VertexArray::Create() {

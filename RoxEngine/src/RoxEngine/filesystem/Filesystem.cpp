@@ -1,8 +1,8 @@
-#include "Filesystem.hpp"
+module;
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-
+module roxengine;
 namespace fs = std::filesystem;
 namespace RoxEngine::FileSystem {
 	std::string resourcesFolder;

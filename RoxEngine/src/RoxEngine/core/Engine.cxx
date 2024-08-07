@@ -1,8 +1,8 @@
-#pragma once
-#include <RoxEngine/core/Window.hpp>
-#include <RoxEngine/utils/Memory.h>
+export module roxengine:engine;
+import :utils;
+import :window;
 
-namespace RoxEngine {
+export namespace RoxEngine {
     class Game {
     public:
         virtual ~Game() = default;

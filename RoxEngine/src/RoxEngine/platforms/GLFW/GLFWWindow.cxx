@@ -1,6 +1,8 @@
-#pragma once
-#include <RoxEngine/core/Window.hpp>
-namespace RoxEngine::GLFW {
+module;
+#include <string>
+export module roxengine:platforms_glfw;
+import :window;
+export namespace RoxEngine::GLFW {
     class Window final : public ::RoxEngine::Window {
     public:
         //TODO: Add args to constructor

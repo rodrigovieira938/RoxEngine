@@ -1,6 +1,6 @@
+module;
 #include <glad/gl.h>
-#include "GLBuffer.hpp"
-#include "RoxEngine/renderer/Buffer.hpp"
+module roxengine;
 
 namespace RoxEngine::GL {
     VertexBuffer::VertexBuffer(void* vertices, size_t size) : mSize(size) {
@@ -98,7 +98,7 @@ namespace RoxEngine::GL {
             auto texture = mTextureIDS[i];
             auto format = attachments[i];
             glBindTexture(GL_TEXTURE_2D, texture);
-            glTexImage2D(GL_TEXTURE_2D, 0, FramebufferColorTexFormatToGl(format), width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glTexImage2D(GL_TEXTURE_2D, 0, FramebufferColorTexFormatToGl(format), width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, texture, 0);
