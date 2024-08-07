@@ -1,4 +1,6 @@
 module roxengine;
+#include <cstdint>
+
 namespace RoxEngine
 {
 	size_t UniformBuffer::DataType::GetSize() const
