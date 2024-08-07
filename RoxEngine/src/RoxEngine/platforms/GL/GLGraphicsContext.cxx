@@ -1,7 +1,6 @@
-#pragma once
-#include <RoxEngine/renderer/GraphicsContext.hpp>
-
-namespace RoxEngine::GL {
+export module roxengine:platforms_gl_graphicscontext;
+import :renderer_graphicscontext;
+export namespace RoxEngine::GL {
     class GraphicsContext final : public ::RoxEngine::GraphicsContext {
     public:
         GraphicsContext();

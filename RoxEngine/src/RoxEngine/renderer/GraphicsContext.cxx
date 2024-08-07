@@ -1,10 +1,8 @@
-#pragma once
-
-#include "RoxEngine/renderer/Material.hpp"
-#include "RoxEngine/renderer/Shader.hpp"
-#include "RoxEngine/renderer/VertexArray.hpp"
-#include "RoxEngine/utils/Memory.h"
-namespace RoxEngine {
+export module roxengine:renderer_graphicscontext;
+import :utils;
+import :renderer_vertexarray;
+import :renderer_material;
+export namespace RoxEngine {
     enum class RendererApi {
         //NONE = -1, /*doesnt exist because there is no need to*/
         OPENGL

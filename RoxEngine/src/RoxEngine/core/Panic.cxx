@@ -1,7 +1,8 @@
-#pragma once
+module;
 #include <functional>
+export module roxengine:panic;
 
-namespace RoxEngine {
+export namespace RoxEngine {
 	struct IError;
 
 	using PanicFunc = std::function<int(IError&)>;

@@ -1,5 +1,23 @@
-#pragma once
+module;
+#include <memory>
+export module roxengine:utils;
 namespace RoxEngine {
+#pragma region MEMORY_MANAGEMENT
+    export template<typename T>
+        using Scope = std::unique_ptr<T>;
+    export template<typename T, typename ... Args>
+        constexpr Scope<T> CreateScope(Args&& ... args)
+    {
+        return std::make_unique<T>(std::forward<Args>(args)...);
+    }
+
+    export template<typename T>
+        using Ref = std::shared_ptr<T>;
+    export template<typename T, typename ... Args>
+        constexpr Ref<T> CreateRef(Args&& ... args)
+    {
+        return std::make_shared<T>(std::forward<Args>(args)...);
+    }
     struct Buffer {
         Buffer(size_t size) { mData = std::malloc(size); mSize = size; }
 
@@ -22,4 +40,5 @@ namespace RoxEngine {
     private:
         Buffer mBuffer;
     };
+#pragma endregion
 }

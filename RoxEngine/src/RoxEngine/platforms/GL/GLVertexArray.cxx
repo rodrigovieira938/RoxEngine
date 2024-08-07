@@ -1,7 +1,7 @@
-#include <RoxEngine/renderer/Buffer.hpp>
-#include <RoxEngine/renderer/VertexArray.hpp>
+module;
 #include <memory>
-
+export module roxengine:platforms_gl_vertexarray;
+import :renderer_vertexarray;
 namespace RoxEngine::GL {
     class VertexArray final : public ::RoxEngine::VertexArray {
     public:

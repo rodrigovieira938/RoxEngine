@@ -1,8 +1,9 @@
-#pragma once
+module;
 #include <string_view>
+export module roxengine:errors;
 
-#define MESSAGE_ERROR(name,msg) struct name : public IError { ~name() override = default; std::string_view GetError() override {return msg;}}; inline static name s ## name = {};
-namespace RoxEngine {
+#define MESSAGE_ERROR(name,msg) struct name : public IError { ~name() override = default; std::string_view GetError() override {return msg;}}; name s ## name = {};
+export namespace RoxEngine {
 	struct IError {
 		virtual ~IError() = default;
 		virtual std::string_view GetError() = 0;

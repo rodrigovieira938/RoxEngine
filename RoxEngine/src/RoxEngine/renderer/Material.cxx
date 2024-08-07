@@ -1,9 +1,11 @@
-#pragma once
-#include <RoxEngine/renderer/Shader.hpp>
-#include <RoxEngine/renderer/UniformBuffer.hpp>
+module;
 #include <vector>
-
-namespace RoxEngine {
+#include <string>
+export module roxengine:renderer_material;
+import :renderer_shader;
+import :renderer_uniformbuffer;
+import :utils;
+export namespace RoxEngine {
 	class Material {
 	public:
 		virtual ~Material() = default;

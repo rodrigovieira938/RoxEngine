@@ -1,14 +1,10 @@
-#pragma once
-#include "RoxEngine/renderer/Shader.hpp"
-#include <RoxEngine/platforms/GL/GLUniformBuffer.hpp>
-#include <cstdint>
-#include <unordered_map>
-#include "include/slang-com-ptr.h"
-namespace slang
-{
-	struct IModule;
-}
-
+module;
+#include <slang/include/slang.h>
+#include <slang/include/slang-com-ptr.h>
+#include <string>
+export module roxengine:platforms_gl_shader;
+import :renderer_shader;
+import :slang;
 namespace RoxEngine::GL {
     class Shader final : public ::RoxEngine::Shader {
     public:
