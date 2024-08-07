@@ -1,5 +1,6 @@
-module roxengine;
+module;
 #include <cstdint>
+module roxengine;
 
 namespace RoxEngine
 {
