@@ -2,6 +2,8 @@ module;
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include "RoxEngine/profiler/profiler.hpp"
+#include <string>
+#include <memory>
 module roxengine;
 namespace RoxEngine {
     static Engine* sEngine = nullptr;

@@ -32,4 +32,5 @@ build
 .cache 
 
 imgui.ini
+logs/
 CMakeSettings.json

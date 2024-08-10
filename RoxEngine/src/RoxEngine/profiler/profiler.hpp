@@ -1,5 +1,5 @@
 #pragma once
-#define ENABLE_PROFILER //TODO: remove this
+//#define ENABLE_PROFILER //TODO: remove this
 
 #ifdef ENABLE_PROFILER 
 
