@@ -4,6 +4,7 @@ export module roxengine;
 
 export import :engine;
 export import :errors;
+export import :logger;
 export import :panic;
 export import :result;
 export import :window;
