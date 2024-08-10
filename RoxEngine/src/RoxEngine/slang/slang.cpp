@@ -52,7 +52,8 @@ namespace RoxEngine {
         }
         if(!sGlobalSession)
         {
-            std::cout << "OHHH NOO!";
+            //TODO: instead of printing return this in an error
+            log::fatal("Failed to create slang's Global Session");
         }
 	}
     void SlangLayer::Shutdown()

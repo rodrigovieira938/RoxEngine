@@ -19,7 +19,7 @@ namespace RoxEngine::GL {
             if (hasCompiled == GL_FALSE)
             {
                 glGetShaderInfoLog(shader, 1024, nullptr, infoLog);
-                std::cout << "SHADER_COMPILATION_ERROR for:" << type << "\n" << infoLog << "\n";
+                log::error("Shader Compilation error for {} : {}", type, infoLog);
             }
         }
         else
@@ -28,13 +28,11 @@ namespace RoxEngine::GL {
             if (hasCompiled == GL_FALSE)
             {
                 glGetProgramInfoLog(shader, 1024, nullptr, infoLog);
-                std::cout << "SHADER_LINKING_ERROR for:" << type << "\n" << infoLog << "\n";
+                log::error("Shader Linking error for {} : {}", type, infoLog);
             }
         }
     }
     GLuint CreateProgram(const char* vertexSource, const char* fragmentSource) {
-        std::cout << vertexSource << "\n\n" << fragmentSource << "\n";
-
         const GLuint id = glCreateProgram();
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
         GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -77,7 +75,7 @@ namespace RoxEngine::GL {
 
         if (diagnosticBlob)
         {
-            std::cout << static_cast<const char*>(diagnosticBlob->getBufferPointer()) << "\n";
+            log::error("Failed to link the program: {}", static_cast<const char*>(diagnosticBlob->getBufferPointer()));
             return 0;
         }
 
@@ -90,10 +88,10 @@ namespace RoxEngine::GL {
 
         if (vertex_diagnostic || fragment_diagnostic)
         {
-            if (vertex_diagnostic)
-                std::cout << "VERTEX SHADER ERROR: " << static_cast<const char*>(vertex_diagnostic->getBufferPointer()) << "\n";
+            if (vertex_diagnostic) 
+                log::error("Vertex shader error: {}", static_cast<const char*>(vertex_diagnostic->getBufferPointer()));
             if (fragment_diagnostic)
-                std::cout << "FRAGMENT SHADER ERROR: " << static_cast<const char*>(fragment_diagnostic->getBufferPointer()) << "\n";
+                log::error("Fragment shader error: {}", static_cast<const char*>(fragment_diagnostic->getBufferPointer()));
             return 0;
         }
 

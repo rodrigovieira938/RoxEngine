@@ -1,5 +1,6 @@
 module;
 #include <string_view>
+#include <string>
 export module roxengine:errors;
 
 #define MESSAGE_ERROR(name,msg) struct name : public IError { ~name() override = default; std::string_view GetError() override {return msg;}}; name s ## name = {};
