@@ -14,7 +14,7 @@ namespace RoxEngine::GL {
     	mModule = SlangLayer::sSession->loadModuleFromSourceString(module_name.c_str(), "", src.c_str(), diagnostics.writeRef());
         if (diagnostics)
         {
-            std::cout << static_cast<const char*>(diagnostics->getBufferPointer()) << "\n";
+            log::error("Shader loading failed: {}", diagnostics->getBufferPointer());
             return;
         }
     }
@@ -29,7 +29,7 @@ namespace RoxEngine::GL {
         mModule = SlangLayer::sSession->loadModuleFromSourceString(module_name.c_str(), path.c_str(), src.c_str(), diagnostics.writeRef());
         if (diagnostics)
         {
-            std::cout << static_cast<const char*>(diagnostics->getBufferPointer()) << "\n";
+            log::error("Shader loading failed: {}", diagnostics->getBufferPointer());
             return;
         }
     }

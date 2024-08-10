@@ -1,5 +1,6 @@
 module;
 #include <string_view>
+#include <string>
 module roxengine;
 
 namespace RoxEngine
