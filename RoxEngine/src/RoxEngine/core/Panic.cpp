@@ -3,11 +3,11 @@ module;
 #include <functional>
 module roxengine;
 import :errors;
-
+import :logger;
 namespace RoxEngine {
 
 	int DefaultPanicHandler(IError& error) {
-		std::cerr << "Application panicked: " << error.GetError() << "\n";
+		log::fatal("Application panicked: {}", error.GetError());
 		return -1;
 	}
 

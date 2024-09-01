@@ -24,5 +24,9 @@ export namespace RoxEngine {
 
 	MESSAGE_ERROR(ResultValueAcessedError, "Result's value accessed while being null")
 	MESSAGE_ERROR(ResultErrorAcessedError, "Result's error accessed while being null")
+	MESSAGE_ERROR(EntityNotAlive, "Entity is not alive!")
+	MESSAGE_ERROR(GetComponentNo, "Entity doesn't have that component!")
+	MESSAGE_ERROR(AddComponentTwice, "Adding a component twice to an entity!")
+	MESSAGE_ERROR(RemoveComponentNo, "Removing an unexisting component!")
 }
 #undef MESSAGE_ERROR
