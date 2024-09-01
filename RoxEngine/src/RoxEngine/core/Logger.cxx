@@ -11,15 +11,15 @@ namespace RoxEngine::log {
 		void flush();
 
 		template<typename T>
-		void trace(const T& msg) { mLogger->trace(msg); }
+		void trace(const T& msg) { mLogger->trace(std::format("{}", msg)); }
 		template<typename T>
-		void info(const T& msg)  {mLogger->info(msg); }
+		void info(const T& msg)  {mLogger->info(std::format("{}", msg)); }
 		template<typename T>
-		void warn(const T& msg)  {mLogger->warn(msg); }
+		void warn(const T& msg)  {mLogger->warn(std::format("{}", msg)); }
 		template<typename T>
-		void error(const T& msg) {mLogger->error(msg); }
+		void error(const T& msg) {mLogger->error(std::format("{}", msg)); }
 		template<typename T>
-		void fatal(const T& msg) {mLogger->critical(msg); }
+		void fatal(const T& msg) {mLogger->critical(std::format("{}", msg)); }
 
 		template <typename... Args>
 		void trace(spdlog::format_string_t<Args...> fmt, Args &&...args) {
@@ -49,15 +49,15 @@ namespace RoxEngine::log {
 	Logger sLogger("ROXENGINE-APP");
 
 	export template<typename T>
-	void trace(const T& msg) { sLogger.trace(msg); }
+	void trace(const T& msg) { sLogger.trace(std::format("{}",msg)); }
 	export template<typename T>
-	void info(const T& msg) { sLogger.info(msg); }
+	void info(const T& msg)  { sLogger.info(std::format("{}",msg)); }
 	export template<typename T>
-	void warn(const T& msg) { sLogger.warn(msg); }
+	void warn(const T& msg)  { sLogger.warn(std::format("{}",msg)); }
 	export template<typename T>
-	void error(const T& msg) { sLogger.error(msg); }
+	void error(const T& msg) { sLogger.error(std::format("{}", msg)); }
 	export template<typename T>
-	void fatal(const T& msg) { sLogger.fatal(msg); }
+	void fatal(const T& msg) { sLogger.fatal(std::format("{}", msg)); }
 
 	export template <typename... Args>
 		void trace(spdlog::format_string_t<Args...> fmt, Args &&...args) {

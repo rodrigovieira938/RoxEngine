@@ -1,6 +1,4 @@
-#include <iostream>
 #include <filesystem>
-
 #include <glm/glm.hpp>
 
 import roxengine;
@@ -12,23 +10,29 @@ struct TestGame final : public Game {
     Ref<Material> material;
     Ref<Framebuffer> fb;
 
-    struct TestComponent { std::string a = "First!"; };
+    struct TestComponent
+    {
+        TestComponent(const std::string& s) { a = s; log::info("TestComponent::TestComponent(const std::string&)");}
+        TestComponent(const TestComponent& other) { a = std::move(other.a); log::info("TestComponent::TestComponent(TestComponent&)"); }
+        ~TestComponent() { log::info("TestComponent::~TestComponent()"); }
+        TestComponent& operator=(const TestComponent& other) { a = std::move(other.a);  log::info("TestComponent::operator=(const TestComponent&)"); return *this; }
+	    std::string a = "<OOPS>";
+    };
 
     void Init() override {
-        // Asserts because of c++ wrapper (internal linkage of static variables) TODO: make own c++ wrapper
-    	/*Scene s;
+    	Scene s;
         Entity e = s.CreateEntity();
-        std::cout << std::boolalpha << e.HasComponent<TestComponent>() << "\n";
-        e.AddComponent<TestComponent>({});
-        std::cout << std::boolalpha << e.HasComponent<TestComponent>() << "\n";
-        std::cout << e.GetComponent<TestComponent>().a << "\n";
+    	log::info(e.HasComponent<TestComponent>());
+        e.AddComponent<TestComponent>("First");
+        log::info(e.HasComponent<TestComponent>());
+        log::info(e.GetComponent<TestComponent>().a);
         e.GetComponent<TestComponent>().a = "Second!";
-    	std::cout << e.GetComponent<TestComponent>().a << "\n";
+    	log::info(e.GetComponent<TestComponent>().a);
         e.RemoveComponent<TestComponent>();
-        std::cout << e.AddComponent<TestComponent>({ "Third!" }).a << "\n";
+        log::info(e.AddComponent<TestComponent>({ "Third!" }).a);
         e.RemoveComponent<TestComponent>();
-    	std::cout << std::boolalpha << e.HasComponent<TestComponent>() << "\n";
-		*/
+        log::info(e.HasComponent<TestComponent>());
+		
 
     	va = VertexArray::Create();
         {
@@ -56,7 +60,7 @@ struct TestGame final : public Game {
         if(FileSystem::Exists("res://test.txt"))
         {
 			std::string content = FileSystem::ReadTextFile("res://test.txt");
-			std::cout << "res://test.txt contents = \"" << content << "\"\n";
+			log::info("res://test.txt contents = \"{}\"",content);
         }
 
         if(auto ubo = material->GetUbo("Uniforms"))
@@ -70,7 +74,7 @@ struct TestGame final : public Game {
     }
     void Update() override {
         if(Input::GetKeyState(Key::W) != KeyState::NONE)
-                std::cout << "W KEY action: " << static_cast<int>(Input::GetKeyState(Key::W)) << "\n";
+               log::info("W KEY action: {}",static_cast<int>(Input::GetKeyState(Key::W)));
     }
     void Render() override {
         GraphicsContext::ClearScreen();
