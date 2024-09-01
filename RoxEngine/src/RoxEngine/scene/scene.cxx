@@ -1,13 +1,12 @@
 module;
 #include <memory>
-#define FLECS_CUSTOM_BUILD
-#define FLECS_CPP
-#include "flecs/flecs.h"
-#include "flecs/src/private_types.h"
+
+//#define FLECS_CPP
 export module roxengine:scene;
 import :utils;
 import :panic;
 import :errors;
+import "import_flecs.h";
 namespace RoxEngine
 {
 	export class Scene;
