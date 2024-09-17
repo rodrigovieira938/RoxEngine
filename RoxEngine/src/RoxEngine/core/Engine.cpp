@@ -12,13 +12,8 @@ namespace RoxEngine {
             sEngine = new Engine();
         return sEngine;
     }
-    namespace FileSystem
-    {
-        extern std::string resourcesFolder;
-    }
     int Engine::Run(Scope<Game> game) {
         //TODO: add the option to change the folder at initialization not runtime
-        FileSystem::resourcesFolder = "./resources";
         PROFILER_BEGIN_SESSION("RoxEngine");
         if(!glfwInit()) return 1;
         mWindow = CreateRef<GLFW::Window>();
