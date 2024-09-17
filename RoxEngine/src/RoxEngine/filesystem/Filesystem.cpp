@@ -5,26 +5,25 @@ module;
 module roxengine;
 namespace fs = std::filesystem;
 namespace RoxEngine::FileSystem {
-	std::string resourcesFolder;
-	bool IsResourcePath(const std::string& path)
+	bool FileFilesystem::IsResourcePath(const std::string& path)
 	{
 		return path.rfind("res://", 0) == 0;
 	}
-	bool Exists(const std::string& path)
+	bool FileFilesystem::Exists(const std::string& path)
 	{
 		if (IsResourcePath(path))
 		{
-			return fs::exists(std::string(resourcesFolder + std::string(path.begin() + 5, path.end())));
+			return fs::exists(std::string(mResourcesFolder + std::string(path.begin() + 5, path.end())));
 		}
 		return fs::exists(fs::path(path));
 	}
 
-	std::string GetFileName(const std::string& path, bool with_extension)
+	std::string FileFilesystem::GetFileName(const std::string& path, bool with_extension)
 	{
 		fs::path fspath = fs::path(path);
 		if(IsResourcePath(path))
 		{
-			fspath = std::string(resourcesFolder + std::string(path.begin() + 5, path.end()));
+			fspath = std::string(mResourcesFolder + std::string(path.begin() + 5, path.end()));
 		}
 
 		if (with_extension)
@@ -32,17 +31,17 @@ namespace RoxEngine::FileSystem {
 		return fspath.stem().generic_string();
 	}
 
-	size_t GetFileSize(const std::string& path)
+	size_t FileFilesystem::GetFileSize(const std::string& path)
 	{
 		std::ifstream file(path, std::ios::ate | std::ios::binary);
 		return (size_t)file.tellg();
 	}
-	Buffer ReadFile(const std::string& path)
+	Buffer FileFilesystem::ReadFile(const std::string& path)
 	{
 		std::ifstream file(path, std::ios::ate | std::ios::binary);
 		if(IsResourcePath(path))
 		{
-			std::string true_path = fs::canonical(std::string(resourcesFolder + std::string(path.begin() + 5, path.end()))).generic_string();
+			std::string true_path = fs::canonical(std::string(mResourcesFolder + std::string(path.begin() + 5, path.end()))).generic_string();
 			file = std::ifstream(true_path, std::ios::ate | std::ios::binary);
 		}
 
@@ -60,13 +59,13 @@ namespace RoxEngine::FileSystem {
 
 		return buffer;
 	}
-	std::string ReadTextFile(const std::string& path)
+	std::string FileFilesystem::ReadTextFile(const std::string& path)
 	{
 		std::string data;
 		std::ifstream file(path, std::ios::ate | std::ios::binary);
 		if (IsResourcePath(path))
 		{
-			std::string true_path = fs::canonical(std::string(resourcesFolder + std::string(path.begin() + 5, path.end()))).generic_string();
+			std::string true_path = fs::canonical(std::string(mResourcesFolder + std::string(path.begin() + 5, path.end()))).generic_string();
 			file = std::ifstream(true_path, std::ios::ate | std::ios::binary);
 		}
 		if (!file.is_open())
