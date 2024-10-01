@@ -2,6 +2,7 @@ module;
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include "MimeTypeDB.hpp"
 module roxengine;
 namespace fs = std::filesystem;
 namespace RoxEngine::FileSystem {
@@ -16,6 +17,31 @@ namespace RoxEngine::FileSystem {
 			return fs::exists(std::string(mResourcesFolder + std::string(path.begin() + 5, path.end())));
 		}
 		return fs::exists(fs::path(path));
+	}
+
+	std::string_view FileFilesystem::GetMimeType(const std::string& path)
+	{
+		if(Exists(path))
+		{
+			auto fspath = fs::path(path);
+			auto extension = fspath.extension().generic_string();
+			auto it = mimeTypeDB.find(extension);
+			if (it != mimeTypeDB.end())
+				return it->second;
+			return "unknown";
+		}
+		//TODO: return error
+		return "";
+	}
+
+	std::string FileFilesystem::GetFileExtension(const std::string& path)
+	{
+		fs::path fspath = fs::path(path);
+		if (IsResourcePath(path))
+		{
+			fspath = std::string(mResourcesFolder + std::string(path.begin() + 5, path.end()));
+		}
+		return fspath.extension().generic_string();
 	}
 
 	std::string FileFilesystem::GetFileName(const std::string& path, bool with_extension)
