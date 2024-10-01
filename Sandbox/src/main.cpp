@@ -18,9 +18,10 @@ struct TestGame final : public Game {
         TestComponent& operator=(const TestComponent& other) { a = std::move(other.a);  log::info("TestComponent::operator=(const TestComponent&)"); return *this; }
 	    std::string a = "<OOPS>";
     };
-
+     
     void Init() override {
-    	Scene s;
+
+        Scene s;
         Entity e = s.CreateEntity();
     	log::info(e.HasComponent<TestComponent>());
         e.AddComponent<TestComponent>("First");
@@ -60,7 +61,14 @@ struct TestGame final : public Game {
         if(FileSystem::Exists("res://test.txt"))
         {
 			std::string content = FileSystem::ReadTextFile("res://test.txt");
-			log::info("res://test.txt contents = \"{}\"",content);
+
+            AssetManager::TextAssetDecoder txtDecoder;
+            AssetManager::Load<AssetManager::TextAssetDecoder>("res://test.txt", txtDecoder);
+
+        	log::info("res://test.txt name=\"{}\" extension=\"{}\" contents = \"{}\"",
+                FileSystem::GetFileName("res://test.txt", false), 
+                FileSystem::GetFileExtension("res://test.txt"), 
+                txtDecoder.content);
         }
 
         if(auto ubo = material->GetUbo("Uniforms"))
