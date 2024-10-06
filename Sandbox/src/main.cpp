@@ -9,7 +9,7 @@ struct TestGame final : public Game {
     Ref<Shader> shader;
     Ref<Material> material;
     Ref<Framebuffer> fb;
-
+    DefaultRenderer renderer;
     struct TestComponent
     {
         TestComponent(const std::string& s) { a = s; log::info("TestComponent::TestComponent(const std::string&)");}
@@ -34,27 +34,19 @@ struct TestGame final : public Game {
         e.RemoveComponent<TestComponent>();
         log::info(e.HasComponent<TestComponent>());
 		
-
-    	va = VertexArray::Create();
-        {
-            float vertices[] = {
-                -.5,-.5,.0,
-                -.5, .5,.0,
-                .5, .5,.0,
-                .5,-.5,.0,
-            };
-            uint32_t indices[] = {
-                0,2,1,
-                0,3,2
-            };
-
-            auto vb = VertexBuffer::Create(vertices, sizeof(float)*3*4);
-            vb->SetLayout({{"mPos", ShaderDataType::Float3}});
-            auto ib = IndexBuffer::Create(indices, 6);
-
-            va->AddVertexBuffer(vb);
-            va->SetIndexBuffer(ib);
-        }
+        Mesh mesh;
+        mesh.position = {
+           { -.5,-.5,.0},
+           {-.5, .5,.0},
+           {.5, .5,.0},
+           {.5,-.5,.0},
+        };
+        mesh.indices = {
+            0,2,1,
+        	0,3,2
+        };
+        renderer.SetCamera({}, {});
+        renderer.DrawMesh(mesh);
         fb = Framebuffer::Create(800, 800, {FramebufferColorTexFormat::RGB32}, FramebufferDepthTexFormat::D24UNS8U);
         shader = Shader::Create("res://shaders/basic.slang");
         material = Material::Create(shader, Material::EntryPointInfo{ "basic_vmain", "basic_fmain" });
@@ -87,7 +79,8 @@ struct TestGame final : public Game {
     void Render() override {
         GraphicsContext::ClearScreen();
         GraphicsContext::UseMaterial(material);
-        GraphicsContext::Draw(va, va->GetIndexBuffer()->GetCount());
+        renderer.Render();
+        //GraphicsContext::Draw(va, va->GetIndexBuffer()->GetCount());
     }
 };
 
