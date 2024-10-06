@@ -10,6 +10,17 @@ namespace RoxEngine::FileSystem {
 	{
 		return path.rfind("res://", 0) == 0;
 	}
+
+	std::string FileFilesystem::GetCanonicalPath(const std::string& path)
+	{
+		fs::path fspath = fs::path(path);
+		if (IsResourcePath(path))
+		{
+			fspath = std::string(mResourcesFolder + std::string(path.begin() + 5, path.end()));
+		}
+		return fs::canonical(fspath).generic_string();
+	}
+
 	bool FileFilesystem::Exists(const std::string& path)
 	{
 		if (IsResourcePath(path))

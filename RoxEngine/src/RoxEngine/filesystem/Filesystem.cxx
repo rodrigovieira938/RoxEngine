@@ -9,6 +9,7 @@ namespace RoxEngine::FileSystem {
 	public:
 		~IFilesysten() = default;
 		virtual bool IsResourcePath(const std::string& path) = 0;
+		virtual std::string GetCanonicalPath(const std::string& path) = 0;
 		virtual bool Exists(const std::string& path) = 0;
 		virtual std::string_view GetMimeType(const std::string& path) = 0;
 		virtual std::string GetFileExtension(const std::string& path) = 0;
@@ -23,6 +24,7 @@ namespace RoxEngine::FileSystem {
 		FileFilesystem(std::string&& folder) : mResourcesFolder(std::move(folder)) {}
 		std::string mResourcesFolder;
 		bool IsResourcePath(const std::string& path) override;
+		std::string GetCanonicalPath(const std::string& path) override;
 		bool Exists(const std::string& path) override;
 		std::string_view GetMimeType(const std::string& path) override;
 		std::string GetFileExtension(const std::string& path) override;
@@ -40,6 +42,7 @@ namespace RoxEngine::FileSystem {
 		{}
 
 		bool IsResourcePath(const std::string& path) { return impl.IsResourcePath(path); }
+		std::string GetCanonicalPath(const std::string& path) { return impl.GetCanonicalPath(path); }
 		bool Exists(const std::string& path) { return impl.Exists(path); }
 		std::string_view GetMimeType(const std::string& path) { return impl.GetMimeType(path); }
 		std::string GetFileExtension(const std::string& path) { return impl.GetFileExtension(path); }
@@ -56,6 +59,7 @@ namespace RoxEngine::FileSystem {
 
 	export bool IsResourcePath(const std::string& path) { return sFileSystem.IsResourcePath(path); }
 	export bool Exists(const std::string& path) { return sFileSystem.Exists(path); }
+	export std::string GetCanonicalPath(const std::string& path) { return sFileSystem.GetCanonicalPath(path); }
 	export std::string_view GetMimeType(const std::string& path) { return sFileSystem.GetMimeType(path); }
 	export std::string GetFileExtension(const std::string& path) { return sFileSystem.GetFileExtension(path); }
 	export std::string GetFileName(const std::string& path, bool with_extension = true) { return sFileSystem.GetFileName(path, with_extension);  }
