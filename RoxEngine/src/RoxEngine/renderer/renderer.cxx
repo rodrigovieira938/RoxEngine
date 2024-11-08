@@ -6,10 +6,12 @@ export import :renderer_material;
 export import :renderer_shader;
 export import :renderer_uniformbuffer;
 export import :renderer_vertexarray;
+
 import "glm/fwd.hpp";
 import "glm/vec2.hpp";
 import "glm/vec4.hpp";
 import "glm/mat4x4.hpp";
+import "memory";
 
 export namespace RoxEngine
 {
@@ -61,7 +63,14 @@ export namespace RoxEngine
 		};
 		std::vector<Camera> cams;
 		std::vector<Batch> batches;
+
+		bool debugWireMesh = false;
+		bool debugNormalRendering = true;
+		glm::vec3 debugWireMeshColor = {1,0,1};
+		float debugWireMeshLineSize = 3;
 	public:
+		std::shared_ptr<Material> debugMaterial = nullptr;
+
 		size_t SetCamera(glm::mat4 viewProj, glm::mat4 camPos) override
 		{
 			cams.push_back({ viewProj, camPos });
@@ -90,13 +99,8 @@ export namespace RoxEngine
 			SET_VA(color, sizeof(glm::vec4));
 			batches.emplace_back(b);
 		}
-		void Render() const override
-		{
-			for(auto& batch : batches)
-			{
-				GraphicsContext::Draw(batch.va, batch.va->GetIndexBuffer()->GetCount());
-			}
-		}
+		void DebugMenu();
+		void Render() const override;
 		void Clear() override
 		{
 			cams.clear();

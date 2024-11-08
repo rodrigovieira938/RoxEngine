@@ -50,7 +50,13 @@ struct TestGame final : public Game {
         fb = Framebuffer::Create(800, 800, {FramebufferColorTexFormat::RGB32}, FramebufferDepthTexFormat::D24UNS8U);
         shader = Shader::Create("res://shaders/basic.slang");
         material = Material::Create(shader, Material::EntryPointInfo{ "basic_vmain", "basic_fmain" });
-        if(FileSystem::Exists("res://test.txt"))
+        renderer.debugMaterial = Material::Create(shader, Material::EntryPointInfo{ "basic_vmain", "basic_fmain" });
+        glm::mat4 a = { 1.0f };
+        glm::vec3 color = { 0,0,1 };
+    	renderer.debugMaterial->GetUbo("Uniforms")->Set("matrix", &a[0][0], sizeof(glm::mat4));
+        renderer.debugMaterial->GetUbo("Uniforms")->Set("color", &color.r, sizeof(color));
+
+    	if(FileSystem::Exists("res://test.txt"))
         {
 			std::string content = FileSystem::ReadTextFile("res://test.txt");
 
@@ -79,8 +85,8 @@ struct TestGame final : public Game {
     void Render() override {
         GraphicsContext::ClearScreen();
         GraphicsContext::UseMaterial(material);
+        renderer.DebugMenu();
         renderer.Render();
-        //GraphicsContext::Draw(va, va->GetIndexBuffer()->GetCount());
     }
 };
 
