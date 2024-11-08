@@ -35,17 +35,58 @@ struct TestGame final : public Game {
         log::info(e.HasComponent<TestComponent>());
 		
         Mesh mesh;
-        mesh.position = {
-           { -.5,-.5,.0},
-           {-.5, .5,.0},
-           {.5, .5,.0},
-           {.5,-.5,.0},
+        mesh.position= {
+           {-0.5f, -0.5f,  0.5f},  // bottom-left
+			{ 0.5f, -0.5f,  0.5f},  // bottom-right
+			{ 0.5f,  0.5f,  0.5f},  // top-right
+			{-0.5f,  0.5f,  0.5f},  // top-left
+
+			// Back face
+			{-0.5f, -0.5f, -0.5f}, // bottom-left
+			{ 0.5f, -0.5f, -0.5f}, // bottom-right
+			{ 0.5f,  0.5f, -0.5f}, // top-right
+			{-0.5f,  0.5f, -0.5f}, // top-left
+
+			// Left face
+			{-0.5f, -0.5f, -0.5f}, // bottom-back
+			{-0.5f, -0.5f,  0.5f}, // bottom-front
+			{-0.5f,  0.5f,  0.5f}, // top-front
+			{-0.5f,  0.5f, -0.5f}, // top-back
+
+			// Right face
+			{ 0.5f, -0.5f, -0.5f},  // bottom-back
+			{ 0.5f, -0.5f,  0.5f},  // bottom-front
+			{ 0.5f,  0.5f,  0.5f},  // top-front
+			{ 0.5f,  0.5f, -0.5f},  // top-back
+
+			// Top face
+			{-0.5f,  0.5f,  0.5f},  // front-left
+			{ 0.5f,  0.5f,  0.5f},  // front-right
+			{ 0.5f,  0.5f, -0.5f},  // back-right
+			{-0.5f,  0.5f, -0.5f},  // back-left
+
+			// Bottom face
+			{-0.5f, -0.5f,  0.5f}, // front-left
+			{ 0.5f, -0.5f,  0.5f}, // front-right
+			{ 0.5f, -0.5f, -0.5f}, // back-right
+			{-0.5f, -0.5f, -0.5f}  // back-left
         };
-        mesh.indices = {
-            0,2,1,
-        	0,3,2
+    	mesh.indices = {
+            // Front face
+		    0, 1, 2,  0, 2, 3,
+		    // Back face
+		    4, 5, 6,  4, 6, 7,
+		    // Left face
+		    8, 9, 10,  8, 10, 11,
+		    // Right face
+		    12, 13, 14,  12, 14, 15,
+		    // Top face
+		    16, 17, 18,  16, 18, 19,
+		    // Bottom face
+		    20, 21, 22,  20, 22, 23
         };
-        renderer.SetCamera({}, {});
+
+    	renderer.SetCamera({}, {});
         renderer.DrawMesh(mesh);
         fb = Framebuffer::Create(800, 800, {FramebufferColorTexFormat::RGB32}, FramebufferDepthTexFormat::D24UNS8U);
         shader = Shader::Create("res://shaders/basic.slang");
