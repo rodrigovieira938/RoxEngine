@@ -1,7 +1,8 @@
-module;
 #include "RoxEngine/profiler/profiler.hpp"
 #include <string>
-module roxengine;
+#include <RoxEngine/renderer/GraphicsContext.hpp>
+#include <RoxEngine/platforms/GL/GLShader.hpp>
+
 namespace RoxEngine {
     Ref<Shader> Shader::Create(const std::string& src, const std::string& module_name)
     {

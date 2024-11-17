@@ -1,4 +1,3 @@
-module;
 #include <glad/gl.h>
 #define IMGUI_DEFINE_MATH_OPERATORS
 #undef glActiveTexture           
@@ -68,7 +67,9 @@ module;
 #include <imgui/imgui.cpp>
 #include <imgui/misc/cpp/imgui_stdlib.cpp>
 #include <memory>
-module roxengine;
+#include <RoxEngine/imgui/Imgui.hpp>
+#include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
+#include <RoxEngine/core/Engine.hpp>
 
 namespace RoxEngine {
     void ImGuiLayer::Init() {
@@ -96,7 +97,6 @@ namespace RoxEngine {
         #else
             const char* glsl_version = "#version 130";
         #endif
-
         ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)std::static_pointer_cast<GLFW::Window>(Engine::Get()->GetWindow())->mWindow, false);
         bool a = ImGui_ImplOpenGL3_Init(glsl_version);
     }

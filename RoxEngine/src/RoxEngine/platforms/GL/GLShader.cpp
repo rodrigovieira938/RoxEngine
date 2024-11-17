@@ -1,9 +1,11 @@
-module;
 #include <glad/gl.h>
 #include <iostream>
 #include <slang/include/slang.h>
 #include <slang/include/slang-com-ptr.h>
-module roxengine;
+#include <RoxEngine/platforms/GL/GLShader.hpp>
+#include <RoxEngine/slang/slang.hpp>
+#include <RoxEngine/core/Logger.hpp>
+#include <RoxEngine/filesystem/Filesystem.hpp>
 
 namespace RoxEngine::GL {
     Shader::Shader(const std::string& src, const std::string& module_name)

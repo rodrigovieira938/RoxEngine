@@ -1,8 +1,9 @@
 file(GLOB_RECURSE roxengine_src 
-    "src/*.cpp" "src/*.h"
+    "src/*.cpp" 
+    "src/*.h"
 )
 file(GLOB_RECURSE roxengine_module_src
-    "src/*.cxx"
+    "src/*.cppm"
 )
 
 add_library(roxengine ${roxengine_src})

@@ -5,11 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "preLaunchTask": "Build sandbox",
             "type": "lldb",
+            "preLaunchTask": "Build sandbox",
             "request": "launch",
+            "console": "externalTerminal",
             "name": "Debug - Sandbox",
-            "program": "${workspaceFolder}/build/Sandbox/Debug/sandbox.exe",
+            "program": "${workspaceFolder}/build/Sandbox/sandbox.exe",
             "args": [],
             "cwd": "${workspaceFolder}/Sandbox"
         }

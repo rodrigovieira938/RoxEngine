@@ -1,10 +1,12 @@
-module;
-#include <iostream>
 #include <glad/gl.h>
 #include <slang/include/slang-com-ptr.h>
 #include <slang/include/slang.h>
 #include <string>
-module roxengine;
+#include <RoxEngine/core/Logger.hpp>
+#include <RoxEngine/platforms/GL/GLMaterial.hpp>
+#include <RoxEngine/slang/slang.hpp>
+#include <RoxEngine/platforms/GL/GLShader.hpp>
+#include <RoxEngine/platforms/GL/GLUniformBuffer.hpp>
 
 namespace RoxEngine::GL {
     void compileErrors(unsigned int shader, const char* type)
@@ -321,7 +323,7 @@ namespace RoxEngine::GL {
                 BakeReflection("", desc, layout, field, field_layout);
             }
             mUboMap[var->getName()] = mUbos.size();
-            mUbos.emplace_back(CreateRef<UniformBuffer>(inner_type_layout->getSize(), var->getBindingIndex(), std::move(desc)));
+            mUbos.emplace_back(CreateRef<GL::UniformBuffer>(inner_type_layout->getSize(), var->getBindingIndex(), std::move(desc)));
         }
 	}
 

@@ -1,11 +1,13 @@
-module;
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include "MimeTypeDB.hpp"
-module roxengine;
+#include <RoxEngine/filesystem/MimeTypeDB.hpp>
+#include <RoxEngine/filesystem/Filesystem.hpp>
 namespace fs = std::filesystem;
+
 namespace RoxEngine::FileSystem {
+	FileSystem sFileSystem;
+
 	bool FileFilesystem::IsResourcePath(const std::string& path)
 	{
 		return path.rfind("res://", 0) == 0;

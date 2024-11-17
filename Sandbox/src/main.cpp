@@ -1,6 +1,6 @@
-#include <filesystem>
 #include <glm/glm.hpp>
-
+#include <string>
+#include <RoxEngine/roxengine.hpp> //better for lsps
 import roxengine;
 using namespace RoxEngine;
 
@@ -20,7 +20,6 @@ struct TestGame final : public Game {
     };
      
     void Init() override {
-
         Scene s;
         Entity e = s.CreateEntity();
     	log::info(e.HasComponent<TestComponent>());
@@ -36,7 +35,7 @@ struct TestGame final : public Game {
 		
         Mesh mesh;
         mesh.position= {
-           {-0.5f, -0.5f,  0.5f},  // bottom-left
+            {-0.5f, -0.5f,  0.5f},  // bottom-left
 			{ 0.5f, -0.5f,  0.5f},  // bottom-right
 			{ 0.5f,  0.5f,  0.5f},  // top-right
 			{-0.5f,  0.5f,  0.5f},  // top-left
@@ -131,8 +130,7 @@ struct TestGame final : public Game {
     }
 };
 
-Scope<Game> CreateGame()
-{
+Scope<Game> CreateGame() {
     return CreateScope<TestGame>();
 }
 

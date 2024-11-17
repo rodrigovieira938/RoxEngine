@@ -1,11 +1,12 @@
-module;
 #include <glad/gl.h>
 #include <cstring>
 #include <vector>
 #include <imgui/backends/imgui_impl_glfw.h>
 #include "GLFW/glfw3.h"
+#include <RoxEngine/input/Input.hpp>
 #include <memory>
-module roxengine;
+#include <RoxEngine/core/Engine.hpp>
+#include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
 
 namespace RoxEngine
 {

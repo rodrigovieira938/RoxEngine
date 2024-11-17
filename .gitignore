@@ -21,9 +21,8 @@ out
 
 build
 
-#clangd
-.cache 
-
+clangd
+.cache
 imgui.ini
 logs/
 CMakeSettings.json

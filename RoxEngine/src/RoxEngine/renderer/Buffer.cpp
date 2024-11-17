@@ -1,8 +1,9 @@
-module;
 #include <cassert>
 #include "RoxEngine/profiler/profiler.hpp"
-module roxengine;
-import :renderer_buffers;
+#include <RoxEngine/renderer/Buffer.hpp>
+#include <RoxEngine/renderer/GraphicsContext.hpp>
+#include <RoxEngine/platforms/GL/GLBuffer.hpp>
+
 namespace RoxEngine {
 	uint32_t ShaderDataTypeSize(ShaderDataType type)
 	{

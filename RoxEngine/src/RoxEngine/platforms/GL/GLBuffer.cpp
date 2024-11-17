@@ -1,6 +1,5 @@
-module;
 #include <glad/gl.h>
-module roxengine;
+#include <RoxEngine/platforms/GL/GLBuffer.hpp>
 
 namespace RoxEngine::GL {
     VertexBuffer::VertexBuffer(void* vertices, size_t size) : mSize(size) {

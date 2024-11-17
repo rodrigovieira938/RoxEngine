@@ -1,14 +1,15 @@
-module;
 #define SPDLOG_HEADER_ONLY
 #define SPDLOG_USE_STD_FORMAT
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/async_logger.h>
-module roxengine;
+#include <RoxEngine/core/Logger.hpp>
 
 namespace RoxEngine::log
 {
+	Logger sLogger("ROXENGINE-APP");
+
 	Logger::Logger(const std::string& name)
 	{
 		spdlog::sink_ptr sinks[] = {

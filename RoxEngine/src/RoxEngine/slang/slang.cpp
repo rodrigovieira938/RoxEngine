@@ -1,9 +1,7 @@
-module;
 #include <iostream>
-#include "include/slang-com-ptr.h"
-module roxengine;
-import :slang;
-import :filesystem;
+#include <RoxEngine/slang/slang.hpp>
+#include <RoxEngine/filesystem/Filesystem.hpp>
+#include <RoxEngine/core/Logger.hpp>
 
 namespace RoxEngine {
 

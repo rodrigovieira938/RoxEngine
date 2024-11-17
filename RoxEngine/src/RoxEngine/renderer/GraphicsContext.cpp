@@ -1,7 +1,7 @@
-module;
 #include "RoxEngine/profiler/profiler.hpp"
-module roxengine;
-import :renderer_graphicscontext;
+#include <RoxEngine/platforms/GL/GLGraphicsContext.hpp>
+#include <RoxEngine/utils/Utils.hpp>
+
 namespace RoxEngine{
     GraphicsContext* sContext = nullptr;
     RendererApi sAPI;

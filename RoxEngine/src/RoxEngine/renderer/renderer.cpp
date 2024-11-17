@@ -1,7 +1,10 @@
-module;
 #include <imgui/imgui.h>
 #include <glad/gl.h>
-module roxengine;
+#include <RoxEngine/renderer/Renderer.hpp>
+#include <RoxEngine/renderer/GraphicsContext.hpp>
+
+#include <RoxEngine/platforms/GL/GLVertexArray.hpp>
+#include <RoxEngine/platforms/GL/GLBuffer.hpp>
 
 namespace RoxEngine {
 	void DefaultRenderer::Render() const {

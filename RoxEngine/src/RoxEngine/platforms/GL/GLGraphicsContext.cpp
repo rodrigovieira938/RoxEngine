@@ -1,10 +1,13 @@
-module;
+#include <RoxEngine/platforms/GL/GLGraphicsContext.hpp>
+#include <RoxEngine/platforms/GL/GLMaterial.hpp>
+#include <RoxEngine/platforms/GL/GLVertexArray.hpp>
+#include <RoxEngine/platforms/GL/GLBuffer.hpp>
+#include <RoxEngine/platforms/GL/GLUniformBuffer.hpp>
 #include "RoxEngine/profiler/gpu_profiler.hpp"
 #include "RoxEngine/profiler/profiler.hpp"
 #include "glad/gl.h"
 #include "GLFW/glfw3.h"
 #include <memory>
-module roxengine;
 
 namespace RoxEngine::GL {
     void GLAPIENTRY 

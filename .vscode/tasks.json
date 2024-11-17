@@ -2,7 +2,6 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			
 			"type": "cmake",
 			"label": "Build sandbox",
 			"command": "build",

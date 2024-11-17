@@ -1,7 +1,6 @@
-module;
 #include <string_view>
 #include <string>
-module roxengine;
+#include <RoxEngine/core/Errors.hpp>
 
 namespace RoxEngine
 {
