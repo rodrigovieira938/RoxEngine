@@ -10,7 +10,7 @@
             "request": "launch",
             "console": "externalTerminal",
             "name": "Debug - Sandbox",
-            "program": "${workspaceFolder}/build/Sandbox/sandbox.exe",
+            "program": "${workspaceFolder}/build/Sandbox/sandbox",
             "args": [],
             "cwd": "${workspaceFolder}/Sandbox"
         }

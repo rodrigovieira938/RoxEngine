@@ -1,4 +1,6 @@
 #pragma once
+#include "RoxEngine/core/Errors.hpp"
+#include "RoxEngine/core/Panic.hpp"
 #include <memory>
 
 #define FLECS_CUSTOM_BUILD
@@ -154,13 +156,13 @@ namespace RoxEngine
 		Scene::Data mScene;
 	};
 
-	Entity Scene::CreateEntity()
+	inline Entity Scene::CreateEntity()
 	{
 		Entity e(ecs_new_w_id(mWorld.get(), 0), mData);
 		return e;
 	}
 
-	Entity::Entity(ecs_entity_t id, Scene::Data& scene)
+	inline Entity::Entity(ecs_entity_t id, Scene::Data& scene)
 		: mId(scene.world.lock().get(), id)
 		, mScene(scene)
 	{

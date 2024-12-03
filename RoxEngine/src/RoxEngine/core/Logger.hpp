@@ -23,23 +23,23 @@ namespace RoxEngine::log {
 		void fatal(const T& msg) {mLogger->critical(std::format("{}", msg)); }
 
 		template <typename... Args>
-		void trace(spdlog::format_string_t<Args...>&& fmt, Args &&...args) {
+		void trace(std::format_string<Args...>&& fmt, Args &&...args) {
 			mLogger->trace(std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		void info(spdlog::format_string_t<Args...>&& fmt, Args &&...args) {
+		void info(std::format_string<Args...>&& fmt, Args &&...args) {
 			mLogger->info(std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		void warn(spdlog::format_string_t<Args...>&& fmt, Args &&...args) {
+		void warn(std::format_string<Args...>&& fmt, Args &&...args) {
 			mLogger->warn(std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		void error(spdlog::format_string_t<Args...>&& fmt, Args &&...args) {
+		void error(std::format_string<Args...>&& fmt, Args &&...args) {
 			mLogger->error(std::format(fmt, std::forward<Args>(args)...));
 		}
 		template <typename... Args>
-		void fatal(spdlog::format_string_t<Args...>&& fmt, Args &&...args) {
+		void fatal(std::format_string<Args...>&& fmt, Args &&...args) {
 			mLogger->critical(fmt, std::forward<Args>(args)...);
 		}
 
@@ -61,23 +61,23 @@ namespace RoxEngine::log {
 	inline void fatal(const T& msg) { sLogger.fatal(std::format("{}", msg)); }
 
 	template <typename... Args>
-	inline void trace(spdlog::format_string_t<Args...>&& fmt, Args &&...args) {
+	inline void trace(std::format_string<Args...>&& fmt, Args &&...args) {
 		sLogger.trace(std::format(fmt, std::forward<Args>(args)...));
 	}
 	template <typename... Args>
-	inline void info(spdlog::format_string_t<Args...>&& fmt, Args &&...args) {
+	inline void info(std::format_string<Args...>&& fmt, Args &&...args) {
 		sLogger.info(std::format(fmt, std::forward<Args>(args)...));
 	}
 	template <typename... Args>
-	inline void warn(spdlog::format_string_t<Args...>&& fmt, Args &&...args) {
+	inline void warn(std::format_string<Args...>&& fmt, Args &&...args) {
 		sLogger.warn(std::format(fmt, std::forward<Args>(args)...));
 	}
 	template <typename... Args>
-	inline void error(spdlog::format_string_t<Args...>&& fmt, Args &&...args) {
+	inline void error(std::format_string<Args...>&& fmt, Args &&...args) {
 		sLogger.error(std::format(fmt, std::forward<Args>(args)...));
 	}
 	template <typename... Args>
-	inline void fatal(spdlog::format_string_t<Args...>&& fmt, Args &&...args) {
+	inline void fatal(std::format_string<Args...>&& fmt, Args &&...args) {
 		sLogger.fatal(std::format(fmt, std::forward<Args>(args)...));
 	}
 
