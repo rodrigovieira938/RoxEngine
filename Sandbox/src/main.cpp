@@ -1,3 +1,4 @@
+#include "RoxEngine/input/Input.hpp"
 #include <glm/glm.hpp>
 #include <string>
 #include <RoxEngine/roxengine.hpp> //better for lsps
@@ -119,8 +120,9 @@ struct TestGame final : public Game {
         }
     }
     void Update() override {
-        if(Input::GetKeyState(Key::W) != KeyState::NONE)
-               log::info("W KEY action: {}",static_cast<int>(Input::GetKeyState(Key::W)));
+        auto w_state = Input::GetKeyState(Key::W);
+        if(w_state != KeyState::NONE)
+            log::info("W Press time: {}", Input::GetKeyPressDuration(Key::W));
     }
     void Render() override {
         GraphicsContext::ClearScreen();

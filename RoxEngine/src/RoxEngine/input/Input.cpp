@@ -1,3 +1,5 @@
+#include <array>
+#include <chrono>
 #include <glad/gl.h>
 #include <cstring>
 #include <vector>
@@ -325,7 +327,7 @@ namespace RoxEngine
         }
     }
 
-    std::vector<KeyState> sKeyMaps;
+    std::array<KeyInfo, Key::MAX> sKeyMaps;
     bool sNeedsUpdate = false;
 
     void keycallback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -335,9 +337,14 @@ namespace RoxEngine
             if (key > 0 && key < sKeyMaps.size())
             {
                 if (action == GLFW_PRESS)
-                    sKeyMaps[key] = KeyState::PRESSED;
+                    sKeyMaps[key] = KeyInfo {
+                        KeyState::PRESSED,
+                        std::chrono::steady_clock::now()
+                    };
                 if (action == GLFW_RELEASE)
-                    sKeyMaps[key] = KeyState::RELEASED;
+                    sKeyMaps[key] = {
+                    KeyState::RELEASED
+                    };
                 sNeedsUpdate = true;
             }
         }
@@ -349,7 +356,6 @@ namespace RoxEngine
         auto window = std::static_pointer_cast<GLFW::Window>(Engine::Get()->GetWindow());
         glfwSetKeyCallback((GLFWwindow *)window->mWindow, keycallback);
         glfwSetInputMode((GLFWwindow *)window->mWindow, GLFW_LOCK_KEY_MODS, true);
-        sKeyMaps.resize(Key::MAX);
 
         glfwSetWindowFocusCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_WindowFocusCallback);
         glfwSetCursorEnterCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_CursorEnterCallback);
@@ -363,26 +369,34 @@ namespace RoxEngine
     {
         if (!sNeedsUpdate)
             return;
-        for (auto &state : sKeyMaps)
+        for (auto &info : sKeyMaps)
         {
-            switch (state)
+            switch (info.state)
             {
             case KeyState::PRESSED:
-                state = KeyState::REPEAT;
+                info.state = KeyState::REPEAT;
                 break;
             case KeyState::RELEASED:
-                state = KeyState::NONE;
+                info.state = KeyState::NONE;
                 break;
             default:
                 continue; // repeat doesn't change until its release, and none is none until a new event
             }
         }
     }
-    KeyState Input::GetKeyState(KeyCode keycode)
-    {
+    KeyState Input::GetKeyState(KeyCode keycode) {
         if (keycode < 0 || keycode >= sKeyMaps.size())
             return KeyState::NONE;
-        return sKeyMaps[keycode];
+        return sKeyMaps[keycode].state;
+    }
+    double Input::GetKeyPressDuration(KeyCode keycode) {
+        if (keycode < 0 || keycode >= sKeyMaps.size())
+            return {};
+        auto state = GetKeyState(keycode);
+        if(state == KeyState::NONE || state == KeyState::RELEASED) {
+            return 0;
+        }
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - sKeyMaps[keycode].pressTime).count();
     }
     void Input::Shutdown()
     {

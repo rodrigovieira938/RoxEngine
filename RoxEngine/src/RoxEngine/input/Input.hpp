@@ -1,4 +1,6 @@
 #pragma once
+#include <array>
+#include <chrono>
 #include <cstdint>
 
 namespace RoxEngine {
@@ -147,10 +149,16 @@ namespace RoxEngine {
         REPEAT,
         RELEASED,
     };
+	struct KeyInfo {
+		KeyState state;
+		std::chrono::steady_clock::time_point pressTime; //Time the key was been first pressed
+	};
     class Input {
     public:
         Input() = delete;
-        static KeyState GetKeyState(KeyCode KeyCode);
+        static KeyState GetKeyState(KeyCode code);
+		// Returns the time the key press time in ms
+		static double GetKeyPressDuration(KeyCode code);
         // whether key is pressed or repeating
         inline static bool IsKeyDown(KeyCode code)          {auto state = GetKeyState(code); return state == KeyState::PRESSED || state == KeyState::REPEAT;}
         // whether key is none or release
