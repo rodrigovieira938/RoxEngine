@@ -1,3 +1,4 @@
+#include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/input/Input.hpp"
 #include <glm/glm.hpp>
 #include <string>
@@ -120,9 +121,16 @@ struct TestGame final : public Game {
         }
     }
     void Update() override {
-        auto w_state = Input::GetKeyState(Key::W);
-        if(w_state != KeyState::NONE)
-            log::info("W Press time: {}", Input::GetKeyPressDuration(Key::W));
+        auto lastKeyPressed = Input::GetLastKeyPressed();
+        if (auto* v = std::get_if<KeyCode>(&lastKeyPressed)) {
+            KeyCode keycode = *v;
+            log::info("Last key pressed was {}", size_t(keycode));
+            Input::ResetLastKeyPressed();
+        } else if (auto* v = std::get_if<MouseButton>(&lastKeyPressed)) {
+            MouseButton mousebutton = *v;
+            log::info("Last key pressed was mouse button {}", size_t(mousebutton));
+            Input::ResetLastKeyPressed();
+        }
     }
     void Render() override {
         GraphicsContext::ClearScreen();

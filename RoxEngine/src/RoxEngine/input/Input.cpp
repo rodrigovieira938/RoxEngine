@@ -1,15 +1,16 @@
 #include <array>
 #include <chrono>
+#include <cstddef>
 #include <glad/gl.h>
 #include <cstring>
-#include <vector>
 #include <imgui/backends/imgui_impl_glfw.h>
 #include "GLFW/glfw3.h"
 #include <RoxEngine/input/Input.hpp>
 #include <memory>
 #include <RoxEngine/core/Engine.hpp>
 #include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
-
+#include <RoxEngine/core/Logger.hpp>
+#include <variant>
 namespace RoxEngine
 {
     namespace Utils
@@ -327,28 +328,69 @@ namespace RoxEngine
         }
     }
 
+    struct KeyInfo {
+		KeyState state;
+		std::chrono::steady_clock::time_point pressTime; //Time the key was been first pressed
+	};
+
     std::array<KeyInfo, Key::MAX> sKeyMaps;
-    bool sNeedsUpdate = false;
+    std::array<KeyInfo, size_t(MouseButton::MAX)> sMouseButtonsMaps;
+    bool sKeyboardNeedsUpdate = false;
+    bool sMouseNeedsUpdate = false;
+    double sScrollDelta = 0.0;
+    bool sMousePosChanged = false;
+    std::variant<KeyCode, MouseButton, std::monostate> sLastKeyPressed = std::monostate();
+    std::variant<KeyCode, MouseButton, std::monostate> sLastKeyReleased = std::monostate();
 
     void keycallback(GLFWwindow *window, int key, int scancode, int action, int mods)
     {
-        if (key != GLFW_KEY_UNKNOWN)
+        if (key > 0 && key < sKeyMaps.size())
         {
-            if (key > 0 && key < sKeyMaps.size())
-            {
-                if (action == GLFW_PRESS)
-                    sKeyMaps[key] = KeyInfo {
-                        KeyState::PRESSED,
-                        std::chrono::steady_clock::now()
-                    };
-                if (action == GLFW_RELEASE)
-                    sKeyMaps[key] = {
-                    KeyState::RELEASED
-                    };
-                sNeedsUpdate = true;
+            if (action == GLFW_PRESS) {
+                sKeyMaps[key] = KeyInfo {
+                    KeyState::PRESSED,
+                    std::chrono::steady_clock::now()
+                };
+                sLastKeyPressed = (KeyCode)key;
             }
+            if (action == GLFW_RELEASE) {
+                sKeyMaps[key] = {
+                KeyState::RELEASED
+                };
+                sLastKeyReleased = (KeyCode)key;
+            }
+            sKeyboardNeedsUpdate = true;
         }
         ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
+    }
+    void mouseposcallback(GLFWwindow* window, double x, double y) {
+        sMousePosChanged = true;
+        ImGui_ImplGlfw_CursorPosCallback(window,x,y);
+    }
+    void mousebuttoncallback(GLFWwindow* window, int button, int action, int mods) {
+        if (button >= 0 && button < sMouseButtonsMaps.size())
+        {
+            if (action == GLFW_PRESS) {
+                sMouseButtonsMaps[button] = KeyInfo {
+                    KeyState::PRESSED,
+                    std::chrono::steady_clock::now()
+                };
+                sLastKeyPressed = (MouseButton)button;
+            }
+            if (action == GLFW_RELEASE) {
+                sMouseButtonsMaps[button] = {
+                KeyState::RELEASED
+                };
+                sLastKeyReleased = (MouseButton)button;
+            }
+            sMouseNeedsUpdate = true;
+        }
+
+        ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+    }
+    void scrollcallback(GLFWwindow* window, double xoffset, double yoffset) {
+        sScrollDelta = yoffset;
+        ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
     }
 
     void Input::Init()
@@ -356,31 +398,50 @@ namespace RoxEngine
         auto window = std::static_pointer_cast<GLFW::Window>(Engine::Get()->GetWindow());
         glfwSetKeyCallback((GLFWwindow *)window->mWindow, keycallback);
         glfwSetInputMode((GLFWwindow *)window->mWindow, GLFW_LOCK_KEY_MODS, true);
+        glfwSetCursorPosCallback((GLFWwindow *)window->mWindow, mouseposcallback);
+        glfwSetScrollCallback((GLFWwindow *)window->mWindow, scrollcallback);
+        glfwSetMouseButtonCallback((GLFWwindow *)window->mWindow, mousebuttoncallback);
 
         glfwSetWindowFocusCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_WindowFocusCallback);
         glfwSetCursorEnterCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_CursorEnterCallback);
-        glfwSetCursorPosCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_CursorPosCallback);
-        glfwSetMouseButtonCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_MouseButtonCallback);
-        glfwSetScrollCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_ScrollCallback);
         glfwSetCharCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_CharCallback);
         glfwSetMonitorCallback(ImGui_ImplGlfw_MonitorCallback);
     }
     void Input::Update()
     {
-        if (!sNeedsUpdate)
-            return;
-        for (auto &info : sKeyMaps)
-        {
-            switch (info.state)
+        sScrollDelta = 0.0;
+        if(sMousePosChanged)
+            sMousePosChanged = false;
+        if (sKeyboardNeedsUpdate) {
+            for (auto &info : sKeyMaps)
             {
-            case KeyState::PRESSED:
-                info.state = KeyState::REPEAT;
-                break;
-            case KeyState::RELEASED:
-                info.state = KeyState::NONE;
-                break;
-            default:
-                continue; // repeat doesn't change until its release, and none is none until a new event
+                switch (info.state)
+                {
+                case KeyState::PRESSED:
+                    info.state = KeyState::REPEAT;
+                    break;
+                case KeyState::RELEASED:
+                    info.state = KeyState::NONE;
+                    break;
+                default:
+                    continue; // repeat doesn't change until its release, and none is none until a new event
+                }
+            }
+        }
+        if(sMouseNeedsUpdate) {
+            for (auto &info : sMouseButtonsMaps)
+            {
+                switch (info.state)
+                {
+                case KeyState::PRESSED:
+                    info.state = KeyState::REPEAT;
+                    break;
+                case KeyState::RELEASED:
+                    info.state = KeyState::NONE;
+                    break;
+                default:
+                    continue; // repeat doesn't change until its release, and none is none until a new event
+                }
             }
         }
     }
@@ -391,12 +452,66 @@ namespace RoxEngine
     }
     double Input::GetKeyPressDuration(KeyCode keycode) {
         if (keycode < 0 || keycode >= sKeyMaps.size())
-            return {};
+            return 0;
         auto state = GetKeyState(keycode);
         if(state == KeyState::NONE || state == KeyState::RELEASED) {
             return 0;
         }
         return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - sKeyMaps[keycode].pressTime).count();
+    }
+
+    void Input::SetMouseState(MouseState state) {
+        auto window = std::static_pointer_cast<GLFW::Window>(Engine::Get()->GetWindow());
+        switch (state) {
+        case MouseState::NORMAL:
+            glfwSetInputMode((GLFWwindow *)window->mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            break;
+        case MouseState::DISABLED:
+            glfwSetInputMode((GLFWwindow *)window->mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            break;
+        case MouseState::HIDDEN:
+            glfwSetInputMode((GLFWwindow *)window->mWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+            break;
+        }
+    }
+    bool Input::MousePositionChanged() {
+        return sMousePosChanged;
+    }
+    glm::dvec2 Input::GetMousePosition() {
+        auto window = std::static_pointer_cast<GLFW::Window>(Engine::Get()->GetWindow());
+        glm::dvec2 pos;
+        glfwGetCursorPos((GLFWwindow *)window->mWindow, &pos.x, &pos.y);
+        return pos;
+    }
+    double Input::GetMouseScroll() {
+        return sScrollDelta;
+    }
+    KeyState Input::GetMouseButtonState(MouseButton btn) {
+        if (size_t(btn) >= sMouseButtonsMaps.size())
+            return KeyState::NONE;
+        return sMouseButtonsMaps[size_t(btn)].state;
+    }
+    double Input::GetMousePressDuration(MouseButton btn) {
+        if (size_t(btn) < 0 || size_t(btn) >= sMouseButtonsMaps.size())
+            return 0;
+        auto state = GetMouseButtonState(btn);
+        if(state == KeyState::NONE || state == KeyState::RELEASED) {
+            return 0;
+        }
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - sMouseButtonsMaps[size_t(btn)].pressTime).count();
+    }
+
+    std::variant<KeyCode, MouseButton, std::monostate> Input::GetLastKeyPressed() {
+        return sLastKeyPressed;
+    }
+    std::variant<KeyCode, MouseButton, std::monostate> Input::GetLastKeyReleased() {
+        return sLastKeyReleased;
+    }
+    void Input::ResetLastKeyReleased() {
+        sLastKeyReleased = std::monostate();
+    }
+    void Input::ResetLastKeyPressed() {
+        sLastKeyPressed = std::monostate();    
     }
     void Input::Shutdown()
     {

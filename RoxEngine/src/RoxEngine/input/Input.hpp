@@ -1,7 +1,7 @@
 #pragma once
-#include <array>
-#include <chrono>
+#include "glm/glm.hpp"
 #include <cstdint>
+#include <variant>
 
 namespace RoxEngine {
     using KeyCode = uint16_t;
@@ -149,9 +149,25 @@ namespace RoxEngine {
         REPEAT,
         RELEASED,
     };
-	struct KeyInfo {
-		KeyState state;
-		std::chrono::steady_clock::time_point pressTime; //Time the key was been first pressed
+	enum class MouseState {
+		NORMAL = 0,
+		DISABLED,
+		HIDDEN,
+	};
+	enum class MouseButton {
+		BUTTON_1 = 0,
+		BUTTON_2 = 1,
+		BUTTON_3 = 2,
+		BUTTON_4 = 3,
+		BUTTON_5 = 4,
+		BUTTON_6 = 5,
+		BUTTON_7 = 6,
+		BUTTON_8 = 7,
+
+		LEFT   = MouseButton::BUTTON_1,
+		RIGHT  = MouseButton::BUTTON_2,
+		MIDDLE = MouseButton::BUTTON_3,
+		MAX    = MouseButton::BUTTON_8,
 	};
     class Input {
     public:
@@ -170,7 +186,34 @@ namespace RoxEngine {
         //if the key is releasing
         inline static bool IsKeyReleased(KeyCode code)      {auto state = GetKeyState(code); return state == KeyState::RELEASED;}
         //TODO: GetLastKeyPressed and GetKeysPressed - Maybe used for keyrebinding, and some other stuff
-    private:
+    
+		static void SetMouseState(MouseState state);
+		static double GetMouseScroll();
+		static bool MousePositionChanged();
+		static glm::dvec2 GetMousePosition();
+
+		static KeyState GetMouseButtonState(MouseButton btn);
+
+		// Returns the time the mouse button press time in ms
+		static double GetMousePressDuration(MouseButton btn);
+        // whether mouse button is pressed or repeating
+        inline static bool IsMouseButtonDown(MouseButton btn)          {auto state = GetMouseButtonState(btn); return state == KeyState::PRESSED || state == KeyState::REPEAT;}
+        // whether mouse button is none or release
+        inline static bool IsMouseButtonUp(MouseButton btn)            {auto state = GetMouseButtonState(btn); return state == KeyState::NONE    || state == KeyState::RELEASED;}
+        //if the mouse button is pressed
+        inline static bool IsMouseButtonPressed(MouseButton btn)       {auto state = GetMouseButtonState(btn); return state == KeyState::PRESSED;}
+        //if the mouse button is repeating
+        inline static bool IsMouseButtonRepeat(MouseButton btn)        {auto state = GetMouseButtonState(btn); return state == KeyState::REPEAT;}
+        //if the mouse button is releasing
+        inline static bool IsMouseButtonReleased(MouseButton btn)      {auto state = GetMouseButtonState(btn); return state == KeyState::RELEASED;}
+	
+		static std::variant<KeyCode, MouseButton, std::monostate> GetLastKeyPressed();
+		static std::variant<KeyCode, MouseButton, std::monostate> GetLastKeyReleased();
+
+		static void ResetLastKeyPressed();
+		static void ResetLastKeyReleased();
+
+	private:
         friend class Engine;
         static void Init();
         static void Update();
