@@ -2,10 +2,11 @@
 #include "RoxEngine/core/Errors.hpp"
 #include "RoxEngine/core/Panic.hpp"
 #include <memory>
+#include <type_traits>
 
 #define FLECS_CUSTOM_BUILD
 #define FLECS_CPP
-#include "flecs/flecs.h"
+#include <flecs.h>
 #include "flecs/src/private_types.h"
 #include <RoxEngine/utils/Utils.hpp>
 
@@ -50,7 +51,7 @@ namespace RoxEngine
 			return id;
 		}
 	};
-
+	
 	class Scene {
 	public:
 		Scene() : mWorld(ecs_init()){
@@ -107,7 +108,7 @@ namespace RoxEngine
 		T& AddComponent(Args&&... args)
 		{
 			ADD_COMPONENT_CHECK;
-			T& dst = *static_cast<T*>(ecs_emplace_id(world, mId, cid));
+			T& dst = *static_cast<T*>(ecs_emplace_id(world, mId, cid, nullptr));
 			FLECS_PLACEMENT_NEW(&dst, T{ FLECS_FWD(args)... });
 			ecs_modified_id(world, mId, cid);
 			return dst;
@@ -123,7 +124,7 @@ namespace RoxEngine
 		template<typename T>
 		T& AddComponent(T&& c) {
 			ADD_COMPONENT_CHECK;
-			T& dst = *static_cast<std::remove_reference_t<T>*>(ecs_emplace_id(world, mId, cid));
+			T& dst = *static_cast<std::remove_reference_t<T>*>(ecs_emplace_id(world, mId, cid, nullptr));
 			dst = FLECS_MOV(c);
 			ecs_modified_id(world, mId, cid);
 			return dst;
