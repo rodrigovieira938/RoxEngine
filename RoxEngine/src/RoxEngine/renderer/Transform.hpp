@@ -5,10 +5,10 @@
 #include <glm/gtx/quaternion.hpp>
 
 namespace RoxEngine {
-    class Transfom {
+    class Transform {
     public:
-        Transfom() = default;
-        inline Transfom(glm::vec3 position, glm::vec3 rotation = {0,0,0}, glm::vec3 scale = {1,1,1}) {
+        Transform() = default;
+        inline Transform(glm::vec3 position, glm::vec3 rotation = {0,0,0}, glm::vec3 scale = {1,1,1}) {
             this->position = position;
             this->rotation = rotation;
             this->scale = scale;
