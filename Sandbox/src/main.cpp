@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <string>
 #include <RoxEngine/roxengine.hpp> //better for lsps
+#include <RoxEngine/renderer/DefaultRendererPipeline/Rendeder.hpp>
 import roxengine;
 using namespace RoxEngine;
 
@@ -22,19 +23,6 @@ struct TestGame final : public Game {
     };
      
     void Init() override {
-        Scene s;
-        Entity e = s.CreateEntity();
-    	log::info(e.HasComponent<TestComponent>());
-        e.AddComponent<TestComponent>("First");
-        log::info(e.HasComponent<TestComponent>());
-        log::info(e.GetComponent<TestComponent>().a);
-        e.GetComponent<TestComponent>().a = "Second!";
-    	log::info(e.GetComponent<TestComponent>().a);
-        e.RemoveComponent<TestComponent>();
-        log::info(e.AddComponent<TestComponent>({ "Third!" }).a);
-        e.RemoveComponent<TestComponent>();
-        log::info(e.HasComponent<TestComponent>());
-		
         Mesh mesh;
         mesh.position= {
             {-0.5f, -0.5f,  0.5f},  // bottom-left
@@ -98,19 +86,6 @@ struct TestGame final : public Game {
     	renderer.debugMaterial->GetUbo("Uniforms")->Set("matrix", &a[0][0], sizeof(glm::mat4));
         renderer.debugMaterial->GetUbo("Uniforms")->Set("color", &color.r, sizeof(color));
 
-    	if(FileSystem::Exists("res://test.txt"))
-        {
-			std::string content = FileSystem::ReadTextFile("res://test.txt");
-
-            AssetManager::TextAssetDecoder txtDecoder;
-            AssetManager::Load<AssetManager::TextAssetDecoder>("res://test.txt", txtDecoder);
-
-        	log::info("res://test.txt name=\"{}\" extension=\"{}\" contents = \"{}\"",
-                FileSystem::GetFileName("res://test.txt", false), 
-                FileSystem::GetFileExtension("res://test.txt"), 
-                txtDecoder.content);
-        }
-
         if(auto ubo = material->GetUbo("Uniforms"))
         {
             glm::vec3 color = { 255.f / 255.f,223.f / 255.f,214.f / 255.f, };
@@ -121,16 +96,6 @@ struct TestGame final : public Game {
         }
     }
     void Update() override {
-        auto lastKeyPressed = Input::GetLastKeyPressed();
-        if (auto* v = std::get_if<KeyCode>(&lastKeyPressed)) {
-            KeyCode keycode = *v;
-            log::info("Last key pressed was {}", size_t(keycode));
-            Input::ResetLastKeyPressed();
-        } else if (auto* v = std::get_if<MouseButton>(&lastKeyPressed)) {
-            MouseButton mousebutton = *v;
-            log::info("Last key pressed was mouse button {}", size_t(mousebutton));
-            Input::ResetLastKeyPressed();
-        }
     }
     void Render() override {
         GraphicsContext::ClearScreen();

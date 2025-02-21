@@ -100,8 +100,6 @@ namespace RoxEngine {
     export using RoxEngine::MeshTopology;
     export using RoxEngine::SubMeshInfo;
     export using RoxEngine::Mesh;
-    export using RoxEngine::IRenderer;
-    export using RoxEngine::DefaultRenderer;
     /*renderer/Renderer.hpp*/
     /*renderer/Shader.hpp*/
     export using RoxEngine::Shader;

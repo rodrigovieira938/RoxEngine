@@ -27,7 +27,7 @@
 #include <RoxEngine/renderer/Buffer.hpp>
 #include <RoxEngine/renderer/GraphicsContext.hpp>
 #include <RoxEngine/renderer/Material.hpp>
-#include <RoxEngine/renderer/Renderer.hpp>
+#include <RoxEngine/renderer/Mesh.hpp>
 #include <RoxEngine/renderer/Shader.hpp>
 #include <RoxEngine/renderer/UniformBuffer.hpp>
 #include <RoxEngine/renderer/VertexArray.hpp>
