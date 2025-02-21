@@ -14,10 +14,15 @@ namespace RoxEngine {
 			const char* vertex_main;
 			const char* fragment_main;
 		};
+		struct Settings {
+			int queue = -1;
+		};
 		static Ref<Material> Create(const Ref<Shader>& shader, const EntryPointInfo& info, const char* link_time_constants = "");
 
 		virtual Ref<UniformBuffer> GetUbo(const std::string& name) = 0;
 		virtual std::vector<Ref<UniformBuffer>>& GetUbos() = 0;
 		virtual Ref<Shader> GetShader() = 0;
+
+		Settings settings;
 	};
 }
