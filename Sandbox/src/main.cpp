@@ -1,5 +1,6 @@
 #include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/input/Input.hpp"
+#include "RoxEngine/renderer/DefaultRendererPipeline/DefaultRendererPipeline.hpp"
 #include <glm/glm.hpp>
 #include <string>
 #include <RoxEngine/roxengine.hpp> //better for lsps
@@ -12,17 +13,12 @@ struct TestGame final : public Game {
     Ref<Shader> shader;
     Ref<Material> material;
     Ref<Framebuffer> fb;
-    DefaultRenderer renderer;
-    struct TestComponent
-    {
-        TestComponent(const std::string& s) { a = s; log::info("TestComponent::TestComponent(const std::string&)");}
-        TestComponent(const TestComponent& other) { a = std::move(other.a); log::info("TestComponent::TestComponent(TestComponent&)"); }
-        ~TestComponent() { log::info("TestComponent::~TestComponent()"); }
-        TestComponent& operator=(const TestComponent& other) { a = std::move(other.a);  log::info("TestComponent::operator=(const TestComponent&)"); return *this; }
-	    std::string a = "<OOPS>";
-    };
-     
+    DefaultRendererPipeline* rendererPipeline;
+
     void Init() override {
+        rendererPipeline = new DefaultRendererPipeline();
+        Engine::Get()->SetRendererPipeline(rendererPipeline);
+
         Mesh mesh;
         mesh.position= {
             {-0.5f, -0.5f,  0.5f},  // bottom-left
@@ -75,16 +71,16 @@ struct TestGame final : public Game {
 		    20, 21, 22,  20, 22, 23
         };
 
-    	renderer.SetCamera({}, {});
-        renderer.DrawMesh(mesh);
         fb = Framebuffer::Create(800, 800, {FramebufferColorTexFormat::RGB32}, FramebufferDepthTexFormat::D24UNS8U);
         shader = Shader::Create("res://shaders/basic.slang");
         material = Material::Create(shader, Material::EntryPointInfo{ "basic_vmain", "basic_fmain" });
-        renderer.debugMaterial = Material::Create(shader, Material::EntryPointInfo{ "basic_vmain", "basic_fmain" });
+        rendererPipeline->mRenderer.debugMaterial = Material::Create(shader, Material::EntryPointInfo{ "basic_vmain", "basic_fmain" });
         glm::mat4 a = { 1.0f };
         glm::vec3 color = { 0,0,1 };
-    	renderer.debugMaterial->GetUbo("Uniforms")->Set("matrix", &a[0][0], sizeof(glm::mat4));
-        renderer.debugMaterial->GetUbo("Uniforms")->Set("color", &color.r, sizeof(color));
+    	rendererPipeline->SetCamera({});
+        rendererPipeline->DrawMesh(mesh, material.get());
+    	rendererPipeline->mRenderer.debugMaterial->GetUbo("Uniforms")->Set("matrix", &a[0][0], sizeof(glm::mat4));
+        rendererPipeline->mRenderer.debugMaterial->GetUbo("Uniforms")->Set("color", &color.r, sizeof(color));
 
         if(auto ubo = material->GetUbo("Uniforms"))
         {
@@ -100,8 +96,8 @@ struct TestGame final : public Game {
     void Render() override {
         GraphicsContext::ClearScreen();
         GraphicsContext::UseMaterial(material);
-        renderer.DebugMenu();
-        renderer.Render();
+        rendererPipeline->mRenderer.DebugMenu();
+        rendererPipeline->Render();
     }
 };
 
