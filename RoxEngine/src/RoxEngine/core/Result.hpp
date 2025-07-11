@@ -1,9 +1,8 @@
-module;
+#pragma once
+#include <RoxEngine/core/Errors.hpp>
+#include <RoxEngine/core/Panic.hpp>
 #include <memory>
-export module roxengine:result;
-import :errors;
-import :panic;
-export namespace RoxEngine {
+namespace RoxEngine {
 	template<typename T>
 	//Default implementation of ResultDeref
 	struct ResultDeref

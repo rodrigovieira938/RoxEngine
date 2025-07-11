@@ -1,13 +1,11 @@
-module;
-#include <string>
-#include <vector>
+#pragma once
 #include <unordered_map>
-export module roxengine:platforms_gl_material;
-
-import :utils;
-import :renderer_material;
-
-export namespace RoxEngine::GL {
+#include <vector>
+#include <RoxEngine/renderer/Material.hpp>
+#include <RoxEngine/renderer/UniformBuffer.hpp>
+#include <RoxEngine/renderer/Shader.hpp>
+#include <RoxEngine/utils/Utils.hpp>
+namespace RoxEngine::GL {
 	class Material final : public ::RoxEngine::Material {
 	public:
 		Material(const Ref<::RoxEngine::Shader>& shader, const EntryPointInfo& info, const char* link_time_constants = "");

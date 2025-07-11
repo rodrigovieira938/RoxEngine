@@ -1,6 +1,5 @@
-module;
 #include <cstdint>
-module roxengine;
+#include <RoxEngine/renderer/UniformBuffer.hpp>
 
 namespace RoxEngine
 {

@@ -1,9 +1,11 @@
-module;
+#include "RoxEngine/core/Logger.hpp"
+#include "RoxEngine/filesystem/Filesystem.hpp"
 #include <glad/gl.h>
 #include <iostream>
 #include <slang/include/slang.h>
 #include <slang/include/slang-com-ptr.h>
-module roxengine;
+#include <RoxEngine/platforms/GL/GLShader.hpp>
+#include <RoxEngine/slang/slang.hpp>
 
 namespace RoxEngine::GL {
     Shader::Shader(const std::string& src, const std::string& module_name)
@@ -14,7 +16,7 @@ namespace RoxEngine::GL {
     	mModule = SlangLayer::sSession->loadModuleFromSourceString(module_name.c_str(), "", src.c_str(), diagnostics.writeRef());
         if (diagnostics)
         {
-            log::error("Shader loading failed: {}", diagnostics->getBufferPointer());
+            log::error("Shader loading failed: {}", (char*)diagnostics->getBufferPointer());
             return;
         }
     }

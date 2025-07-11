@@ -1,10 +1,13 @@
-module;
 #include "RoxEngine/profiler/gpu_profiler.hpp"
 #include "RoxEngine/profiler/profiler.hpp"
 #include "glad/gl.h"
 #include "GLFW/glfw3.h"
 #include <memory>
-module roxengine;
+#include <RoxEngine/platforms/GL/GLGraphicsContext.hpp>
+#include "RoxEngine/platforms/GL/GLMaterial.hpp"
+#include "RoxEngine/platforms/GL/GLUniformBuffer.hpp"
+#include "RoxEngine/platforms/GL/GLVertexArray.hpp"
+#include "RoxEngine/platforms/GL/GLBuffer.hpp"
 
 namespace RoxEngine::GL {
     void GLAPIENTRY 
@@ -54,7 +57,7 @@ namespace RoxEngine::GL {
     	glUseProgram(glmaterial->mID);
     	for(auto ubo : glmaterial->mUbos)
         {
-            auto glubo = std::static_pointer_cast<UniformBuffer>(ubo);
+            auto glubo = std::static_pointer_cast<GL::UniformBuffer>(ubo);
 
             glubo->update();
             glBindBufferBase(GL_UNIFORM_BUFFER, glubo->mBinding, glubo->mId);

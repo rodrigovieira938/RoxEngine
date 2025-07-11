@@ -1,8 +1,7 @@
-module;
 #include "glad/gld.h"
+#include <cstring>
 #include <string>
-module roxengine;
-
+#include <RoxEngine/platforms/GL/GLUniformBuffer.hpp>
 namespace RoxEngine::GL {
 	UniformBuffer::UniformBuffer(size_t size, uint32_t binding, std::unordered_map<std::string, DataType>&& desc)
 		: mSize(size) 

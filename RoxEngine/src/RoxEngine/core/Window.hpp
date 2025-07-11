@@ -1,7 +1,6 @@
-module;
+#pragma once
 #include <string>
-export module roxengine:window;
-export namespace RoxEngine {
+namespace RoxEngine {
     class Window {
     public:
         virtual ~Window() = default;

@@ -1,7 +1,6 @@
-module;
+#pragma once
 #include <cstdint>
-export module roxengine:input;
-export namespace RoxEngine {
+namespace RoxEngine {
     using KeyCode = uint16_t;
 
 	namespace Key

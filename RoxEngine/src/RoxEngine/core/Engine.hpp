@@ -1,8 +1,7 @@
-export module roxengine:engine;
-import :utils;
-import :window;
-
-export namespace RoxEngine {
+#pragma once
+#include <RoxEngine/utils/Utils.hpp>
+#include <RoxEngine/core/Window.hpp>
+namespace RoxEngine {
     class Game {
     public:
         virtual ~Game() = default;

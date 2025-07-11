@@ -1,9 +1,9 @@
-module;
+#include "RoxEngine/core/Panic.hpp"
+#include "RoxEngine/core/Errors.hpp"
+#include "RoxEngine/core/Logger.hpp"
 #include <iostream>
 #include <functional>
-module roxengine;
-import :errors;
-import :logger;
+
 namespace RoxEngine {
 
 	int DefaultPanicHandler(IError& error) {

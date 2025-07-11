@@ -1,11 +1,7 @@
-module;
-#include <string_view>
+#pragma once
 #include <string>
-export module roxengine:assetmanager;
-import <string>;
-import :result;
-import :errors;
-import :filesystem;
+#include <RoxEngine/filesystem/Filesystem.hpp>
+
 namespace RoxEngine::AssetManager {
 	template<typename T>
 	concept AssetDecoder = requires(T a, const std::string_view& view, const std::string_view & view2) {
@@ -13,7 +9,7 @@ namespace RoxEngine::AssetManager {
 		{ a.Decode(view) } -> std::same_as<void>;
 	};
 
-	export struct TextAssetDecoder
+	struct TextAssetDecoder
 	{
 		std::string content;
 		static constexpr bool IsSameMimeType(const std::string_view& view)
@@ -26,7 +22,7 @@ namespace RoxEngine::AssetManager {
 		}
 	};
 
-	export template<typename T> requires AssetDecoder<T>
+	template<typename T> requires AssetDecoder<T>
 	bool Load(const std::string& filepath, T& decoder)
 	{
 		bool same = decoder.IsSameMimeType(FileSystem::GetMimeType(filepath));

@@ -1,7 +1,9 @@
-#include <filesystem>
+#include <RoxEngine/RoxEngine.hpp>
+#include <RoxEngine/renderer/VertexArray.hpp>
+#include <RoxEngine/renderer/Material.hpp>
+#include <RoxEngine/renderer/GraphicsContext.hpp>
 #include <glm/glm.hpp>
 
-import roxengine;
 using namespace RoxEngine;
 
 struct TestGame final : public Game {

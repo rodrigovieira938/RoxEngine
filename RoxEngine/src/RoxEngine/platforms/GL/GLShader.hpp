@@ -1,10 +1,7 @@
-module;
-#include <slang/include/slang.h>
-#include <slang/include/slang-com-ptr.h>
+#pragma once
+#include <RoxEngine/renderer/Shader.hpp>
+#include <include/slang-com-ptr.h>
 #include <string>
-export module roxengine:platforms_gl_shader;
-import :renderer_shader;
-import :slang;
 namespace RoxEngine::GL {
     class Shader final : public ::RoxEngine::Shader {
     public:

@@ -1,10 +1,10 @@
-module;
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
+#include "GLFW/glfw3.h"
 #include "RoxEngine/profiler/profiler.hpp"
-#include <string>
-#include <memory>
-module roxengine;
+#include <RoxEngine/core/Engine.hpp>
+#include <RoxEngine/renderer/GraphicsContext.hpp>
+#include <RoxEngine/input/Input.hpp>
+#include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
+#include <RoxEngine/imgui/imgui.hpp>
 namespace RoxEngine {
     static Engine* sEngine = nullptr;
     Engine* Engine::Get() {
@@ -43,6 +43,5 @@ namespace RoxEngine {
         return 0; // OK
     }
     void Engine::DrawDebugInfo() {
-        mWindow = mWindow;
     }
 }

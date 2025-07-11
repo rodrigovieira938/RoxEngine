@@ -1,9 +1,8 @@
-module;
+#pragma once
+#include <RoxEngine/renderer/UniformBuffer.hpp>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
-export module roxengine:platforms_gl_uniformbuffer;
-import :renderer_uniformbuffer;
-
 namespace RoxEngine::GL {
 	class UniformBuffer final : public ::RoxEngine::UniformBuffer {
 	public:

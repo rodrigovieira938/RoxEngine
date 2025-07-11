@@ -1,8 +1,7 @@
-module;
+#pragma once
+#include "RoxEngine/renderer/Buffer.hpp"
 #include <memory>
-export module roxengine:renderer_vertexarray;
-import :renderer_buffers;
-export namespace RoxEngine {
+namespace RoxEngine {
     class VertexArray
     {
     public:

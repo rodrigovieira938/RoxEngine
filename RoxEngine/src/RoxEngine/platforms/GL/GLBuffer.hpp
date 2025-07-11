@@ -1,6 +1,7 @@
-export module roxengine:platforms_gl_buffers;
-import :renderer_buffers;
-export namespace RoxEngine::GL {
+#pragma once
+#include <RoxEngine/renderer/Buffer.hpp>
+
+namespace RoxEngine::GL {
     class VertexBuffer final : public ::RoxEngine::VertexBuffer {
     public:
         VertexBuffer(void* vertices, size_t size);

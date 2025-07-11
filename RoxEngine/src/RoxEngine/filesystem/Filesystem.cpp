@@ -1,11 +1,36 @@
-module;
 #include <filesystem>
+#include <RoxEngine/filesystem/Filesystem.hpp>
+#include <RoxEngine/filesystem/MimeTypeDB.hpp>
 #include <fstream>
-#include <iostream>
-#include "MimeTypeDB.hpp"
-module roxengine;
 namespace fs = std::filesystem;
+
 namespace RoxEngine::FileSystem {
+	class FileFilesystem final : public IFilesysten
+	{
+		public:
+		FileFilesystem(std::string&& folder) : mResourcesFolder(std::move(folder)) {}
+		std::string mResourcesFolder;
+		bool IsResourcePath(const std::string& path) override;
+		bool Exists(const std::string& path) override;
+		std::string_view GetMimeType(const std::string& path) override;
+		std::string GetFileExtension(const std::string& path) override;
+		std::string GetFileName(const std::string& path, bool with_extension) override;
+		size_t GetFileSize(const std::string& path) override;
+		Buffer ReadFile(const std::string& path) override;
+		std::string ReadTextFile(const std::string& path) override;
+	};
+
+	static FileFilesystem sFileSystem("./resources");
+
+	bool IsResourcePath(const std::string& path) { return sFileSystem.IsResourcePath(path); }
+	bool Exists(const std::string& path) { return sFileSystem.Exists(path); }
+	std::string_view GetMimeType(const std::string& path) { return sFileSystem.GetMimeType(path); }
+	std::string GetFileExtension(const std::string& path) { return sFileSystem.GetFileExtension(path); }
+	std::string GetFileName(const std::string& path, bool with_extension) { return sFileSystem.GetFileName(path, with_extension);  }
+	size_t GetFileSize(const std::string& path) { return sFileSystem.GetFileSize(path); }
+	Buffer ReadFile(const std::string& path) { return sFileSystem.ReadFile(path); }
+	std::string ReadTextFile(const std::string& path) { return sFileSystem.ReadTextFile(path); }
+
 	bool FileFilesystem::IsResourcePath(const std::string& path)
 	{
 		return path.rfind("res://", 0) == 0;

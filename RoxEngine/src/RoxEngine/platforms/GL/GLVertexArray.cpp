@@ -1,9 +1,8 @@
-module;
 #include <glad/gl.h>
 #include <memory>
 #include <cassert>
-module roxengine;
-
+#include <RoxEngine/platforms/GL/GLVertexArray.hpp>
+#include <RoxEngine/platforms/GL/GLBuffer.hpp>
 namespace RoxEngine::GL {
     static GLenum ShaderDataTypeToOpenGLBaseType(ShaderDataType type)
 	{

@@ -1,20 +1,18 @@
-module;
+#pragma once
+#include "RoxEngine/utils/Utils.hpp"
 #include <memory>
 #include <string>
 #include <cassert>
 #include <vector>
-export module roxengine:renderer_buffers;
-import :utils;
-
 namespace RoxEngine {
-    export enum class ShaderDataType
+    enum class ShaderDataType
 	{
 		None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool
 	};
 
 	uint32_t ShaderDataTypeSize(ShaderDataType type);
 
-	export struct BufferElement
+	struct BufferElement
 	{
 		std::string Name;
 		ShaderDataType Type;
@@ -50,7 +48,7 @@ namespace RoxEngine {
 		}
 	};
 
-	export class BufferLayout
+	class BufferLayout
 	{
 	public:
 		BufferLayout() {}
@@ -85,7 +83,7 @@ namespace RoxEngine {
 		uint32_t mStride = 0;
 	};
 
-	export class VertexBuffer
+	class VertexBuffer
 	{
 	public:
 		virtual ~VertexBuffer() = default;
@@ -100,7 +98,7 @@ namespace RoxEngine {
 	};
 
 	// Currently only support 32-bit index buffers
-	export class IndexBuffer
+	class IndexBuffer
 	{
 	public:
 		virtual ~IndexBuffer() = default;
@@ -110,7 +108,7 @@ namespace RoxEngine {
 
 		static Ref<IndexBuffer> Create(uint32_t* indices, size_t count);
 	};
-	export enum class FramebufferColorTexFormat {
+	enum class FramebufferColorTexFormat {
 		R8,
 		RG8,
 		RGB8,
@@ -124,12 +122,12 @@ namespace RoxEngine {
 		RGB32,
 		RGBA32,
 	};
-	export enum class FramebufferDepthTexFormat {
+	enum class FramebufferDepthTexFormat {
 		D32F,
 		D32FS8U,
 		D24UNS8U,
 	};
-	export class Framebuffer
+	class Framebuffer
 	{
 	public:
 		static std::shared_ptr<Framebuffer> Create(uint32_t width, uint32_t height, const std::vector<FramebufferColorTexFormat>& attachments, FramebufferDepthTexFormat depthFormat);

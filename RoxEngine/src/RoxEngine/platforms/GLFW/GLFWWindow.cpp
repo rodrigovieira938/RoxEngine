@@ -1,10 +1,8 @@
-module;
 #include "RoxEngine/profiler/profiler.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <string>
-module roxengine;
-
+#include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
 #define GET_WINDOW ((GLFWwindow*)mWindow)
 
 namespace RoxEngine::GLFW {

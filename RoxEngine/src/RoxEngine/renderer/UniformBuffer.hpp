@@ -1,9 +1,8 @@
-module;
-#include <unordered_map>
-#include <string>
+#pragma once
 #include <cstdint>
-export module roxengine:renderer_uniformbuffer;
-export namespace RoxEngine {
+#include <string>
+#include <unordered_map>
+namespace RoxEngine {
 	class UniformBuffer {
 	public:
 		virtual bool Set(const std::string& name, uint32_t value) = 0;

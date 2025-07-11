@@ -1,17 +1,14 @@
-module;
+#include "RoxEngine/core/Errors.hpp"
+#include "RoxEngine/core/Panic.hpp"
+#include "RoxEngine/utils/Utils.hpp"
+#define FLECS_CUSTOM_BUILD
+#define FLECS_CPP
+#include "flecs/flecs.h"
+#include "flecs/src/private_types.h"
 #include <memory>
 
-//#define FLECS_CPP
-export module roxengine:scene;
-import :utils;
-import :panic;
-import :errors;
-import "import_flecs.h";
 namespace RoxEngine
 {
-	export class Scene;
-	export class Entity;
-
 	ecs_entity_t create_component_id(ecs_world_t* world, auto name, auto size, auto alignment)
 	{
 		ecs_entity_t id = 0;
@@ -48,7 +45,7 @@ namespace RoxEngine
 			return id;
 		}
 	};
-
+	class Entity;
 	class Scene {
 	public:
 		Scene() : mWorld(ecs_init()){

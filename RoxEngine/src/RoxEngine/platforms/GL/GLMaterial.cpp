@@ -1,10 +1,14 @@
-module;
+#include "RoxEngine/core/Logger.hpp"
+#include <cstring>
 #include <iostream>
 #include <glad/gl.h>
 #include <slang/include/slang-com-ptr.h>
 #include <slang/include/slang.h>
 #include <string>
-module roxengine;
+#include <RoxEngine/platforms/GL/GLMaterial.hpp>
+#include <RoxEngine/platforms/GL/GLShader.hpp>
+#include <RoxEngine/platforms/GL/GLUniformBuffer.hpp>
+#include <RoxEngine/slang/slang.hpp>
 
 namespace RoxEngine::GL {
     void compileErrors(unsigned int shader, const char* type)

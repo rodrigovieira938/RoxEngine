@@ -1,6 +1,10 @@
-export module roxengine:platforms_gl_graphicscontext;
-import :renderer_graphicscontext;
-export namespace RoxEngine::GL {
+#pragma once
+#include <RoxEngine/renderer/GraphicsContext.hpp>
+#include <RoxEngine/renderer/VertexArray.hpp>
+#include <RoxEngine/renderer/Material.hpp>
+#include <RoxEngine/utils/Utils.hpp>
+
+namespace RoxEngine::GL {
     class GraphicsContext final : public ::RoxEngine::GraphicsContext {
     public:
         GraphicsContext();
