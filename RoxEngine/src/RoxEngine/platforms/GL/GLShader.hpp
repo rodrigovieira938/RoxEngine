@@ -1,6 +1,6 @@
 #pragma once
 #include <RoxEngine/renderer/Shader.hpp>
-#include <include/slang-com-ptr.h>
+#include <slang-com-ptr.h>
 #include <string>
 namespace RoxEngine::GL {
     class Shader final : public ::RoxEngine::Shader {

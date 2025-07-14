@@ -1,7 +1,45 @@
 cmake_minimum_required(VERSION 3.28)
 project(RoxEngine VERSION 0.1.0 LANGUAGES C CXX)
 set (CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_SCAN_FOR_MODULES ON)
-add_subdirectory(Vendor)
+include(FetchContent)
+
+FetchContent_Declare(
+    glad
+    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+    GIT_TAG        658f48e72aee3c6582e80b05ac0f8787a64fe6bb #v2.0.6
+    GIT_PROGRESS   TRUE
+    SOURCE_SUBDIR  cmake
+)
+FetchContent_Declare(
+    glfw
+    GIT_REPOSITORY https://github.com/glfw/glfw.git
+    GIT_TAG 3.4
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+FetchContent_Declare(
+    glm
+    GIT_REPOSITORY https://github.com/g-truc/glm
+    GIT_TAG 1.0.1
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+FetchContent_Declare(
+    flecs
+    GIT_REPOSITORY https://github.com/SanderMertens/flecs
+    GIT_TAG v4.1.0
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+FetchContent_Declare(
+    slang
+    GIT_REPOSITORY https://github.com/shader-slang/slang
+    GIT_TAG v2025.12.1
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(glad glfw glm flecs slang)
+glad_add_library(glad STATIC REPRODUCIBLE LOADER API gl:core=4.4)
+
 add_subdirectory(RoxEngine)
 add_subdirectory(Sandbox)

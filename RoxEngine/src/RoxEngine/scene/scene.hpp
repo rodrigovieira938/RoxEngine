@@ -3,8 +3,7 @@
 #include "RoxEngine/utils/Utils.hpp"
 #define FLECS_CUSTOM_BUILD
 #define FLECS_CPP
-#include "flecs/flecs.h"
-#include "flecs/src/private_types.h"
+#include "flecs.h"
 #include <memory>
 
 namespace RoxEngine

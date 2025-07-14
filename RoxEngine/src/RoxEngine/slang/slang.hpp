@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
-#include "include/slang-com-ptr.h"
-#include "include/slang.h"
+#include "slang-com-ptr.h"
+#include "slang.h"
 
 namespace RoxEngine {
     class SlangLayer

@@ -1,7 +1,6 @@
 #include <iostream>
 #include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/filesystem/Filesystem.hpp"
-#include "include/slang-com-ptr.h"
 #include <RoxEngine/slang/slang.hpp>
 
 namespace RoxEngine {
