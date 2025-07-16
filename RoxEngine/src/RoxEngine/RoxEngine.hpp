@@ -9,7 +9,7 @@
 #include <RoxEngine/filesystem/Filesystem.hpp>
 #include <RoxEngine/imgui/imgui.hpp>
 #include <RoxEngine/input/Input.hpp>
-#include <RoxEngine/scene/scene.hpp>
+#include <RoxEngine/ecs/ecs.hpp>
 #include <RoxEngine/utils/Utils.hpp>
 
 

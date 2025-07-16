@@ -22,10 +22,9 @@ struct TestGame final : public Game {
     };
      
     void Init() override {
-
-        Scene s;
-        Entity e = s.CreateEntity();
-    	log::info(e.HasComponent<TestComponent>());
+        Scene s = World::createScene();
+        Entity e = s.entity();
+    	/*log::info(e.HasComponent<TestComponent>());
         e.AddComponent<TestComponent>("First");
         log::info(e.HasComponent<TestComponent>());
         log::info(e.GetComponent<TestComponent>().a);
@@ -34,7 +33,7 @@ struct TestGame final : public Game {
         e.RemoveComponent<TestComponent>();
         log::info(e.AddComponent<TestComponent>({ "Third!" }).a);
         e.RemoveComponent<TestComponent>();
-        log::info(e.HasComponent<TestComponent>());
+        log::info(e.HasComponent<TestComponent>());*/
 		
 
     	va = VertexArray::Create();
@@ -88,6 +87,7 @@ struct TestGame final : public Game {
     }
     void Render() override {
         GraphicsContext::ClearScreen();
+        World::debugView();
         GraphicsContext::UseMaterial(material);
         GraphicsContext::Draw(va, va->GetIndexBuffer()->GetCount());
     }
