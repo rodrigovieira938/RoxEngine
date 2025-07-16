@@ -24,6 +24,9 @@ struct TestGame final : public Game {
     void Init() override {
         Scene s = World::createScene();
         Entity e = s.entity();
+        if(!World::lookupComponent("TestComponent").exists()) {
+            log::info("Component not found!");
+        }
     	/*log::info(e.HasComponent<TestComponent>());
         e.AddComponent<TestComponent>("First");
         log::info(e.HasComponent<TestComponent>());
