@@ -38,8 +38,26 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
 )
-FetchContent_MakeAvailable(glad glfw glm flecs slang)
+FetchContent_Declare(
+    imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui
+    GIT_TAG origin/docking
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog
+    GIT_TAG v1.15.3
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+set(SPDLOG_USE_STD_FORMAT 1)
+FetchContent_MakeAvailable(glad glfw glm flecs slang imgui spdlog)
+
 glad_add_library(glad STATIC REPRODUCIBLE LOADER API gl:core=4.4)
+add_library(imgui-lib STATIC ${imgui_SOURCE_DIR}/imgui.cpp ${imgui_SOURCE_DIR}/imgui_draw.cpp ${imgui_SOURCE_DIR}/imgui_tables.cpp ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
+target_include_directories(imgui-lib PUBLIC ${imgui_SOURCE_DIR})
 
 add_subdirectory(RoxEngine)
 add_subdirectory(Sandbox)

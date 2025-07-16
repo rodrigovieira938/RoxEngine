@@ -1,5 +1,3 @@
-#define SPDLOG_HEADER_ONLY
-#define SPDLOG_USE_STD_FORMAT
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>

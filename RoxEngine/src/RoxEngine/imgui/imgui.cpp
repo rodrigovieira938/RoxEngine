@@ -1,12 +1,8 @@
 #include "RoxEngine/platforms/GLFW/GLFWWindow.hpp"
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui/backends/imgui_impl_opengl3.cpp>
-#include <imgui/backends/imgui_impl_glfw.cpp>
-#include <imgui/imgui_draw.cpp>
-#include <imgui/imgui_tables.cpp>
-#include <imgui/imgui_widgets.cpp>
-#include <imgui/imgui.cpp>
-#include <imgui/misc/cpp/imgui_stdlib.cpp>
+#include <backends/imgui_impl_opengl3.cpp>
+#include <backends/imgui_impl_glfw.cpp>
+#include <misc/cpp/imgui_stdlib.cpp>
 #include <memory>
 #include <RoxEngine/imgui/imgui.hpp>
 #include <RoxEngine/core/Engine.hpp>

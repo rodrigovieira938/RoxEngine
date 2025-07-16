@@ -1,3 +1,4 @@
+#pragma once
 #include "RoxEngine/core/Errors.hpp"
 #include "RoxEngine/core/Panic.hpp"
 #include "RoxEngine/utils/Utils.hpp"
@@ -57,27 +58,25 @@ namespace RoxEngine
 		friend Entity;
 		struct Data
 		{
-			std::weak_ptr<ecs_world_t> world;
+			ecs_world_t* world;
 			Scene* self;
 		};
 
 		Data mData;
-		Ref<ecs_world_t> mWorld;
+		ecs_world_t* mWorld;
 	};
 	class Entity
 	{
 	public:
 		bool IsAlive() const
 		{
-			if (mScene.world.expired())
-				return false;
-			return ecs_exists(mScene.self->mWorld.get(), mId);
+			return ecs_exists(mScene.self->mWorld, mId);
 		}
 		template<typename T>
 		bool HasComponent() const
 		{
 			if (!IsAlive()) Panic(sEntityNotAlive);
-			auto world = mScene.world.lock().get();
+			auto world = mScene.world;
 			return mId.has(ComponentRegistry<T>::id(world));
 		}
 	
@@ -85,12 +84,12 @@ namespace RoxEngine
 		T& GetComponent()
 		{
 			if (!IsAlive()) Panic(sEntityNotAlive);
-			auto world = mScene.world.lock().get();
+			auto world = mScene.world;
 			auto cid = ComponentRegistry<T>::id(world);
 			if (!mId.has(cid)) Panic(sGetComponentNo);
 			return *static_cast<T*>(ecs_get_mut_id(world, mId, cid));
 		}
-#define ADD_COMPONENT_CHECK if (!IsAlive()) Panic(sEntityNotAlive);  auto world = mScene.world.lock().get(); auto cid = ComponentRegistry<T>::id(world); if (mId.has(cid)) Panic(sAddComponentTwice);
+#define ADD_COMPONENT_CHECK if (!IsAlive()) Panic(sEntityNotAlive);  auto world = mScene.world; auto cid = ComponentRegistry<T>::id(world); if (mId.has(cid)) Panic(sAddComponentTwice);
 		template<typename T>
 		T& AddComponent()
 		{
@@ -102,7 +101,8 @@ namespace RoxEngine
 		T& AddComponent(Args&&... args)
 		{
 			ADD_COMPONENT_CHECK;
-			T& dst = *static_cast<T*>(ecs_emplace_id(world, mId, cid));
+			bool is_new;
+			T& dst = *static_cast<T*>(ecs_emplace_id(world, mId, cid, &is_new));
 			FLECS_PLACEMENT_NEW(&dst, T{ FLECS_FWD(args)... });
 			ecs_modified_id(world, mId, cid);
 			return dst;
@@ -110,7 +110,8 @@ namespace RoxEngine
 		template<typename T>
 		T& AddComponent(T& c) {
 			ADD_COMPONENT_CHECK;
-			T& dst = *static_cast<T*>(ecs_emplace_id(world, mId, cid));
+			bool is_new;
+			T& dst = *static_cast<T*>(ecs_emplace_id(world, mId, cid, &is_new));
 			dst = FLECS_MOV(c);
 			ecs_modified_id(world, mId, cid);
 			return dst;
@@ -118,7 +119,8 @@ namespace RoxEngine
 		template<typename T>
 		T& AddComponent(T&& c) {
 			ADD_COMPONENT_CHECK;
-			T& dst = *static_cast<std::remove_reference_t<T>*>(ecs_emplace_id(world, mId, cid));
+			bool is_new;
+			T& dst = *static_cast<std::remove_reference_t<T>*>(ecs_emplace_id(world, mId, cid, &is_new));
 			dst = FLECS_MOV(c);
 			ecs_modified_id(world, mId, cid);
 			return dst;
@@ -136,7 +138,7 @@ namespace RoxEngine
 		void RemoveComponent()
 		{
 			if (!IsAlive()) Panic(sEntityNotAlive);
-			auto world = mScene.world.lock().get();
+			auto world = mScene.world;
 			auto cid = ComponentRegistry<T>::id(world);
 
 			if (!mId.has(cid)) Panic(sRemoveComponentNo);
@@ -153,12 +155,12 @@ namespace RoxEngine
 
 	Entity Scene::CreateEntity()
 	{
-		Entity e(ecs_new_w_id(mWorld.get(), 0), mData);
+		Entity e(ecs_new_w_id(mWorld, 0), mData);
 		return e;
 	}
 
 	Entity::Entity(ecs_entity_t id, Scene::Data& scene)
-		: mId(scene.world.lock().get(), id)
+		: mId(scene.world, id)
 		, mScene(scene)
 	{
 

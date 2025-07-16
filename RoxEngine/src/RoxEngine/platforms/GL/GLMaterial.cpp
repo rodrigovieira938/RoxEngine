@@ -2,8 +2,8 @@
 #include <cstring>
 #include <iostream>
 #include <glad/gl.h>
-#include <slang/include/slang-com-ptr.h>
-#include <slang/include/slang.h>
+#include <slang-com-ptr.h>
+#include <slang.h>
 #include <string>
 #include <RoxEngine/platforms/GL/GLMaterial.hpp>
 #include <RoxEngine/platforms/GL/GLShader.hpp>

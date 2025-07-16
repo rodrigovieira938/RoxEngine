@@ -3,4 +3,4 @@ file(GLOB_RECURSE sandbox_src
 )
 
 add_executable(sandbox ${sandbox_src})
-target_link_libraries(sandbox roxengine)
+target_link_libraries(sandbox PRIVATE roxengine)

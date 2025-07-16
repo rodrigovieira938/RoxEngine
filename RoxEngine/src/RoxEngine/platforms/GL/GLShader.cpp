@@ -2,8 +2,8 @@
 #include "RoxEngine/filesystem/Filesystem.hpp"
 #include <glad/gl.h>
 #include <iostream>
-#include <slang/include/slang.h>
-#include <slang/include/slang-com-ptr.h>
+#include <slang.h>
+#include <slang-com-ptr.h>
 #include <RoxEngine/platforms/GL/GLShader.hpp>
 #include <RoxEngine/slang/slang.hpp>
 
