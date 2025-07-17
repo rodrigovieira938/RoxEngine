@@ -1,11 +1,20 @@
 #include "flecs.h"
+#include "flecs/addons/cpp/c_types.hpp"
 #include "imgui.h"
 #include <RoxEngine/ecs/ecs.hpp>
 #include <RoxEngine/imgui/imgui.hpp>
 #include <format>
+#include <latch>
 
 namespace RoxEngine {
-    static flecs::world world;
+    flecs::world init_world() {
+        flecs::world world;
+        auto scope = world.scope(world.entity("RoxEngine").add(flecs::Module));
+        scope.entity("components").add(flecs::Module);
+        scope.entity("cpp").add(flecs::Module);
+        return world;
+    }
+    static flecs::world world = init_world();
     Entity::Entity(uint64_t id) : mId(id) {
     }
     bool Entity::exists() {
@@ -41,9 +50,20 @@ namespace RoxEngine {
     Scene World::createScene() {
         return Scene(reinterpret_cast<uint64_t>(world.prefab().raw_id()));
     }
-    UntypedComponent World::lookupComponent(const std::string& name) {
+    UntypedComponent World::lookupComponent(const char* name) {
         //TODO: check if its a component, make aliasses 
-        return UntypedComponent(world.lookup(name.c_str()).raw_id());
+        return UntypedComponent(world.scope("RoxEngine::components").lookup(name).raw_id());
+    }
+    UntypedComponent World::component(const char* name) {
+        //TODO: panic if exists
+        char * ptr = strtok((char*)name, "::");
+        auto lastEntity = world.entity("RoxEngine::components");
+        while(ptr != NULL) {
+            lastEntity = world.component(ptr).child_of(lastEntity).add(flecs::Module);
+            ptr = strtok(NULL, "::");
+        }
+        //TODO: add type info
+        return UntypedComponent(lastEntity.remove(flecs::Module).raw_id());
     }
     void iterate_children(flecs::entity e, flecs::entity* selected) {
         auto name = e.name();

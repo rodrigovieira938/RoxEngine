@@ -1,4 +1,5 @@
 #pragma once
+#include "RoxEngine/utils/Utils.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -40,7 +41,16 @@ namespace RoxEngine {
     class World {
     public:
         static Scene createScene();
-        static UntypedComponent lookupComponent(const std::string& name);
+        static UntypedComponent lookupComponent(const char * name);
+        static UntypedComponent lookupComponent(const std::string& name) {
+            return lookupComponent(name.data());
+        }
+        //Finds or creates a component with name
+        static UntypedComponent component(const char * name);
+        template<typename T>
+        static UntypedComponent component() {
+            return component(TypeToString<T>());
+        }
         static void debugView();
     };
 }
