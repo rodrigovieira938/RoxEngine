@@ -25,16 +25,16 @@ struct TestGame final : public Game {
         Scene s = World::createScene();
         Entity e = s.entity();
         World::component<TestComponent>();
-    	/*log::info(e.HasComponent<TestComponent>());
-        e.AddComponent<TestComponent>("First");
-        log::info(e.HasComponent<TestComponent>());
-        log::info(e.GetComponent<TestComponent>().a);
-        e.GetComponent<TestComponent>().a = "Second!";
-    	log::info(e.GetComponent<TestComponent>().a);
-        e.RemoveComponent<TestComponent>();
-        log::info(e.AddComponent<TestComponent>({ "Third!" }).a);
-        e.RemoveComponent<TestComponent>();
-        log::info(e.HasComponent<TestComponent>());*/
+    	log::info(e.hasComponent<TestComponent>());
+        e.addComponent<TestComponent>("First");
+        log::info(e.hasComponent<TestComponent>());
+        log::info(e.getComponent<TestComponent>()->a);
+        e.getComponent<TestComponent>()->a = "Second!";
+    	log::info(e.getComponent<TestComponent>()->a);
+        e.removeComponent<TestComponent>();
+        log::info(e.addComponent<TestComponent>("Third!")->a);
+        e.removeComponent<TestComponent>();
+        log::info(e.hasComponent<TestComponent>());
 		
 
     	va = VertexArray::Create();

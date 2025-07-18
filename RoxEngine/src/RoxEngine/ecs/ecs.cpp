@@ -1,12 +1,23 @@
+#include "RoxEngine/core/Logger.hpp"
 #include "flecs.h"
 #include "flecs/addons/cpp/c_types.hpp"
 #include "imgui.h"
 #include <RoxEngine/ecs/ecs.hpp>
 #include <RoxEngine/imgui/imgui.hpp>
 #include <format>
-#include <latch>
 
 namespace RoxEngine {
+    struct ConversionFactor {
+        float multiplier;
+    };
+    flecs::entity ConvertsTo;
+    float convert(float value, flecs::entity from, flecs::entity to) {
+        if (auto conv = from.get_ref<ConversionFactor>(from.world().pair(ConvertsTo,to))) {
+            return value * conv->multiplier;
+        }
+        // No conversion found — fallback, error, or identity
+        return value;
+    }
     flecs::world init_world() {
         flecs::world world;
         auto scope = world.scope(world.entity("RoxEngine").add(flecs::Module));
@@ -24,14 +35,25 @@ namespace RoxEngine {
     void Entity::destroy() {
         return flecs::entity(world, mId).destruct();
     }
-    UntypedComponent::UntypedComponent(uint64_t id) : Entity(id) {}
-    size_t UntypedComponent::getSize() {
-        //FIXME: use the c++ api if possible
-        return ecs_get_type_info(world, mId)->size;
+    bool Entity::hasComponent(UntypedComponent component) {
+        return flecs::entity(world, mId).has(component.mId);
     }
-    size_t UntypedComponent::getAlignment() {
+    void* Entity::addComponent(UntypedComponent component) {
+        auto e = flecs::entity(world, mId); 
+        e.add(component.mId);
+        return e.get_mut(component.mId);
+    }
+    void* Entity::getComponent(UntypedComponent component) {
+        return flecs::entity(world, mId).get_mut(component.mId);
+    }
+    void Entity::removeComponent(UntypedComponent component) {
+        flecs::entity(world, mId).remove(component.mId);
+    }
+    UntypedComponent::UntypedComponent(uint64_t id) : Entity(id) {}
+    UntypedComponent::TypeInfo UntypedComponent::getTypeInfo() {
+        auto type_info = ecs_get_type_info(world, mId); 
         //FIXME: use the c++ api if possible
-        return ecs_get_type_info(world, mId)->alignment;
+        return TypeInfo{(size_t)type_info->size, (size_t)type_info->component};
     }
 
     Scene::Scene(uint64_t id) : mId(id) {
@@ -54,7 +76,7 @@ namespace RoxEngine {
         //TODO: check if its a component, make aliasses 
         return UntypedComponent(world.scope("RoxEngine::components").lookup(name).raw_id());
     }
-    UntypedComponent World::component(const char* name) {
+    UntypedComponent World::component(const char* name, UntypedComponent::TypeInfo info) {
         //TODO: panic if exists
         char * ptr = strtok((char*)name, "::");
         auto lastEntity = world.entity("RoxEngine::components");
@@ -62,8 +84,7 @@ namespace RoxEngine {
             lastEntity = world.component(ptr).child_of(lastEntity).add(flecs::Module);
             ptr = strtok(NULL, "::");
         }
-        //TODO: add type info
-        return UntypedComponent(lastEntity.remove(flecs::Module).raw_id());
+        return UntypedComponent(lastEntity.set<EcsComponent>(EcsComponent{(ecs_size_t)info.size,(ecs_size_t) info.alignment}).remove(flecs::Module).raw_id());
     }
     void iterate_children(flecs::entity e, flecs::entity* selected) {
         auto name = e.name();
