@@ -14,11 +14,11 @@ struct TestGame final : public Game {
 
     struct TestComponent
     {
-        TestComponent(const std::string& s) { a = s; log::info("TestComponent::TestComponent(const std::string&)");}
-        TestComponent(const TestComponent& other) { a = std::move(other.a); log::info("TestComponent::TestComponent(TestComponent&)"); }
-        ~TestComponent() { log::info("TestComponent::~TestComponent()"); }
-        TestComponent& operator=(const TestComponent& other) { a = std::move(other.a);  log::info("TestComponent::operator=(const TestComponent&)"); return *this; }
-	    std::string a = "<OOPS>";
+        TestComponent() {};
+        TestComponent(const std::string& s) { a = s;}
+        ~TestComponent() {log::info("~TestComponent()");}
+	    bool operator ==(const TestComponent& other) const {return a == other.a;}
+        std::string a = "<OOPS>";
     };
      
     void Init() override {

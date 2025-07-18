@@ -51,4 +51,8 @@ namespace RoxEngine {
             #error TypeToString() doesn't support this compiler, implement it!
         #endif
     }
+    template<typename T>
+    concept HasEqualOperator = requires (const T a, const T& b) {
+        { a == b } -> std::convertible_to<bool>;
+    };
 }

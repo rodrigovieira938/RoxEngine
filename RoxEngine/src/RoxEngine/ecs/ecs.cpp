@@ -76,7 +76,7 @@ namespace RoxEngine {
         //TODO: check if its a component, make aliasses 
         return UntypedComponent(world.scope("RoxEngine::components").lookup(name).raw_id());
     }
-    UntypedComponent World::component(const char* name, UntypedComponent::TypeInfo info) {
+    UntypedComponent World::component(const char* name, UntypedComponent::TypeInfo info, UntypedComponent::Hooks hooks) {
         //TODO: panic if exists
         char * ptr = strtok((char*)name, "::");
         auto lastEntity = world.entity("RoxEngine::components");
@@ -84,7 +84,24 @@ namespace RoxEngine {
             lastEntity = world.component(ptr).child_of(lastEntity).add(flecs::Module);
             ptr = strtok(NULL, "::");
         }
-        return UntypedComponent(lastEntity.set<EcsComponent>(EcsComponent{(ecs_size_t)info.size,(ecs_size_t) info.alignment}).remove(flecs::Module).raw_id());
+        lastEntity.set<EcsComponent>(EcsComponent{(ecs_size_t)info.size,(ecs_size_t) info.alignment}).remove(flecs::Module);
+        ecs_type_hooks_t h={};
+        memset(&h, 0, sizeof(ecs_type_hooks_t));
+        /*
+            xtor ctor = nullptr, dtor = nullptr;
+            hook2 move = nullptr, copy = nullptr, copy_ctor = nullptr, move_ctor = nullptr;
+            equal_hook equal = nullptr;
+        */
+        h.ctor = (ecs_xtor_t)hooks.ctor;
+        h.dtor = (ecs_xtor_t)hooks.dtor;
+        h.move = (ecs_move_t)hooks.move;
+        h.copy = (ecs_copy_t)hooks.copy;
+        h.move_ctor = (ecs_move_t)hooks.move_ctor;
+        h.copy_ctor = (ecs_copy_t)hooks.copy_ctor;
+        h.equals = (ecs_equals_t)hooks.equals;
+        h.flags = ECS_TYPE_HOOK_CTOR|ECS_TYPE_HOOK_DTOR|ECS_TYPE_HOOK_COPY|ECS_TYPE_HOOK_MOVE|ECS_TYPE_HOOK_COPY_CTOR|ECS_TYPE_HOOK_MOVE_CTOR|ECS_TYPE_HOOK_EQUALS;
+        ecs_set_hooks_id(world, lastEntity, &h);
+        return UntypedComponent(lastEntity.raw_id());
     }
     void iterate_children(flecs::entity e, flecs::entity* selected) {
         auto name = e.name();
