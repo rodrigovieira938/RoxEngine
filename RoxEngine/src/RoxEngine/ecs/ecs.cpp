@@ -65,12 +65,12 @@ namespace RoxEngine {
     void Scene::destroy() {
         return flecs::entity(world, mId).destruct();
     }
-    Entity Scene::entity() {
-        return Entity(world.entity());
+    Entity Scene::entity(const std::string& name) {
+        return Entity(world.entity(name.data()).child_of(mId));
     }
 
-    Scene World::createScene() {
-        return Scene(reinterpret_cast<uint64_t>(world.prefab().raw_id()));
+    Scene World::createScene(const std::string& name) {
+        return Scene(reinterpret_cast<uint64_t>(world.prefab(name.data()).raw_id()));
     }
     UntypedComponent World::lookupComponent(const char* name) {
         //TODO: check if its a component, make aliasses 

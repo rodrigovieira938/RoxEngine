@@ -46,7 +46,7 @@ namespace RoxEngine {
     };
     class Scene {
     public:
-        Entity entity();
+        Entity entity(const std::string& name="");
         bool exists();
         void destroy();
     private:
@@ -57,7 +57,7 @@ namespace RoxEngine {
     };
     class World {
     public:
-        static Scene createScene();
+        static Scene createScene(const std::string& name="");
         static UntypedComponent lookupComponent(const char * name);
         static UntypedComponent lookupComponent(const std::string& name) {
             return lookupComponent(name.data());

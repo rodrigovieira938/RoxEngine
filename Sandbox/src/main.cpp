@@ -22,7 +22,7 @@ struct TestGame final : public Game {
     };
      
     void Init() override {
-        Scene s = World::createScene();
+        Scene s = World::createScene("TestGameScene");
         Entity e = s.entity();
         World::component<TestComponent>();
     	log::info(e.hasComponent<TestComponent>());
@@ -35,7 +35,7 @@ struct TestGame final : public Game {
         log::info(e.addComponent<TestComponent>("Third!")->a);
         e.removeComponent<TestComponent>();
         log::info(e.hasComponent<TestComponent>());
-		
+        e.addComponent<TestComponent>("Forth!");
 
     	va = VertexArray::Create();
         {
