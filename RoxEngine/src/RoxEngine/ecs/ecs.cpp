@@ -1,6 +1,5 @@
 #include "RoxEngine/core/Logger.hpp"
 #include "flecs.h"
-#include "flecs/addons/cpp/c_types.hpp"
 #include "imgui.h"
 #include <RoxEngine/ecs/ecs.hpp>
 #include <RoxEngine/imgui/imgui.hpp>
@@ -35,7 +34,7 @@ namespace RoxEngine {
     void Entity::destroy() {
         return flecs::entity(world, mId).destruct();
     }
-    bool Entity::hasComponent(UntypedComponent component) {
+    bool Entity::hasComponent(UntypedComponent component) const{
         return flecs::entity(world, mId).has(component.mId);
     }
     void* Entity::addComponent(UntypedComponent component) {
@@ -70,19 +69,26 @@ namespace RoxEngine {
     }
 
     Scene World::createScene(const std::string& name) {
-        return Scene(reinterpret_cast<uint64_t>(world.prefab(name.data()).raw_id()));
+        return Scene(reinterpret_cast<uint64_t>(world.entity(name.data()).raw_id()));
     }
     UntypedComponent World::lookupComponent(const char* name) {
         //TODO: check if its a component, make aliasses 
         return UntypedComponent(world.scope("RoxEngine::components").lookup(name).raw_id());
     }
     UntypedComponent World::component(const char* name, UntypedComponent::TypeInfo info, UntypedComponent::Hooks hooks) {
+        auto component = lookupComponent(name);
+        if(component.mId != 0) {
+            return component;
+        }
         //TODO: panic if exists
         char * ptr = strtok((char*)name, "::");
-        auto lastEntity = world.entity("RoxEngine::components");
-        while(ptr != NULL) {
-            lastEntity = world.component(ptr).child_of(lastEntity).add(flecs::Module);
-            ptr = strtok(NULL, "::");
+        auto lastEntity = world.lookup("RoxEngine::components");
+        for(;ptr != NULL; ptr = strtok(NULL, "::")) {
+            if(auto e = lastEntity.lookup(ptr); e) {
+                lastEntity = e;
+            } else {
+                lastEntity = world.entity(ptr).child_of(lastEntity).add(flecs::Module);
+            }
         }
         lastEntity.set<EcsComponent>(EcsComponent{(ecs_size_t)info.size,(ecs_size_t) info.alignment}).remove(flecs::Module);
         ecs_type_hooks_t h={};
@@ -152,5 +158,72 @@ namespace RoxEngine {
             }
             ImGui::End();
         }
+    }
+    Query::Query(void* query) {
+        mQuery = query;
+    }
+    void Query::each(std::function<void(Entity e)> callback) {
+        ecs_iter_t it = ecs_query_iter(world, (ecs_query_t*)mQuery);
+        while(ecs_query_next(&it)) {
+            for (int i = 0; i < it.count; i ++) {
+                callback(Entity(it.entities[i]));
+            }
+        }
+    }
+    Query QueryBuilder::build()  {
+        int count = 0;
+        for(auto& term : terms) {
+            if(term.groupBegin)
+                count++;
+            else if(term.groupEnd)
+                count--;
+        }
+        if(count == 0) {
+            //TODO: warn
+        }
+        if(terms.size() > 32) {
+            log::warn("Queries with more than 32 terms are not yet supported!");
+            return nullptr;
+        }
+        ecs_query_desc_t desc = {};
+        for (int i = 0; i < terms.size(); i++) {
+            const auto& term = terms[i];
+            Op op = term.op;
+            if(term.component.mId != 0) {
+                desc.terms[i].id = term.component.mId;
+                switch(op) {
+                case Op::AND:
+                    desc.terms[i].oper = EcsAnd;
+                    break;
+                case Op::OR:
+                    if(i+1 < terms.size()) {
+                        desc.terms[i].oper = EcsOr;
+                    } else {
+                        log::error("Query after an or_with it must have an with to finish the group or another or_with to continue the or group.");
+                        return nullptr;
+                    }
+                    break;
+                case Op::NOT:
+                    if(i > 0) {
+                        if(terms[i-1].op == Op::OR) {
+                            log::error("Query cannot negate components inside an OR");
+                            return nullptr;
+                        }
+                    }
+                    desc.terms[i].oper = EcsNot;
+                    break;
+                }
+            } else {
+                if(term.groupBegin) {
+                    desc.terms[i].id = EcsScopeOpen;
+                    desc.terms[i].src.id = EcsIsEntity;
+    
+                } else if(term.groupEnd) {
+                    desc.terms[i].id = EcsScopeClose;
+                    desc.terms[i].src.id = EcsIsEntity;
+                }
+            }
+        }
+        return ecs_query_init(world, &desc);
     }
 }

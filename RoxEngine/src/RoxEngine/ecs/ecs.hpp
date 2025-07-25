@@ -2,8 +2,10 @@
 #include "RoxEngine/utils/Utils.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 namespace RoxEngine {
     template<typename T>
@@ -22,8 +24,8 @@ namespace RoxEngine {
         bool exists();
         void destroy();
         template<typename T> requires ComponentConcept<T>
-        bool hasComponent();
-        bool hasComponent(UntypedComponent component);
+        bool hasComponent() const;
+        bool hasComponent(UntypedComponent component) const;
         template<typename T, typename... Args> requires ComponentConcept<T>
         T* addComponent(Args&&... args);
         void* addComponent(UntypedComponent component);
@@ -35,6 +37,7 @@ namespace RoxEngine {
         void removeComponent(UntypedComponent component);
     protected:
         friend class Scene;
+        friend class Query;
         Entity(uint64_t id);
 
         uint64_t mId;
@@ -61,6 +64,7 @@ namespace RoxEngine {
         void destroy() = delete;
     private:
         friend class World;
+        friend class QueryBuilder;
         UntypedComponent(uint64_t id);
     };
     class Scene {
@@ -146,8 +150,51 @@ namespace RoxEngine {
         }
         static void debugView();
     };
+    class Query {
+    public:
+        void each(std::function<void(Entity e)>);
+    private:
+        friend class QueryBuilder;
+        Query(void* query);
+        void* mQuery;
+    };
+    class QueryBuilder {
+    public:
+        enum class Op {
+            AND,
+            OR,
+            NOT
+        };
+        struct Term {
+            Op op;
+            UntypedComponent component;
+            bool groupBegin = false;
+            bool groupEnd = false;
+        };
+        QueryBuilder& with(UntypedComponent component) { terms.emplace_back(Term{Op::AND, component, false}); return *this;}
+        QueryBuilder& without(UntypedComponent component) { terms.emplace_back(Term{Op::NOT, component, true}); return *this;}
+        QueryBuilder& or_with(UntypedComponent component) { terms.emplace_back(Term{Op::OR, component, false}); return *this;}
+        QueryBuilder& group_begin() {terms.emplace_back(Term{Op::AND, {0}, false, true});return *this;}
+        QueryBuilder& group_end() {terms.emplace_back(Term{Op::AND, {0}, false, false});return *this;}
+        
+        template<typename T>
+        QueryBuilder& with() {
+            return with(World::component<T>());
+        }
+        template<typename T>
+        QueryBuilder& without() {
+            return without(World::component<T>());
+        }
+        template<typename T>
+        QueryBuilder& or_with() {
+            return or_with(World::component<T>());
+        }
+        Query build();
+        private:
+        std::vector<Term> terms;
+    };
     template<typename T> requires ComponentConcept<T>
-    bool Entity::hasComponent() {
+    bool Entity::hasComponent() const{
         return hasComponent(World::component<T>());
     }
     template<typename T, typename... Args> requires ComponentConcept<T>

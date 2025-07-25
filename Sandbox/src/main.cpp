@@ -1,3 +1,4 @@
+#include "RoxEngine/ecs/ecs.hpp"
 #include <RoxEngine/RoxEngine.hpp>
 #include <RoxEngine/renderer/VertexArray.hpp>
 #include <RoxEngine/renderer/Material.hpp>
@@ -20,7 +21,49 @@ struct TestGame final : public Game {
 	    bool operator ==(const TestComponent& other) const {return a == other.a;}
         std::string a = "<OOPS>";
     };
-     
+    struct ComponentA {
+	    bool operator ==(const ComponentA& other) const {return true;}
+    };
+    struct ComponentB {
+	    bool operator ==(const ComponentB& other) const {return true;}
+    };
+    struct ComponentC {
+	    bool operator ==(const ComponentC& other) const {return true;}
+    };
+    struct ComponentD {
+	    bool operator ==(const ComponentD& other) const {return true;}
+    };
+    struct ComponentE {
+	    bool operator ==(const ComponentE& other) const {return true;}
+    };
+    void TestQuery(Scene& scene) {
+        Entity e1 = scene.entity("Entity1");
+        Entity e2 = scene.entity("Entity1");
+        Entity e3 = scene.entity("Entity1");
+        Entity e4 = scene.entity("Entity1");
+        Entity e5 = scene.entity("Entity1");
+        e1.addComponent<ComponentA>();
+        e1.addComponent<ComponentB>();
+        e2.addComponent<ComponentA>();
+        e2.addComponent<ComponentC>();
+        e3.addComponent<ComponentD>();
+        e4.addComponent<ComponentC>();
+        e5.addComponent<ComponentA>();
+        e5.addComponent<ComponentB>();
+        e5.addComponent<ComponentC>();
+        e5.addComponent<ComponentD>();
+
+        auto query = QueryBuilder()
+            .with<ComponentA>()
+            .without<ComponentB>()
+            .or_with<ComponentC>()
+            .with<ComponentD>()
+            .build();
+        query.each([](Entity e){
+            //TODO: print name of the entity
+            log::info("Match");
+        });
+    }
     void Init() override {
         Scene s = World::createScene("TestGameScene");
         Entity e = s.entity();
@@ -36,6 +79,8 @@ struct TestGame final : public Game {
         e.removeComponent<TestComponent>();
         log::info(e.hasComponent<TestComponent>());
         e.addComponent<TestComponent>("Forth!");
+
+        TestQuery(s);
 
     	va = VertexArray::Create();
         {
