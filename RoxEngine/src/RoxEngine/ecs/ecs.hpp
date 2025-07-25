@@ -45,7 +45,7 @@ namespace RoxEngine {
 
         uint64_t mId;
     };
-    class UntypedComponent : public Entity{
+    class UntypedComponent : public Entity {
     public:
         struct TypeInfo {
             size_t size = 0;
@@ -60,6 +60,9 @@ namespace RoxEngine {
             hook2 move = nullptr, copy = nullptr, copy_ctor = nullptr, move_ctor = nullptr;
             equals_hook equals = nullptr;
         };
+        std::string_view symbol();
+        void symbol(std::string_view name);
+
         //Is zero typed component
         bool isTag() {return getTypeInfo().size == 0;}
         TypeInfo getTypeInfo();
@@ -88,12 +91,16 @@ namespace RoxEngine {
         static UntypedComponent lookupComponent(const std::string& name) {
             return lookupComponent(name.data());
         }
+        static UntypedComponent lookupComponentBySymbol(const char * name);
+        static UntypedComponent lookupComponentBySymbol(const std::string& name) {
+            return lookupComponent(name.data());
+        }
         //Finds or creates a component with name
         static UntypedComponent component(const char * name, UntypedComponent::TypeInfo info, UntypedComponent::Hooks hooks);
         template<typename T> requires ComponentConcept<T>
         static UntypedComponent component() {
-            auto name = TypeToString<T>();
-            if(auto c = lookupComponent(name); c.exists()) {
+            auto name = typeid(T).name();
+            if(auto c = lookupComponentBySymbol(name); c.exists()) {
                 return c;
             }
             //TODO: initiaize hooks, (deconstructor, constructor, copy, assign copy, etc...)
@@ -148,7 +155,7 @@ namespace RoxEngine {
                 return (*a) == (*b);
             };
             auto c = component(name, info, hooks);
-            
+            c.symbol(name);
             return c;
         }
         static void debugView();

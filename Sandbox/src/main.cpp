@@ -33,9 +33,6 @@ struct TestGame final : public Game {
     struct ComponentD {
 	    bool operator ==(const ComponentD& other) const {return true;}
     };
-    struct ComponentE {
-	    bool operator ==(const ComponentE& other) const {return true;}
-    };
     void TestQuery(Scene& scene) {
         Entity e1 = scene.entity("Entity1");
         Entity e2 = scene.entity("Entity2");
@@ -66,10 +63,16 @@ struct TestGame final : public Game {
         });
     }
     void Init() override {
+        //Initialize component's friendly name
+        World::component<TestComponent>().name("TestGame::TestComponent");
+        World::component<ComponentA>().name("TestGame::ComponentA");
+        World::component<ComponentB>().name("TestGame::ComponentB");
+        World::component<ComponentC>().name("TestGame::ComponentC");
+        World::component<ComponentD>().name("TestGame::ComponentD");
+
         Scene s = World::createScene("TestGameScene");
         Entity e = s.entity();
         e.name("Entity");
-        World::component<TestComponent>();
         e.addComponent<TestComponent>("First");
 
         TestQuery(s);

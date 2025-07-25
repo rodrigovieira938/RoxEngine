@@ -56,6 +56,12 @@ namespace RoxEngine {
         flecs::entity(world, mId).remove(component.mId);
     }
     UntypedComponent::UntypedComponent(uint64_t id) : Entity(id) {}
+    std::string_view UntypedComponent::symbol() {
+        return ecs_get_symbol(world, mId);
+    }
+    void UntypedComponent::symbol(std::string_view symbol) {
+        ecs_set_symbol(world, mId, std::string(symbol).c_str());
+    }
     UntypedComponent::TypeInfo UntypedComponent::getTypeInfo() {
         auto type_info = ecs_get_type_info(world, mId); 
         //FIXME: use the c++ api if possible
@@ -81,6 +87,9 @@ namespace RoxEngine {
     UntypedComponent World::lookupComponent(const char* name) {
         //TODO: check if its a component, make aliasses 
         return UntypedComponent(world.scope("RoxEngine::components").lookup(name).raw_id());
+    }
+    UntypedComponent World::lookupComponentBySymbol(const char* symbol) {
+        return UntypedComponent(ecs_lookup_symbol(world, symbol, false, false));
     }
     UntypedComponent World::component(const char* name, UntypedComponent::TypeInfo info, UntypedComponent::Hooks hooks) {
         auto component = lookupComponent(name);

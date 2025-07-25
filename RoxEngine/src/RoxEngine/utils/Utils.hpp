@@ -42,15 +42,7 @@ namespace RoxEngine {
         Buffer mBuffer;
     };
 #pragma endregion
-    template<typename T>
-    auto TypeToString() {
-        #ifdef __clang__
-            int status = 0;
-            return abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, &status);
-        #else
-            #error TypeToString() doesn't support this compiler, implement it!
-        #endif
-    }
+
     template<typename T>
     concept HasEqualOperator = requires (const T a, const T& b) {
         { a == b } -> std::convertible_to<bool>;
