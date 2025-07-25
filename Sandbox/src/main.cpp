@@ -33,6 +33,10 @@ struct TestGame final : public Game {
     struct ComponentD {
 	    bool operator ==(const ComponentD& other) const {return true;}
     };
+    struct ConvertsTo {
+        float factor;
+	    bool operator ==(const ConvertsTo& other) const {return factor == other.factor;}
+    };
     void TestQuery(Scene& scene) {
         Entity e1 = scene.entity("Entity1");
         Entity e2 = scene.entity("Entity2");
@@ -62,6 +66,26 @@ struct TestGame final : public Game {
             log::info("Match {}", e.name());
         });
     }
+    void TestRelations(Scene& scene) {
+        auto meter = World::component("meter", {}, {});
+        auto centimeter = World::component("centimeter", {}, {});
+        centimeter.addRelation<ConvertsTo>(meter, 1.f/100.f);
+        meter.addRelation<ConvertsTo>(centimeter, 100.f);
+
+        auto convert = [](float value, UntypedComponent from, UntypedComponent to){
+            if(!from.hasRelation<ConvertsTo>(to)) {
+                log::error("Cannot convert from {} to {}", from.name(), to.name());
+                return 0.f;
+            }
+            return value * from.getRelation<ConvertsTo>(to)->factor;
+        };
+        log::info("Converting 100cm to m = {}", convert(100, centimeter, meter));
+        centimeter.removeRelation<ConvertsTo>(meter);
+        log::info("Converting 50cm to m = {}", convert(50, centimeter, meter));
+        log::info("Converting 100m to m = {}", convert(100, meter, centimeter));
+        meter.removeRelation<ConvertsTo>(centimeter);
+        log::info("Converting 50m to m = {}", convert(50,meter, centimeter));
+    }
     void Init() override {
         //Initialize component's friendly name
         World::component<TestComponent>().name("TestGame::TestComponent");
@@ -76,6 +100,7 @@ struct TestGame final : public Game {
         e.addComponent<TestComponent>("First");
 
         TestQuery(s);
+        TestRelations(s);
 
     	va = VertexArray::Create();
         {

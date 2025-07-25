@@ -19,13 +19,30 @@ namespace RoxEngine {
         std::is_move_constructible_v<T> &&
         HasEqualOperator<T>;
     class UntypedComponent;
+    class UntypedRelation;
+    template<typename T> requires ComponentConcept<T>
+    class Relation;
     class Entity {
     public:
         std::string_view name();
         void name(std::string_view name);
-
         bool exists();
         void destroy();
+
+        UntypedRelation addRelation(UntypedComponent tag, Entity target);
+        bool hasRelation(UntypedComponent tag, Entity target) const;
+        UntypedRelation getRelation(UntypedComponent tag, Entity target);
+        void removeRelation(UntypedComponent tag, Entity target);
+
+        template<typename T, typename... Args> requires ComponentConcept<T>
+        Relation<T> addRelation(Entity target, Args&&... args);
+        template<typename T> requires ComponentConcept<T>
+        bool hasRelation(Entity target) const;
+        template<typename T> requires ComponentConcept<T>
+        Relation<T> getRelation(Entity target);
+        template<typename T> requires ComponentConcept<T>
+        void removeRelation(Entity target);
+
         template<typename T> requires ComponentConcept<T>
         bool hasComponent() const;
         bool hasComponent(UntypedComponent component) const;
@@ -41,6 +58,7 @@ namespace RoxEngine {
     protected:
         friend class Scene;
         friend class Query;
+        friend class UntypedRelation;
         Entity(uint64_t id);
 
         uint64_t mId;
@@ -72,6 +90,33 @@ namespace RoxEngine {
         friend class World;
         friend class QueryBuilder;
         UntypedComponent(uint64_t id);
+    };
+    class UntypedRelation {
+    public:
+        void* get() {return ptr;}
+        UntypedComponent getTag() {return tag;}
+        Entity getTarget() {return target;}
+        bool ok();
+    private:
+        friend class Entity;
+        template<typename T> requires ComponentConcept<T>
+        friend class Relation;
+        UntypedComponent tag;
+        Entity target;
+        //Ptr to the data, if tag is 0 sized do not write to this address 
+        void* ptr;
+        UntypedRelation(UntypedComponent tag, Entity target, void* ptr) : tag(tag), target(target), ptr(ptr){}
+    };
+    template<typename T> requires ComponentConcept<T>
+    class Relation : public UntypedRelation{
+    public:
+        T* get() {return static_cast<T*>(UntypedRelation::get());}
+        T* operator->() {
+            return get();
+        }
+    private:
+        friend class Entity;
+        Relation(UntypedComponent tag, Entity target, void* ptr) : UntypedRelation(tag, target, ptr){}
     };
     class Scene {
     public:
@@ -220,5 +265,26 @@ namespace RoxEngine {
     template<typename T> requires ComponentConcept<T>
     void Entity::removeComponent() {
         removeComponent(World::component<T>());
+    }
+
+    template<typename T, typename... Args> requires ComponentConcept<T>
+    Relation<T> Entity::addRelation(Entity target, Args&&... args) {
+        UntypedRelation untyped = addRelation(World::component<T>(), target);
+        new (untyped.ptr) T(std::forward<Args>(args)...);
+        return Relation<T>(untyped.tag, untyped.target, untyped.ptr);
+    }
+    template<typename T> requires ComponentConcept<T>
+    bool Entity::hasRelation(Entity target) const{
+        UntypedComponent component = World::component<T>(); 
+        return hasRelation(component, target);
+    }
+    template<typename T> requires ComponentConcept<T>
+    Relation<T> Entity::getRelation(Entity target) {
+        UntypedRelation untyped = getRelation(World::component<T>(), target);
+        return Relation<T>(untyped.tag, untyped.target, untyped.ptr);
+    }
+    template<typename T> requires ComponentConcept<T>
+    void Entity::removeRelation(Entity target) {
+        removeRelation(World::component<T>(), target);
     }
 }

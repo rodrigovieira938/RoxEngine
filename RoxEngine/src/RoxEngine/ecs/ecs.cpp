@@ -1,5 +1,6 @@
 #include "RoxEngine/core/Logger.hpp"
 #include "flecs.h"
+#include "flecs/addons/cpp/c_types.hpp"
 #include "imgui.h"
 #include <RoxEngine/ecs/ecs.hpp>
 #include <RoxEngine/imgui/imgui.hpp>
@@ -41,6 +42,20 @@ namespace RoxEngine {
     void Entity::destroy() {
         return flecs::entity(world, mId).destruct();
     }
+    UntypedRelation Entity::addRelation(UntypedComponent tag, Entity target) {
+        flecs::entity(world, mId).add(world.pair(tag.mId, target.mId));
+        return getRelation(tag, target);
+    }
+    bool Entity::hasRelation(UntypedComponent tag, Entity target) const{
+        return flecs::entity(world, mId).has(world.pair(tag.mId, target.mId));
+    }
+    UntypedRelation Entity::getRelation(UntypedComponent tag, Entity target) {
+        //TODO: panic if it doesn't have the component
+        return UntypedRelation(tag, target, flecs::entity(world, mId).get_mut(world.pair(tag.mId, target.mId)));
+    }
+    void Entity::removeRelation(UntypedComponent tag, Entity target) {
+        flecs::entity(world, mId).remove(world.pair(tag.mId, target.mId));
+    }
     bool Entity::hasComponent(UntypedComponent component) const{
         return flecs::entity(world, mId).has(component.mId);
     }
@@ -67,7 +82,9 @@ namespace RoxEngine {
         //FIXME: use the c++ api if possible
         return TypeInfo{(size_t)type_info->size, (size_t)type_info->component};
     }
-
+    bool UntypedRelation::ok() {
+        return target.mId != 0;
+    }
     Scene::Scene(uint64_t id) : mId(id) {
     }
     bool Scene::exists() {
@@ -122,7 +139,8 @@ namespace RoxEngine {
         h.copy_ctor = (ecs_copy_t)hooks.copy_ctor;
         h.equals = (ecs_equals_t)hooks.equals;
         h.flags = ECS_TYPE_HOOK_CTOR|ECS_TYPE_HOOK_DTOR|ECS_TYPE_HOOK_COPY|ECS_TYPE_HOOK_MOVE|ECS_TYPE_HOOK_COPY_CTOR|ECS_TYPE_HOOK_MOVE_CTOR|ECS_TYPE_HOOK_EQUALS;
-        ecs_set_hooks_id(world, lastEntity, &h);
+        if(info.size != 0)
+            ecs_set_hooks_id(world, lastEntity, &h);
         return UntypedComponent(lastEntity.raw_id());
     }
     void iterate_children(flecs::entity e, flecs::entity* selected) {
