@@ -27,6 +27,13 @@ namespace RoxEngine {
     static flecs::world world = init_world();
     Entity::Entity(uint64_t id) : mId(id) {
     }
+    std::string_view Entity::name() {
+        return ecs_get_name(world, mId);
+    }
+    void Entity::name(std::string_view name) {
+        ecs_set_name(world, mId, std::string(name).c_str());
+    }
+
     bool Entity::exists() {
         if(mId == 0) return false;
         return world.exists(mId);

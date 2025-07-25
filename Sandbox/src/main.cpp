@@ -38,14 +38,15 @@ struct TestGame final : public Game {
     };
     void TestQuery(Scene& scene) {
         Entity e1 = scene.entity("Entity1");
-        Entity e2 = scene.entity("Entity1");
-        Entity e3 = scene.entity("Entity1");
-        Entity e4 = scene.entity("Entity1");
-        Entity e5 = scene.entity("Entity1");
+        Entity e2 = scene.entity("Entity2");
+        Entity e3 = scene.entity("Entity3");
+        Entity e4 = scene.entity("Entity4");
+        Entity e5 = scene.entity("Entity5");
         e1.addComponent<ComponentA>();
         e1.addComponent<ComponentB>();
         e2.addComponent<ComponentA>();
         e2.addComponent<ComponentC>();
+        e3.addComponent<ComponentA>();
         e3.addComponent<ComponentD>();
         e4.addComponent<ComponentC>();
         e5.addComponent<ComponentA>();
@@ -61,24 +62,15 @@ struct TestGame final : public Game {
             .build();
         query.each([](Entity e){
             //TODO: print name of the entity
-            log::info("Match");
+            log::info("Match {}", e.name());
         });
     }
     void Init() override {
         Scene s = World::createScene("TestGameScene");
         Entity e = s.entity();
+        e.name("Entity");
         World::component<TestComponent>();
-    	log::info(e.hasComponent<TestComponent>());
         e.addComponent<TestComponent>("First");
-        log::info(e.hasComponent<TestComponent>());
-        log::info(e.getComponent<TestComponent>()->a);
-        e.getComponent<TestComponent>()->a = "Second!";
-    	log::info(e.getComponent<TestComponent>()->a);
-        e.removeComponent<TestComponent>();
-        log::info(e.addComponent<TestComponent>("Third!")->a);
-        e.removeComponent<TestComponent>();
-        log::info(e.hasComponent<TestComponent>());
-        e.addComponent<TestComponent>("Forth!");
 
         TestQuery(s);
 

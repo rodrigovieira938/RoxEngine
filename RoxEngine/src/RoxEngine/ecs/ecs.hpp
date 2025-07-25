@@ -21,6 +21,9 @@ namespace RoxEngine {
     class UntypedComponent;
     class Entity {
     public:
+        std::string_view name();
+        void name(std::string_view name);
+
         bool exists();
         void destroy();
         template<typename T> requires ComponentConcept<T>
