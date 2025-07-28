@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include <RoxEngine/ecs/ecs.hpp>
 #include <RoxEngine/imgui/imgui.hpp>
+#include <cstdint>
 #include <format>
 
 namespace RoxEngine {
@@ -207,9 +208,9 @@ namespace RoxEngine {
     Query QueryBuilder::build()  {
         int count = 0;
         for(auto& term : terms) {
-            if(term.groupBegin)
+            if(term.flags == Term::Flags::GROUP_BEGIN)
                 count++;
-            else if(term.groupEnd)
+            else if(term.flags == Term::Flags::GROUP_END)
                 count--;
         }
         if(count == 0) {
@@ -224,35 +225,43 @@ namespace RoxEngine {
             const auto& term = terms[i];
             Op op = term.op;
             if(term.component.mId != 0) {
-                desc.terms[i].id = term.component.mId;
-                switch(op) {
-                case Op::AND:
-                    desc.terms[i].oper = EcsAnd;
-                    break;
-                case Op::OR:
-                    if(i+1 < terms.size()) {
-                        desc.terms[i].oper = EcsOr;
-                    } else {
-                        log::error("Query after an or_with it must have an with to finish the group or another or_with to continue the or group.");
-                        return nullptr;
-                    }
-                    break;
-                case Op::NOT:
+                if(term.op == Op::NOT) {
                     if(i > 0) {
                         if(terms[i-1].op == Op::OR) {
                             log::error("Query cannot negate components inside an OR");
                             return nullptr;
                         }
                     }
+                } else if(term.op == Op::OR) {
+                    if(i+1 >= terms.size()) {
+                        log::error("Query after an or_with it must have an with to finish the group or another or_with to continue the or group.");
+                            return nullptr;
+                    }
+                }
+
+                if(term.flags == Term::Flags::RELATION) {
+                    //TODO: add the null entity
+                    desc.terms[i].id = world.pair(term.component.mId, (term.target.mId == 0)?flecs::Wildcard:term.target.mId);
+                } else {
+                    desc.terms[i].id = term.component.mId;
+                }
+                switch(op) {
+                case Op::AND:
+                    desc.terms[i].oper = EcsAnd;
+                    break;
+                case Op::OR:
+                    desc.terms[i].oper = EcsOr;
+                    break;
+                case Op::NOT:
                     desc.terms[i].oper = EcsNot;
                     break;
                 }
             } else {
-                if(term.groupBegin) {
+                if(term.flags == Term::Flags::GROUP_BEGIN) {
                     desc.terms[i].id = EcsScopeOpen;
                     desc.terms[i].src.id = EcsIsEntity;
     
-                } else if(term.groupEnd) {
+                } else if(term.flags == Term::Flags::GROUP_END) {
                     desc.terms[i].id = EcsScopeClose;
                     desc.terms[i].src.id = EcsIsEntity;
                 }

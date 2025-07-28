@@ -58,6 +58,7 @@ namespace RoxEngine {
     protected:
         friend class Scene;
         friend class Query;
+        friend class QueryBuilder;
         friend class UntypedRelation;
         Entity(uint64_t id);
 
@@ -221,16 +222,30 @@ namespace RoxEngine {
             NOT
         };
         struct Term {
+            enum class Flags {
+                NONE = 0,
+                GROUP_BEGIN,
+                GROUP_END,
+                RELATION,
+            };
             Op op;
             UntypedComponent component;
-            bool groupBegin = false;
-            bool groupEnd = false;
+            Entity target;
+            Flags flags = Flags::NONE;
+
+            Term(Op op, UntypedComponent component, Flags flags) : op(op), component(component), target(0), flags(flags) {}
+            Term(Flags flags) : component(0), target(0), flags(flags) {}
+            Term(Op op, UntypedComponent component) : Term(op, component, Flags::NONE) {}
+            Term(Op op, UntypedComponent component, Entity target) : op(op), component(component), target(target), flags(Flags::RELATION) {}
         };
-        QueryBuilder& with(UntypedComponent component) { terms.emplace_back(Term{Op::AND, component, false}); return *this;}
-        QueryBuilder& without(UntypedComponent component) { terms.emplace_back(Term{Op::NOT, component, true}); return *this;}
-        QueryBuilder& or_with(UntypedComponent component) { terms.emplace_back(Term{Op::OR, component, false}); return *this;}
-        QueryBuilder& group_begin() {terms.emplace_back(Term{Op::AND, {0}, false, true});return *this;}
-        QueryBuilder& group_end() {terms.emplace_back(Term{Op::AND, {0}, false, false});return *this;}
+        QueryBuilder& with(UntypedComponent component) { terms.emplace_back(Term(Op::AND, component)); return *this;}
+        QueryBuilder& with_relation(UntypedComponent tag, Entity target) {terms.emplace_back(Term(Op::AND, tag, target)); return *this;}
+        QueryBuilder& without(UntypedComponent component) { terms.emplace_back(Term(Op::NOT, component)); return *this;}
+        QueryBuilder& without_relation(UntypedComponent tag, Entity target) {terms.emplace_back(Term(Op::NOT, tag, target)); return *this;}
+        QueryBuilder& or_with(UntypedComponent component) { terms.emplace_back(Term(Op::OR, component)); return *this;}
+        QueryBuilder& or_with_relation(UntypedComponent tag, Entity target) {terms.emplace_back(Term(Op::OR, tag, target)); return *this;}
+        QueryBuilder& group_begin() {terms.emplace_back(Term(Term::Flags::GROUP_BEGIN));return *this;}
+        QueryBuilder& group_end() {terms.emplace_back(Term(Term::Flags::GROUP_END));return *this;}
         
         template<typename T>
         QueryBuilder& with() {
@@ -244,8 +259,20 @@ namespace RoxEngine {
         QueryBuilder& or_with() {
             return or_with(World::component<T>());
         }
+        template<typename T>
+        QueryBuilder& with_relation(Entity target) {
+            return with_relation(World::component<T>(), target);
+        }
+        template<typename T>
+        QueryBuilder& without_relation(Entity target) {
+            return without_relation(World::component<T>(), target);
+        }
+        template<typename T>
+        QueryBuilder& or_with_relation(Entity target) {
+            return or_with_relation(World::component<T>(), target);
+        }
         Query build();
-        private:
+    private:
         std::vector<Term> terms;
     };
     template<typename T> requires ComponentConcept<T>

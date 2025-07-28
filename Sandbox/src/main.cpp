@@ -72,6 +72,19 @@ struct TestGame final : public Game {
         centimeter.addRelation<ConvertsTo>(meter, 1.f/100.f);
         meter.addRelation<ConvertsTo>(centimeter, 100.f);
 
+        QueryBuilder()
+            .with_relation<ConvertsTo>(meter)
+            .build()
+            .each([](Entity e){
+                log::info("{} is convertible to meter", e.name());
+            });
+        QueryBuilder()
+            .with_relation<ConvertsTo>(centimeter)
+            .build()
+            .each([](Entity e){
+                log::info("{} is convertible to centimeter", e.name());
+            });
+
         auto convert = [](float value, UntypedComponent from, UntypedComponent to){
             if(!from.hasRelation<ConvertsTo>(to)) {
                 log::error("Cannot convert from {} to {}", from.name(), to.name());
