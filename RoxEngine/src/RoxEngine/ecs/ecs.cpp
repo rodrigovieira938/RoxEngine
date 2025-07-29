@@ -1,6 +1,6 @@
 #include "RoxEngine/core/Logger.hpp"
 #include "flecs.h"
-#include "flecs/addons/cpp/c_types.hpp"
+#include "flecs/addons/cpp/iter.hpp"
 #include "imgui.h"
 #include <RoxEngine/ecs/ecs.hpp>
 #include <RoxEngine/imgui/imgui.hpp>
@@ -194,14 +194,41 @@ namespace RoxEngine {
             ImGui::End();
         }
     }
+    struct QueryIter::Impl {
+        ecs_iter_t iter;
+        uint32_t row;
+    };
+    void* QueryIter::get(int termIndex) {
+        auto size = ecs_field_size(&impl->iter, termIndex); 
+        if (impl->iter.row_fields & (1llu << termIndex)) {
+            return ecs_field_at_w_size(&impl->iter, size, termIndex, impl->row);
+        } else {
+            bool is_shared = !ecs_field_is_self(&impl->iter, termIndex);
+            void* data = ecs_field_w_size(&impl->iter, size, termIndex);
+            if(is_shared) //If is shared table only has 1 entry
+                return data;
+            return (char*)data + (size * impl->row);
+        }
+    }
+    UntypedRelation QueryIter::getRelation(int termIndex) {
+        ecs_id_t id = ecs_field_id(&impl->iter, termIndex);
+        ecs_entity_t tag = ecs_pair_first(world, id);
+        ecs_entity_t target = ecs_pair_second(world, id);
+        return UntypedRelation(UntypedComponent(tag), Entity(target), get(termIndex));
+    }
+
     Query::Query(void* query) {
         mQuery = query;
     }
-    void Query::each(std::function<void(Entity e)> callback) {
-        ecs_iter_t it = ecs_query_iter(world, (ecs_query_t*)mQuery);
-        while(ecs_query_next(&it)) {
-            for (int i = 0; i < it.count; i ++) {
-                callback(Entity(it.entities[i]));
+    void Query::each(std::function<void(Entity e, QueryIter& iter)> callback) {
+        QueryIter::Impl query_iter{
+            ecs_query_iter(world, (ecs_query_t*)mQuery),
+            0
+        };
+        QueryIter iter(&query_iter, this);
+        while(ecs_query_next(&query_iter.iter)) {
+            for (query_iter.row = 0; query_iter.row < query_iter.iter.count; query_iter.row ++) {
+                callback(Entity(query_iter.iter.entities[query_iter.row]), iter);
             }
         }
     }

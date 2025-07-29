@@ -60,6 +60,7 @@ namespace RoxEngine {
         friend class Query;
         friend class QueryBuilder;
         friend class UntypedRelation;
+        friend class QueryIter;
         Entity(uint64_t id);
 
         uint64_t mId;
@@ -90,6 +91,7 @@ namespace RoxEngine {
     private:
         friend class World;
         friend class QueryBuilder;
+        friend class QueryIter;
         UntypedComponent(uint64_t id);
     };
     class UntypedRelation {
@@ -102,6 +104,7 @@ namespace RoxEngine {
         friend class Entity;
         template<typename T> requires ComponentConcept<T>
         friend class Relation;
+        friend class QueryIter;
         UntypedComponent tag;
         Entity target;
         //Ptr to the data, if tag is 0 sized do not write to this address 
@@ -206,9 +209,24 @@ namespace RoxEngine {
         }
         static void debugView();
     };
+    class Query;
+    class QueryIter {
+    public:
+        void* get(int termIndex);
+        UntypedRelation getRelation(int termIndex);
+    private:
+        friend Query;
+        
+        struct Impl;
+        QueryIter(Impl* impl, Query* query) : impl(impl), query(query) {}
+
+        //No need to delete this since its a pointer to a stack variable only valid on the each function
+        Impl* impl;
+        Query* query;
+    };
     class Query {
     public:
-        void each(std::function<void(Entity e)>);
+        void each(std::function<void(Entity e, QueryIter& iter)>);
     private:
         friend class QueryBuilder;
         Query(void* query);
@@ -240,8 +258,10 @@ namespace RoxEngine {
         };
         QueryBuilder& with(UntypedComponent component) { terms.emplace_back(Term(Op::AND, component)); return *this;}
         QueryBuilder& with_relation(UntypedComponent tag, Entity target) {terms.emplace_back(Term(Op::AND, tag, target)); return *this;}
+        QueryBuilder& with_relation(UntypedComponent tag) {terms.emplace_back(Term(Op::AND, tag, Term::Flags::RELATION)); return *this;}
         QueryBuilder& without(UntypedComponent component) { terms.emplace_back(Term(Op::NOT, component)); return *this;}
         QueryBuilder& without_relation(UntypedComponent tag, Entity target) {terms.emplace_back(Term(Op::NOT, tag, target)); return *this;}
+        QueryBuilder& without_relation(UntypedComponent tag) {terms.emplace_back(Term(Op::NOT, tag, Term::Flags::RELATION)); return *this;}
         QueryBuilder& or_with(UntypedComponent component) { terms.emplace_back(Term(Op::OR, component)); return *this;}
         QueryBuilder& or_with_relation(UntypedComponent tag, Entity target) {terms.emplace_back(Term(Op::OR, tag, target)); return *this;}
         QueryBuilder& group_begin() {terms.emplace_back(Term(Term::Flags::GROUP_BEGIN));return *this;}
@@ -264,8 +284,16 @@ namespace RoxEngine {
             return with_relation(World::component<T>(), target);
         }
         template<typename T>
+        QueryBuilder& with_relation() {
+            return with_relation(World::component<T>());
+        }
+        template<typename T>
         QueryBuilder& without_relation(Entity target) {
             return without_relation(World::component<T>(), target);
+        }
+        template<typename T>
+        QueryBuilder& without_relation() {
+            return without_relation(World::component<T>());
         }
         template<typename T>
         QueryBuilder& or_with_relation(Entity target) {

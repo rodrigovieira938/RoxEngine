@@ -22,6 +22,7 @@ struct TestGame final : public Game {
         std::string a = "<OOPS>";
     };
     struct ComponentA {
+        int a;
 	    bool operator ==(const ComponentA& other) const {return true;}
     };
     struct ComponentB {
@@ -61,7 +62,7 @@ struct TestGame final : public Game {
             .or_with<ComponentC>()
             .with<ComponentD>()
             .build();
-        query.each([](Entity e){
+        query.each([](Entity e, QueryIter& iter){
             //TODO: print name of the entity
             log::info("Match {}", e.name());
         });
@@ -73,16 +74,13 @@ struct TestGame final : public Game {
         meter.addRelation<ConvertsTo>(centimeter, 100.f);
 
         QueryBuilder()
-            .with_relation<ConvertsTo>(meter)
+            .with_relation<ConvertsTo>()
             .build()
-            .each([](Entity e){
-                log::info("{} is convertible to meter", e.name());
-            });
-        QueryBuilder()
-            .with_relation<ConvertsTo>(centimeter)
-            .build()
-            .each([](Entity e){
-                log::info("{} is convertible to centimeter", e.name());
+            .each([](Entity e, QueryIter& iter){
+                auto relation = iter.getRelation(0);
+                auto name = relation.getTarget().name();
+                auto convertsTo = (ConvertsTo*)relation.get();
+                log::info("{} is convertible to {}, conversion factor={}", e.name(), name, convertsTo->factor);
             });
 
         auto convert = [](float value, UntypedComponent from, UntypedComponent to){
