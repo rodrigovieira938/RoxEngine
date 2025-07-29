@@ -1,7 +1,6 @@
 #include "GLFW/glfw3.h"
 #include "RoxEngine/profiler/profiler.hpp"
 #include <RoxEngine/core/Engine.hpp>
-#include <RoxEngine/renderer/GraphicsContext.hpp>
 #include <RoxEngine/input/Input.hpp>
 #include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
 #include <RoxEngine/imgui/imgui.hpp>
@@ -17,8 +16,6 @@ namespace RoxEngine {
         PROFILER_BEGIN_SESSION("RoxEngine");
         if(!glfwInit()) return 1;
         mWindow = CreateRef<GLFW::Window>();
-        GraphicsContext::Init(RendererApi::OPENGL);
-        GraphicsContext::ClearColor(100.0f/255.0f,149.0f/255.0f,237.0f/255.0f);
         ImGuiLayer::Init();
         Input::Init();
         game->Init();
@@ -36,7 +33,6 @@ namespace RoxEngine {
         game.reset();
         Input::Shutdown();
         ImGuiLayer::Shutdown();
-        GraphicsContext::Shutdown();
         glfwTerminate();
         delete sEngine;
         PROFILER_END_SESSION();
