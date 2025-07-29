@@ -125,6 +125,7 @@ namespace RoxEngine {
     class Scene {
     public:
         Entity entity(const std::string& name="");
+        Entity lookup(const std::string& name);
         bool exists();
         void destroy();
     private:

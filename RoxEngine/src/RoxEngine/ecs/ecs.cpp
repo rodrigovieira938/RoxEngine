@@ -1,6 +1,5 @@
 #include "RoxEngine/core/Logger.hpp"
 #include "flecs.h"
-#include "flecs/addons/cpp/iter.hpp"
 #include "imgui.h"
 #include <RoxEngine/ecs/ecs.hpp>
 #include <RoxEngine/imgui/imgui.hpp>
@@ -98,7 +97,9 @@ namespace RoxEngine {
     Entity Scene::entity(const std::string& name) {
         return Entity(world.entity(name.data()).child_of(mId));
     }
-
+    Entity Scene::lookup(const std::string& name) {
+        return Entity(world.scope(mId).lookup(name.c_str(), "/", "/").raw_id());
+    }
     Scene World::createScene(const std::string& name) {
         return Scene(reinterpret_cast<uint64_t>(world.entity(name.data()).raw_id()));
     }

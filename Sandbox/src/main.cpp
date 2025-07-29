@@ -106,13 +106,18 @@ struct TestGame final : public Game {
         World::component<ComponentD>().name("TestGame::ComponentD");
 
         Scene s = World::createScene("TestGameScene");
+        
+        
         Entity e = s.entity();
         e.name("Entity");
         e.addComponent<TestComponent>("First");
-
         TestQuery(s);
         TestRelations(s);
-
+        
+        s.entity("lookupEntity");
+        if(auto e = s.lookup("lookupEntity"); e.exists()) {
+            log::info("LookupEntity found");
+        }
     	va = VertexArray::Create();
         {
             float vertices[] = {
