@@ -1,4 +1,5 @@
 #include "RoxEngine/ecs/ecs.hpp"
+#include "RoxEngine/slang/slang.hpp"
 #include <RoxEngine/RoxEngine.hpp>
 #include <glm/glm.hpp>
 
@@ -110,6 +111,9 @@ struct TestGame final : public Game {
         if(auto e = s.lookup("lookupEntity"); e.exists()) {
             log::info("LookupEntity found");
         }
+        SlangLayer::Init();
+        auto module = SlangLayer::CompileModule("res://shaders/basic.slang");
+        
     }
     void Update() override {
         if(Input::GetKeyState(Key::W) != KeyState::NONE)
