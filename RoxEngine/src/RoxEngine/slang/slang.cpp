@@ -4,8 +4,10 @@
 #include <RoxEngine/slang/slang.hpp>
 #include <cstddef>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 namespace RoxEngine {    
     Slang::ComPtr<slang::IGlobalSession> sGlobalSession = nullptr;
@@ -373,7 +375,12 @@ namespace RoxEngine {
                 t.rowCount = slangType->getRowCount();
                 t.size = slangTypeLayout->getSize();
                 t.innerType = ExtractTypeRecursive(slangType->getElementType(), slangTypeLayout->getElementTypeLayout(), typeSet);
-                t.stride = slangTypeLayout->getElementTypeLayout()->getStride();
+                //FIXME: Find another way of calculating stride for mat3 when layout is std140
+                if(t.colCount == 3 && t.rowCount == 3) {
+                    t.stride = 16;                    
+                } else {
+                    t.stride = slangTypeLayout->getElementTypeLayout()->getStride();
+                }
                 break;
             }
             case Kind::Array: {
@@ -381,7 +388,9 @@ namespace RoxEngine {
                 t.rowCount = slangType->getElementCount();
                 t.size = slangTypeLayout->getSize();
                 t.innerType = ExtractTypeRecursive(slangType->getElementType(), slangTypeLayout->getElementTypeLayout(), typeSet);
-                t.stride = slangTypeLayout->getElementTypeLayout()->getStride();
+                //t.stride = slangTypeLayout->getElementTypeLayout()->getStride();
+                //FIXME: try to not do this and use the api. This is here because of std140 errors
+                t.stride = slangTypeLayout->getStride() / t.rowCount;
                 break;
             }
 
@@ -408,7 +417,7 @@ namespace RoxEngine {
         auto walkContantBuffer = [](slang::VariableLayoutReflection* cbuffer, std::unordered_set<ShaderReflection::Type>& typeSet){
             auto innerTypeLayout = cbuffer->getTypeLayout()->getElementTypeLayout();
             auto innerType = cbuffer->getTypeLayout()->getType()->getElementType();
-
+            
             auto type_name = innerType->getName();
             ModuleReflection::UniformBuffer ubo;
             for(unsigned int i = 0; i < innerType->getFieldCount(); i++) {
@@ -441,6 +450,70 @@ namespace RoxEngine {
             std::move(typeSet),
             std::move(ubos)
         };
+    }
+    std::string SlangLayer::LinkModules(std::span<Slang::ComPtr<slang::IModule>> modules) {
+        if(modules.size() == 0) {
+            return "";
+        }
+        Slang::ComPtr<slang::IEntryPoint> vertex_entrypoint = nullptr;
+        Slang::ComPtr<slang::IEntryPoint> fragment_entrypoint = nullptr;
+
+        for(auto& module : modules) {
+            //TODO: get the chosen entry point from the main module (modules[0])
+            if(!vertex_entrypoint)
+                module->findEntryPointByName("basic_vmain", vertex_entrypoint.writeRef());
+            if(!fragment_entrypoint)
+                module->findEntryPointByName("basic_fmain", fragment_entrypoint.writeRef());
+
+            if(vertex_entrypoint && fragment_entrypoint)
+                break;
+        }
+
+        std::vector<slang::IComponentType*> components(modules.size() + 2);
+        for(int i = 0; i < modules.size(); i++) {
+            components[i] = modules[i];
+        }
+        components[components.size()-2] = vertex_entrypoint;
+        components[components.size()-1] = fragment_entrypoint;
+
+        Slang::ComPtr<slang::IComponentType> program;
+        sSession->createCompositeComponentType(components.data(), components.size(), program.writeRef());
+        Slang::ComPtr<slang::IBlob> diagnosticBlob = nullptr;
+        Slang::ComPtr<slang::IComponentType> linkedProgram = nullptr;
+        program->link(linkedProgram.writeRef(), diagnosticBlob.writeRef());
+
+        if (diagnosticBlob)
+        {
+            log::error("Failed to link the program: {}", static_cast<const char*>(diagnosticBlob->getBufferPointer()));
+            return 0;
+        }
+
+        Slang::ComPtr<slang::IBlob> vertex_diagnostic, fragment_diagnostic;
+        Slang::ComPtr<slang::IBlob> vertex_code, fragment_code;
+
+
+        linkedProgram->getEntryPointCode(0, 0, vertex_code.writeRef(), vertex_diagnostic.writeRef());
+        linkedProgram->getEntryPointCode(1, 0, fragment_code.writeRef(), fragment_diagnostic.writeRef());
+
+        if (vertex_diagnostic || fragment_diagnostic)
+        {
+            if (vertex_diagnostic) 
+                log::error("Vertex shader error: {}", static_cast<const char*>(vertex_diagnostic->getBufferPointer()));
+            if (fragment_diagnostic)
+                log::error("Fragment shader error: {}", static_cast<const char*>(fragment_diagnostic->getBufferPointer()));
+            return 0;
+        }
+
+        std::stringstream stream;
+        stream << "  #define VERTEX_SHADER\n"; //2 spaces at the beggining to be possible to make the line a comment
+        stream << "#ifdef VERTEX_SHADER\n";
+        stream << (const char*)vertex_code->getBufferPointer();
+        stream << "#else\n";
+        stream << (const char*)fragment_code->getBufferPointer();
+        stream << "#endif";
+
+
+        return stream.str();
     }
     void SlangLayer::Shutdown()
     {

@@ -1,6 +1,8 @@
 #include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/ecs/ecs.hpp"
 #include "RoxEngine/slang/slang.hpp"
+#include "slang-com-ptr.h"
+#include "slang.h"
 #include <RoxEngine/RoxEngine.hpp>
 #include <glm/glm.hpp>
 
@@ -115,7 +117,10 @@ struct TestGame final : public Game {
         SlangLayer::Init();
         auto module = SlangLayer::CompileModule("res://shaders/basic.slang");
         auto moduleReflection = SlangLayer::GetModuleReflection(module);
-        
+        std::array<Slang::ComPtr<slang::IModule>, 1> modules = {module}; 
+        auto shader = SlangLayer::LinkModules(modules);
+        log::info("Shader: \n{}", shader);
+
         log::info("Offsets");
         log::info("\tscalarFloat = {}", moduleReflection.lookup("scalarFloat").value_or(-1));
         log::info("\tscalarInt = {}", moduleReflection.lookup("scalarInt").value_or(-1));

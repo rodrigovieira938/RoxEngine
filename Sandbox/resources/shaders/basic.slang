@@ -25,9 +25,7 @@ cbuffer TestBuffer{
 VertexStageOutput basic_vmain(float3 position : POSITION)
 {
     VertexStageOutput output;
-
-    output.sv_position = mul(matrix,float4(position, 1.0));
-    
+    output.sv_position = mul(matrix,float4(position, scalarInt));
     return output;
 }
 

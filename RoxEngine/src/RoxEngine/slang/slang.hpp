@@ -1,8 +1,10 @@
 #pragma once
 #include <optional>
+#include <span>
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <RoxEngine/utils/Utils.hpp>
 #include "slang-com-ptr.h"
 #include "slang.h"
 
@@ -82,6 +84,7 @@ namespace RoxEngine {
         static void Init();
         static Slang::ComPtr<slang::IModule> CompileModule(const std::string& filepath);
         static ModuleReflection GetModuleReflection(Slang::ComPtr<slang::IModule> module);
+        static std::string LinkModules(std::span<Slang::ComPtr<slang::IModule>> modules);
         static void Shutdown();
     };
 };
