@@ -375,11 +375,17 @@ namespace RoxEngine {
                 t.rowCount = slangType->getRowCount();
                 t.size = slangTypeLayout->getSize();
                 t.innerType = ExtractTypeRecursive(slangType->getElementType(), slangTypeLayout->getElementTypeLayout(), typeSet);
-                //FIXME: Find another way of calculating stride for mat3 when layout is std140
-                if(t.colCount == 3 && t.rowCount == 3) {
-                    t.stride = 16;                    
-                } else {
+                switch (slangTypeLayout->getMatrixLayoutMode()) {
+                case SLANG_MATRIX_LAYOUT_MODE_UNKNOWN:
+                    //Resort to this method if layout mode is unknown
                     t.stride = slangTypeLayout->getElementTypeLayout()->getStride();
+                    break;
+                case SLANG_MATRIX_LAYOUT_ROW_MAJOR:
+                    t.stride = t.size / t.rowCount;
+                    break;
+                case SLANG_MATRIX_LAYOUT_COLUMN_MAJOR:
+                    t.stride = t.size / t.colCount;
+                    break;
                 }
                 break;
             }
@@ -417,7 +423,7 @@ namespace RoxEngine {
         auto walkContantBuffer = [](slang::VariableLayoutReflection* cbuffer, std::unordered_set<ShaderReflection::Type>& typeSet){
             auto innerTypeLayout = cbuffer->getTypeLayout()->getElementTypeLayout();
             auto innerType = cbuffer->getTypeLayout()->getType()->getElementType();
-            
+
             auto type_name = innerType->getName();
             ModuleReflection::UniformBuffer ubo;
             for(unsigned int i = 0; i < innerType->getFieldCount(); i++) {
@@ -511,7 +517,7 @@ namespace RoxEngine {
         stream << "#else\n";
         stream << (const char*)fragment_code->getBufferPointer();
         stream << "#endif";
-
+        
 
         return stream.str();
     }
