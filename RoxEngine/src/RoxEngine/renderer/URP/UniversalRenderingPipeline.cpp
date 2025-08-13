@@ -2,47 +2,39 @@
 #include <RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp>
 
 namespace RoxEngine {
-    UniversalRenderingPipeline::UniversalRenderingPipeline(Ref<alina::IDevice> device) {
+    UniversalRenderingPipeline::UniversalRenderingPipeline(alina::Device device) {
         mDevice = device;
         mCmd = std::shared_ptr<alina::ICommandList>(mDevice->createCommandList());
         mCmd->begin();
     }
     void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh) {
-        if(mesh.GetIndices().size() == 0) return;
-        auto vb = 
-            mDevice->createBuffer(alina::BufferDesc()
-                    .setDebugName("VertexBuffer - UniversalRenderingPipeline::DrawMesh")
-                    .setType(alina::BufferType::VERTEX));
-        auto ib =
-            mDevice->createBuffer(
-                alina::BufferDesc()
-                    .setDebugName("VertexBuffer - UniversalRenderingPipeline::DrawMesh")
-                    .setType(alina::BufferType::INDEX));
-        //TODO: add support for uvs and normals
-        auto cmd = mDevice->createCommandList();
-        cmd->begin();
-        cmd->writeBuffer(vb, mesh.GetPosition().data(), mesh.GetPosition().size() * sizeof(glm::vec3), 0);
-        cmd->writeBuffer(ib, mesh.GetIndices().data(), mesh.GetIndices().size() * sizeof(uint32_t), 0);
-        cmd->end();
-        mDevice->execute(cmd);
+        if(mesh.GetIndices().size() == 0 || mesh.GetPosition().size() == 0) return;
+        auto meshData = mesh.GetData();
+        if(mesh.NeedChange()) {
+            meshData.BakeGPUResources(mDevice);
+            mesh.SetNeedCHange(false);
+        }
+        if(!meshData.position_vb || !meshData.indices_vb) {
+            return;
+        }
+        std::vector<alina::BindVertexBuffer> bindVBs = {alina::BindVertexBuffer().setBuffer(meshData.position_vb).setStride(sizeof(glm::vec3))};
+        if(meshData.uvs_vb)
+            bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData.uvs_vb).setStride(sizeof(glm::vec2)));
+        if(meshData.normals_vb)
+            bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData.normals_vb).setStride(sizeof(glm::vec3)));
+
         auto pipeline = mDevice->createGraphicsPipeline(
         alina::GraphicsPipelineDesc()
-            .setInputLayout(
-                mDevice->createInputLayout({
-                    alina::VertexAttributeDesc().setFormat(alina::VertexAttributeFormat::Float).setArraySize(3).setStride(sizeof(glm::vec3)),
-                })
-            )
+            .setInputLayout(meshData.inputLayout)
         );
         mCmd->bindGraphicsPipeline(pipeline);
-        mCmd->bindVertexBuffers({
-            alina::BindVertexBuffer().setBuffer(vb).setStride(sizeof(glm::vec3)),
-        });
-        mCmd->bindIndexBuffer(ib);
+        mCmd->bindVertexBuffers(bindVBs);
+        mCmd->bindIndexBuffer(meshData.indices_vb);
         mCmd->drawIndexed(alina::DrawArguments().setVertexCount(mesh.GetIndices().size()));
     }
     void UniversalRenderingPipeline::Render() {
         mCmd->end();
-        mDevice->execute(mCmd.get());
+        mDevice->execute(mCmd);
         mCmd->begin();
     }
 }

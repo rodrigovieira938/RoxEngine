@@ -9,7 +9,7 @@ namespace RoxEngine {
         void DrawMesh(RoxEngine::Mesh& mesh);
         void Render();
     private:
-        Ref<alina::IDevice> mDevice;
-        Ref<alina::ICommandList> mCmd;
+        alina::Device mDevice;
+        alina::CommandList mCmd;
     };
 }

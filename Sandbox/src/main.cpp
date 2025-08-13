@@ -114,6 +114,7 @@ struct TestGame final : public Game {
             0, 2, 1,
     	    0, 3, 2
         });
+        mesh.ChangedData();
         //Initialize component's friendly name
         World::component<TestComponent>().name("TestGame::TestComponent");
         World::component<ComponentA>().name("TestGame::ComponentA");
