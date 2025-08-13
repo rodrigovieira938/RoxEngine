@@ -1,15 +1,19 @@
 #include "RoxEngine/profiler/profiler.hpp"
+#include "alina/alina.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <string>
 #include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
+#include <alina/opengl.hpp>
 #define GET_WINDOW ((GLFWwindow*)mWindow)
 
 namespace RoxEngine::GLFW {
-    Window::Window() {
+    Window::Window(RendererBackend backend) {
         PROFILER_FUNCTION();
         mWindow = glfwCreateWindow(600, 600, "RoxEngine - APP", nullptr, nullptr);
         glfwMakeContextCurrent(GET_WINDOW);
+        //Backend can only be opengl for now
+        mDevice = Ref<alina::IDevice>(alina::opengl::CreateDevice(glfwGetProcAddress));
     }
     Window::~Window() {
         PROFILER_FUNCTION();

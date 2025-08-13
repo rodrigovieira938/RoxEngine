@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <alina/alina.hpp>
+#include <RoxEngine/utils/Utils.hpp>
 namespace RoxEngine {
     class Window {
     public:
@@ -12,5 +14,6 @@ namespace RoxEngine {
         virtual std::pair<int,int> GetSize() = 0;
         virtual void SetMaximized(bool val) = 0;
         virtual bool IsMaximized() = 0;
+        virtual Ref<alina::IDevice> GetDevice() = 0;
     };
 }
