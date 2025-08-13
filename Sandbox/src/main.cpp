@@ -1,7 +1,9 @@
 #include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/ecs/ecs.hpp"
 #include "RoxEngine/renderer/Mesh.hpp"
+#include "RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp"
 #include "RoxEngine/slang/slang.hpp"
+#include "RoxEngine/utils/Utils.hpp"
 #include "slang-com-ptr.h"
 #include "slang.h"
 #include <RoxEngine/RoxEngine.hpp>
@@ -10,6 +12,8 @@
 using namespace RoxEngine;
 
 struct TestGame final : public Game {
+    Ref<UniversalRenderingPipeline> pipeline;
+    Mesh mesh;
     struct TestComponent
     {
         TestComponent() {};
@@ -94,20 +98,22 @@ struct TestGame final : public Game {
         meter.removeRelation<ConvertsTo>(centimeter);
         log::info("Converting 50m to m = {}", convert(50,meter, centimeter));
     }
+    TestGame() : pipeline(){
+
+    }
     void Init() override {
+        pipeline = CreateRef<UniversalRenderingPipeline>(Engine::Get()->GetWindow()->GetDevice());
         //Simple quad mesh
-        Mesh m;
-        m.SetPosition({
+        mesh.SetPosition({
             {-1.0f, -1.0f, 0.0f},
             {-1.0f,  1.0f, 0.0f},
             { 1.0f,  1.0f, 0.0f},
             { 1.0f, -1.0f, 0.0f}
         });
-        m.SetIndices({
+        mesh.SetIndices({
             0, 2, 1,
     	    0, 3, 2
         });
-
         //Initialize component's friendly name
         World::component<TestComponent>().name("TestGame::TestComponent");
         World::component<ComponentA>().name("TestGame::ComponentA");
@@ -201,6 +207,8 @@ struct TestGame final : public Game {
                log::info("W KEY action: {}",static_cast<int>(Input::GetKeyState(Key::W)));
     }
     void Render() override {
+        pipeline->DrawMesh(mesh);
+        pipeline->Render();
         World::debugView();
     }
 };
