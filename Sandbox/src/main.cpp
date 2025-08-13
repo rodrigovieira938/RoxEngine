@@ -1,5 +1,6 @@
 #include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/ecs/ecs.hpp"
+#include "RoxEngine/renderer/Mesh.hpp"
 #include "RoxEngine/slang/slang.hpp"
 #include "slang-com-ptr.h"
 #include "slang.h"
@@ -94,6 +95,19 @@ struct TestGame final : public Game {
         log::info("Converting 50m to m = {}", convert(50,meter, centimeter));
     }
     void Init() override {
+        //Simple quad mesh
+        Mesh m;
+        m.SetPosition({
+            {-1.0f, -1.0f, 0.0f},
+            {-1.0f,  1.0f, 0.0f},
+            { 1.0f,  1.0f, 0.0f},
+            { 1.0f, -1.0f, 0.0f}
+        });
+        m.SetIndices({
+            0, 2, 1,
+    	    0, 3, 2
+        });
+
         //Initialize component's friendly name
         World::component<TestComponent>().name("TestGame::TestComponent");
         World::component<ComponentA>().name("TestGame::ComponentA");
