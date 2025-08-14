@@ -41,11 +41,7 @@ namespace RoxEngine {
                     attrs.push_back(alina::VertexAttributeDesc().setFormat(alina::VertexAttributeFormat::Float).setArraySize(2).setStride(sizeof(glm::vec2)).setBufferIndex(1));
                 if(normals_vb)
                     attrs.push_back(alina::VertexAttributeDesc().setFormat(alina::VertexAttributeFormat::Float).setArraySize(3).setStride(sizeof(glm::vec3)).setBufferIndex(normals_vb?2:1));
-                if(inputLayoutPool) {
-                    inputLayoutPool->Get(attrs);
-                } else {
-                    inputLayout = device->createInputLayout(attrs);
-                }
+                inputLayout = inputLayoutPool->Get(attrs);
             }
         };
         Mesh() : mData(CreateRef<Data>()) {}
