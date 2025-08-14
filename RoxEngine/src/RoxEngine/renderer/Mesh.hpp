@@ -3,6 +3,7 @@
 #include <RoxEngine/utils/Utils.hpp>
 #include <glm/glm.hpp>
 #include <vector>
+#include <RoxEngine/renderer/alina/ResourcePool.hpp>
 
 namespace RoxEngine {
     class Mesh {
@@ -16,7 +17,7 @@ namespace RoxEngine {
             alina::Buffer position_vb, uvs_vb, normals_vb, indices_vb;
             alina::InputLayout inputLayout;
 
-            void BakeGPUResources(alina::Device device) {
+            void BakeGPUResources(alina::Device device, AlinaGlue::InputLayoutPool* inputLayoutPool = nullptr) {
                 auto cmd = device->createCommandList();
                 size_t vertexCount = position.size();
                 position_vb = device->createBuffer(alina::BufferDesc().setDebugName("MESH - Position VB").setType(alina::BufferType::VERTEX));
@@ -40,7 +41,11 @@ namespace RoxEngine {
                     attrs.push_back(alina::VertexAttributeDesc().setFormat(alina::VertexAttributeFormat::Float).setArraySize(2).setStride(sizeof(glm::vec2)).setBufferIndex(1));
                 if(normals_vb)
                     attrs.push_back(alina::VertexAttributeDesc().setFormat(alina::VertexAttributeFormat::Float).setArraySize(3).setStride(sizeof(glm::vec3)).setBufferIndex(normals_vb?2:1));
-                inputLayout = device->createInputLayout(attrs);
+                if(inputLayoutPool) {
+                    inputLayoutPool->Get(attrs);
+                } else {
+                    inputLayout = device->createInputLayout(attrs);
+                }
             }
         };
         Mesh() : mData(CreateRef<Data>()) {}
@@ -56,7 +61,7 @@ namespace RoxEngine {
         inline Data& GetData() {return *mData.get();};
         inline void ChangedData() {mNeedChange = true;}
         inline bool NeedChange() {return mNeedChange;}
-        inline void SetNeedCHange(bool value) {mNeedChange = value;}
+        inline void SetNeedChange(bool value) {mNeedChange = value;}
     private:
         Mesh(Ref<Data>& data){
             mData = CreateRef<Data>();
