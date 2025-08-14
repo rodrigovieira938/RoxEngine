@@ -457,7 +457,7 @@ namespace RoxEngine {
             std::move(ubos)
         };
     }
-    std::string SlangLayer::LinkModules(std::span<Slang::ComPtr<slang::IModule>> modules) {
+    std::string SlangLayer::LinkModules(std::span<Slang::ComPtr<slang::IModule>> modules, bool vertex_shader) {
         if(modules.size() == 0) {
             return "";
         }
@@ -475,12 +475,15 @@ namespace RoxEngine {
                 break;
         }
 
-        std::vector<slang::IComponentType*> components(modules.size() + 2);
+        std::vector<slang::IComponentType*> components(modules.size() + 1);
         for(int i = 0; i < modules.size(); i++) {
             components[i] = modules[i];
         }
-        components[components.size()-2] = vertex_entrypoint;
-        components[components.size()-1] = fragment_entrypoint;
+        if(vertex_shader) {
+            components[components.size()-1] = vertex_entrypoint;
+        } else {
+            components[components.size()-1] = fragment_entrypoint;
+        }
 
         Slang::ComPtr<slang::IComponentType> program;
         sSession->createCompositeComponentType(components.data(), components.size(), program.writeRef());
@@ -494,32 +497,24 @@ namespace RoxEngine {
             return 0;
         }
 
-        Slang::ComPtr<slang::IBlob> vertex_diagnostic, fragment_diagnostic;
-        Slang::ComPtr<slang::IBlob> vertex_code, fragment_code;
+        Slang::ComPtr<slang::IBlob> diagnostic;
+        Slang::ComPtr<slang::IBlob> code;
 
 
-        linkedProgram->getEntryPointCode(0, 0, vertex_code.writeRef(), vertex_diagnostic.writeRef());
-        linkedProgram->getEntryPointCode(1, 0, fragment_code.writeRef(), fragment_diagnostic.writeRef());
+        linkedProgram->getEntryPointCode(0, 0, code.writeRef(), diagnostic.writeRef());
 
-        if (vertex_diagnostic || fragment_diagnostic)
+        if (diagnostic)
         {
-            if (vertex_diagnostic) 
-                log::error("Vertex shader error: {}", static_cast<const char*>(vertex_diagnostic->getBufferPointer()));
-            if (fragment_diagnostic)
-                log::error("Fragment shader error: {}", static_cast<const char*>(fragment_diagnostic->getBufferPointer()));
+            if (vertex_shader) {
+                log::error("Vertex shader error: {}", static_cast<const char*>(diagnostic->getBufferPointer()));
+            }
+            else {
+                log::error("Fragment shader error: {}", static_cast<const char*>(diagnostic->getBufferPointer()));
+            }
             return 0;
         }
 
-        std::stringstream stream;
-        stream << "  #define VERTEX_SHADER\n"; //2 spaces at the beggining to be possible to make the line a comment
-        stream << "#ifdef VERTEX_SHADER\n";
-        stream << (const char*)vertex_code->getBufferPointer();
-        stream << "#else\n";
-        stream << (const char*)fragment_code->getBufferPointer();
-        stream << "#endif";
-        
-
-        return stream.str();
+        return std::string((char*)code->getBufferPointer());
     }
     void SlangLayer::Shutdown()
     {

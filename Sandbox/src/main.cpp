@@ -1,9 +1,11 @@
 #include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/ecs/ecs.hpp"
+#include "RoxEngine/renderer/Material.hpp"
 #include "RoxEngine/renderer/Mesh.hpp"
 #include "RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp"
 #include "RoxEngine/slang/slang.hpp"
 #include "RoxEngine/utils/Utils.hpp"
+#include "alina/alina.hpp"
 #include "slang-com-ptr.h"
 #include "slang.h"
 #include <RoxEngine/RoxEngine.hpp>
@@ -14,6 +16,9 @@ using namespace RoxEngine;
 struct TestGame final : public Game {
     Ref<UniversalRenderingPipeline> pipeline;
     Mesh mesh;
+    std::optional<Material> material;
+    alina::Shader vertex_shader, fragment_shader;
+
     struct TestComponent
     {
         TestComponent() {};
@@ -137,78 +142,21 @@ struct TestGame final : public Game {
         }
         SlangLayer::Init();
         auto module = SlangLayer::CompileModule("res://shaders/basic.slang");
-        auto moduleReflection = SlangLayer::GetModuleReflection(module);
+        auto moduleReflection = CreateRef<ModuleReflection>(SlangLayer::GetModuleReflection(module));
         std::array<Slang::ComPtr<slang::IModule>, 1> modules = {module}; 
-        auto shader = SlangLayer::LinkModules(modules);
-        log::info("Shader: \n{}", shader);
-
-        log::info("Offsets");
-        log::info("\tscalarFloat = {}", moduleReflection.lookup("scalarFloat").value_or(-1));
-        log::info("\tscalarInt = {}", moduleReflection.lookup("scalarInt").value_or(-1));
-        log::info("\tscalarBool = {}", moduleReflection.lookup("scalarBool").value_or(-1));
-
-        // Vectors with component indexing
-        log::info("\tvector2 = {}", moduleReflection.lookup("vector2").value_or(-1));
-        for (int i = 0; i < 2; ++i) {
-            log::info("\t\tvector2[{}] = {}", i, moduleReflection.lookup(std::format("vector2[{}]", i)).value_or(-1));
-        }
-
-        log::info("\tvector3 = {}", moduleReflection.lookup("vector3").value_or(-1));
-        for (int i = 0; i < 3; ++i) {
-            log::info("\t\tvector3[{}] = {}", i, moduleReflection.lookup(std::format("vector3[{}]", i)).value_or(-1));
-        }
-
-        log::info("\tvector4 = {}", moduleReflection.lookup("vector4").value_or(-1));
-        for (int i = 0; i < 4; ++i) {
-            log::info("\t\tvector4[{}] = {}", i, moduleReflection.lookup(std::format("vector4[{}]", i)).value_or(-1));
-        }
-
-        // Matrices with column and row indexing
-        log::info("\tmatrix3x3 = {}", moduleReflection.lookup("matrix3x3").value_or(-1));
-        for (int col = 0; col < 3; ++col) {
-            log::info("\t\tmatrix3x3[{}] = {}", col, moduleReflection.lookup(std::format("matrix3x3[{}]", col)).value_or(-1));
-            for (int row = 0; row < 3; ++row) {
-                log::info("\t\t\tmatrix3x3[{}][{}] = {}", col, row, moduleReflection.lookup(std::format("matrix3x3[{}][{}]", col, row)).value_or(-1));
-            }
-        }
-
-        log::info("\tmatrix4x4 = {}", moduleReflection.lookup("matrix4x4").value_or(-1));
-        for (int col = 0; col < 4; ++col) {
-            log::info("\t\tmatrix4x4[{}] = {}", col, moduleReflection.lookup(std::format("matrix4x4[{}]", col)).value_or(-1));
-            for (int row = 0; row < 4; ++row) {
-                log::info("\t\t\tmatrix4x4[{}][{}] = {}", col, row, moduleReflection.lookup(std::format("matrix4x4[{}][{}]", col, row)).value_or(-1));
-            }
-        }
-
-        // 1D array
-        log::info("\tarray1D = {}", moduleReflection.lookup("array1D").value_or(-1));
-        for (int i = 0; i < 5; ++i) {
-            log::info("\t\tarray1D[{}] = {}", i, moduleReflection.lookup(std::format("array1D[{}]", i)).value_or(-1));
-        }
-        // 2D array
-        log::info("\tarray2D = {}", moduleReflection.lookup("array2D").value_or(-1));
-        for (int i = 0; i < 3; ++i) {
-            for (int j = 0; j < 4; ++j) {
-                log::info("\t\tarray2D[{}][{}] = {}", i, j, moduleReflection.lookup(std::format("array2D[{}][{}]", i, j)).value_or(-1));
-            }
-        }
-
-        // 3D array
-        log::info("\tarray3D = {}", moduleReflection.lookup("array3D").value_or(-1));
-        for (int i = 0; i < 2; ++i) {
-            for (int j = 0; j < 3; ++j) {
-                for (int k = 0; k < 4; ++k) {
-                    log::info("\t\tarray3D[{}][{}][{}] = {}", i, j, k, moduleReflection.lookup(std::format("array3D[{}][{}][{}]", i, j, k)).value_or(-1));
-                }
-            }
-        }
+        auto vertex_shader_src = SlangLayer::LinkModules(modules);
+        auto fragment_shader_src = SlangLayer::LinkModules(modules, false);
+        auto device = Engine::Get()->GetWindow()->GetDevice();
+        vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_shader_src.data(), vertex_shader_src.size());
+        fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_shader_src.data(), fragment_shader_src.size()); 
+        material = Material(vertex_shader, fragment_shader, moduleReflection);
     }
     void Update() override {
         if(Input::GetKeyState(Key::W) != KeyState::NONE)
                log::info("W KEY action: {}",static_cast<int>(Input::GetKeyState(Key::W)));
     }
     void Render() override {
-        pipeline->DrawMesh(mesh);
+        pipeline->DrawMesh(mesh, material.value());
         pipeline->Render();
         World::debugView();
     }

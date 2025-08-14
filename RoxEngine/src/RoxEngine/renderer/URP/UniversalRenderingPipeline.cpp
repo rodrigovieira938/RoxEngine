@@ -1,3 +1,4 @@
+#include "RoxEngine/renderer/Material.hpp"
 #include "alina/alina.hpp"
 #include <RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp>
 
@@ -17,7 +18,7 @@ namespace RoxEngine {
         );
         begin();
     }
-    void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh) {
+    void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material) {
         if(mesh.GetIndices().size() == 0 || mesh.GetPosition().size() == 0) return;
         auto meshData = mesh.GetData();
         if(mesh.NeedChange()) {
@@ -32,7 +33,11 @@ namespace RoxEngine {
             bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData.uvs_vb).setStride(sizeof(glm::vec2)));
         if(meshData.normals_vb)
             bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData.normals_vb).setStride(sizeof(glm::vec3)));
-        auto pipeline = mGraphicsPipelinePool.Get(alina::GraphicsPipelineDesc().setInputLayout(meshData.inputLayout));
+        auto pipeline_desc = alina::GraphicsPipelineDesc()
+            .setInputLayout(meshData.inputLayout)
+            .setVertexShader(material.GetVertexShader())
+            .setFragmentShader(material.GetFragmentShader());
+        auto pipeline = mGraphicsPipelinePool.Get(pipeline_desc);
         mCmd->bindGraphicsPipeline(pipeline);
         mCmd->bindVertexBuffers(bindVBs);
         mCmd->bindIndexBuffer(meshData.indices_vb);

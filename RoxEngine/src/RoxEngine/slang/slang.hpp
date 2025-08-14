@@ -84,7 +84,7 @@ namespace RoxEngine {
         static void Init();
         static Slang::ComPtr<slang::IModule> CompileModule(const std::string& filepath);
         static ModuleReflection GetModuleReflection(Slang::ComPtr<slang::IModule> module);
-        static std::string LinkModules(std::span<Slang::ComPtr<slang::IModule>> modules);
+        static std::string LinkModules(std::span<Slang::ComPtr<slang::IModule>> modules, bool vertex_shader = true);
         static void Shutdown();
     };
 };
