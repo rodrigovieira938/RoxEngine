@@ -5,7 +5,17 @@ namespace RoxEngine {
     UniversalRenderingPipeline::UniversalRenderingPipeline(alina::Device device) : mInputLayoutPool(device), mGraphicsPipelinePool(device) {
         mDevice = device;
         mCmd = mDevice->createCommandList();
-        mCmd->begin();
+        mFbTex = device->createTexture(
+            alina::TextureDesc().setDebugName("URP Framebuffer Texture").setWidth(800).setHeight(800)
+        );
+        mFb = device->createFramebuffer(
+            alina::FramebufferDesc()
+                .setColorAttachments({
+                    alina::FramebufferAttachment().setTexture(mFbTex)
+                })
+                .setDebugName("URP Framebuffer")
+        );
+        begin();
     }
     void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh) {
         if(mesh.GetIndices().size() == 0 || mesh.GetPosition().size() == 0) return;
@@ -29,8 +39,14 @@ namespace RoxEngine {
         mCmd->drawIndexed(alina::DrawArguments().setVertexCount(mesh.GetIndices().size()));
     }
     void UniversalRenderingPipeline::Render() {
+        mCmd->endRenderPass();
         mCmd->end();
         mDevice->execute(mCmd);
+        begin();
+    }
+    void UniversalRenderingPipeline::begin() {
         mCmd->begin();
+        mCmd->beginRenderPass(alina::RenderPassDesc().setFramebuffer(mFb).setAttachmentsLoadOp({alina::RenderPassLoadOp::CLEAR}).setAttachmentsClearColors({{0,0,0,0}}));
+        mCmd->beginSubPass(alina::SubPassDesc().setAttachments({alina::SubPassAttachment::COLOR}));
     }
 }

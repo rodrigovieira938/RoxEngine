@@ -10,6 +10,8 @@
 namespace RoxEngine::GLFW {
     Window::Window(RendererBackend backend) {
         PROFILER_FUNCTION();
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
         mWindow = glfwCreateWindow(600, 600, "RoxEngine - APP", nullptr, nullptr);
         glfwMakeContextCurrent(GET_WINDOW);
         //Backend can only be opengl for now

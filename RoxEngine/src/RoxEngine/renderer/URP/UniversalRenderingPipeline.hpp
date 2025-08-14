@@ -9,9 +9,13 @@ namespace RoxEngine {
         void DrawMesh(RoxEngine::Mesh& mesh);
         void Render();
     private:
+        void begin();
+
         AlinaGlue::InputLayoutPool mInputLayoutPool;
         AlinaGlue::GraphicsPipelinePool mGraphicsPipelinePool;
         alina::Device mDevice;
         alina::CommandList mCmd;
+        alina::Framebuffer mFb;
+        alina::Texture mFbTex;
     };
 }
