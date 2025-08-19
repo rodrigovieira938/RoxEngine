@@ -72,9 +72,14 @@ namespace RoxEngine {
         };
         struct UniformBuffer {
             std::string name;
+            size_t size;
             std::vector<Field> fields;
         };
-        std::optional<size_t> lookup(std::string_view path);
+        struct LookupResult {
+            size_t offset;
+            size_t ubo_index;
+        };
+        std::optional<LookupResult> lookup(std::string_view path);
         std::unordered_set<ShaderReflection::Type> types;
         std::vector<ModuleReflection::UniformBuffer> ubos;
     };

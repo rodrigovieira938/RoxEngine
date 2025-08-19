@@ -71,21 +71,21 @@ namespace RoxEngine {
         uint32_t mRefCount = 1;
     };
 
-    std::optional<size_t> ModuleReflection::lookup(std::string_view path) {
-        auto lookupUbo = [](std::string_view name,const ShaderReflection::Type** currentField,size_t& offset, std::vector<ModuleReflection::UniformBuffer>& ubos) -> ModuleReflection::UniformBuffer*{
+    std::optional<ModuleReflection::LookupResult> ModuleReflection::lookup(std::string_view path) {
+        auto lookupUbo = [](std::string_view name,const ShaderReflection::Type** currentField,size_t& offset, std::vector<ModuleReflection::UniformBuffer>& ubos) -> size_t{
             for (auto it = ubos.begin(); it != ubos.end(); ++it)
             {
                 if (it->name == name)
-                    return &(*it);
+                    return ubos.end() - it;
                 for(auto field = it->fields.begin(); field != it->fields.end(); ++field) {
                     if(field->name == name) {
                         offset+=field->offset;
                         *currentField = field->type;
-                        return &(*it);
+                        return ubos.end() - it;
                     }
                 }
             }
-            return nullptr;
+            return -1;
         };
         auto lookupFieldUbo = [](std::string_view name, ModuleReflection::UniformBuffer* ubo, size_t& offset) -> const ShaderReflection::Type*{
             for(auto it = ubo->fields.begin(); it != ubo->fields.end(); ++it) {
@@ -160,6 +160,7 @@ namespace RoxEngine {
         std::string_view segment;
         std::string_view dimensions;
         ModuleReflection::UniformBuffer* ubo = nullptr;
+        size_t ubo_index = -1;
         const ShaderReflection::Type* currentField = nullptr;
         size_t offset = 0;
         while(!path.empty()) {
@@ -171,10 +172,11 @@ namespace RoxEngine {
                 segment = segment.substr(0, begin_dimensions);
             }
             if(!ubo) {
-                ubo = lookupUbo(segment, &currentField,offset, ubos);
-                if(!ubo) {
+                ubo_index = lookupUbo(segment, &currentField,offset, ubos);
+                if(ubo_index == -1) {
                     return std::nullopt;
                 }
+                ubo = &ubos[ubo_index];
             } else if(!currentField && ubo) {
                 currentField = lookupFieldUbo(segment, ubo, offset);
                 if(!currentField) {
@@ -236,7 +238,7 @@ namespace RoxEngine {
             }
 
         }
-        return offset;
+        return LookupResult{offset,ubo_index};
     }
 
 	void SlangLayer::Init()
@@ -268,7 +270,6 @@ namespace RoxEngine {
                 session_desc.targetCount = sizeof(slang::TargetDesc) / sizeof(targets);
 
                 session_desc.fileSystem = new filesystem();
-
                 static constexpr const char* search_paths[] = {
                     "" //allow for absolute include path
                 };
@@ -448,6 +449,7 @@ namespace RoxEngine {
             if(auto semanticName = var->getSemanticName();semanticName) {
                 ubo.name = semanticName;
             } 
+            ubo.size = var->getTypeLayout()->getSize();
             ubos.push_back(ubo);
         }
 
