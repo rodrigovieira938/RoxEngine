@@ -39,6 +39,7 @@ namespace RoxEngine {
             .setFragmentShader(material.GetFragmentShader());
         auto pipeline = mGraphicsPipelinePool.Get(pipeline_desc);
         mCmd->bindGraphicsPipeline(pipeline);
+        mCmd->bindShaderResources(material.GetShaderResources());
         mCmd->bindVertexBuffers(bindVBs);
         mCmd->bindIndexBuffer(meshData.indices_vb);
         mCmd->drawIndexed(alina::DrawArguments().setVertexCount(mesh.GetIndices().size()));

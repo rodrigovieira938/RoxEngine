@@ -76,12 +76,12 @@ namespace RoxEngine {
             for (auto it = ubos.begin(); it != ubos.end(); ++it)
             {
                 if (it->name == name)
-                    return ubos.end() - it;
+                    return ubos.end() - it - 1;
                 for(auto field = it->fields.begin(); field != it->fields.end(); ++field) {
                     if(field->name == name) {
                         offset+=field->offset;
                         *currentField = field->type;
-                        return ubos.end() - it;
+                        return ubos.end() - it - 1;
                     }
                 }
             }
@@ -238,7 +238,7 @@ namespace RoxEngine {
             }
 
         }
-        return LookupResult{offset,ubo_index};
+        return LookupResult{offset,ubo_index, currentField};
     }
 
 	void SlangLayer::Init()
@@ -434,6 +434,7 @@ namespace RoxEngine {
                 auto reflectionType = ExtractTypeRecursive(field->getType(),field_layout, typeSet);
                 ubo.fields.push_back({field->getName(),var_layout->getOffset(),reflectionType});
             }
+            ubo.size = innerTypeLayout->getSize();
             return ubo;
         };
 
@@ -449,7 +450,6 @@ namespace RoxEngine {
             if(auto semanticName = var->getSemanticName();semanticName) {
                 ubo.name = semanticName;
             } 
-            ubo.size = var->getTypeLayout()->getSize();
             ubos.push_back(ubo);
         }
 

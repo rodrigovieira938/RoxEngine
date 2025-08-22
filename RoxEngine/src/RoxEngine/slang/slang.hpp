@@ -78,6 +78,7 @@ namespace RoxEngine {
         struct LookupResult {
             size_t offset;
             size_t ubo_index;
+            const ShaderReflection::Type* type;
         };
         std::optional<LookupResult> lookup(std::string_view path);
         std::unordered_set<ShaderReflection::Type> types;

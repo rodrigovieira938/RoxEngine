@@ -150,6 +150,8 @@ struct TestGame final : public Game {
         vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_shader_src.data(), vertex_shader_src.size());
         fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_shader_src.data(), fragment_shader_src.size()); 
         material = Material(vertex_shader, fragment_shader, moduleReflection);
+        material->Set("color", glm::vec3(1,2,3));
+        material->Set("matrix", glm::mat4(1.0f));
     }
     void Update() override {
         if(Input::GetKeyState(Key::W) != KeyState::NONE)
