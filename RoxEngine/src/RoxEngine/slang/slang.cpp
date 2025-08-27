@@ -3,6 +3,7 @@
 #include "RoxEngine/filesystem/Filesystem.hpp"
 #include <RoxEngine/slang/slang.hpp>
 #include <cstddef>
+#include <cstring>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -421,7 +422,8 @@ namespace RoxEngine {
         return &(*it);
     }
     ModuleReflection SlangLayer::GetModuleReflection(Slang::ComPtr<slang::IModule> module) {
-        auto walkContantBuffer = [](slang::VariableLayoutReflection* cbuffer, std::unordered_set<ShaderReflection::Type>& typeSet){
+        auto layout = module->getLayout();
+        auto walkContantBuffer = [layout](slang::VariableLayoutReflection* cbuffer, std::unordered_set<ShaderReflection::Type>& typeSet){
             auto innerTypeLayout = cbuffer->getTypeLayout()->getElementTypeLayout();
             auto innerType = cbuffer->getTypeLayout()->getType()->getElementType();
 
@@ -429,16 +431,28 @@ namespace RoxEngine {
             ModuleReflection::UniformBuffer ubo;
             for(unsigned int i = 0; i < innerType->getFieldCount(); i++) {
                 auto field = innerType->getFieldByIndex(i);
+                
+                const char* field_name = field->getName();
+                for(int x = 0; x < field->getUserAttributeCount(); x++) {
+                    auto attr = field->getUserAttributeByIndex(x);
+                    auto na = attr->getName();
+                    if(strcmp(attr->getName(), "Name") == 0) {
+                        size_t size;
+                        if(attr->getArgumentCount() != 1) continue;
+                        if(attr->getArgumentType(0) != layout->findTypeByName("string")) continue;
+                        field_name = attr->getArgumentValueString(0, &size);
+                    }
+                }
+
                 auto var_layout = innerTypeLayout->getFieldByIndex(i);
                 auto field_layout = var_layout->getTypeLayout();
                 auto reflectionType = ExtractTypeRecursive(field->getType(),field_layout, typeSet);
-                ubo.fields.push_back({field->getName(),var_layout->getOffset(),reflectionType});
+                ubo.fields.push_back({field_name,var_layout->getOffset(),reflectionType});
             }
             ubo.size = innerTypeLayout->getSize();
             return ubo;
         };
 
-        auto layout = module->getLayout();
         std::unordered_set<ShaderReflection::Type> typeSet;
         std::vector<ModuleReflection::UniformBuffer> ubos;
         for (int i = 0; i < layout->getParameterCount(); i++)

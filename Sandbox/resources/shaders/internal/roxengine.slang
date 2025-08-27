@@ -1,5 +1,20 @@
 module roxengine;
 
+[__AttributeUsage(_AttributeTargets.Var)]
+struct NameAttribute
+{
+    string set;
+};
+[__AttributeUsage(_AttributeTargets.Var)]
+struct FloatSliderAttribute
+{
+    float min;
+    float max;
+    float increment = 0.1;
+};
+[__AttributeUsage(_AttributeTargets.Var)]
+struct ColorPickerAttribute {}
+
 public struct VertexStageOutput
 {
     public float4 sv_position : SV_Position;
