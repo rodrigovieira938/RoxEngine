@@ -97,7 +97,8 @@ namespace RoxEngine {
             mGlobals.needUpdate = false;
         }
         mCmd->begin();
-        mCmd->beginRenderPass(alina::RenderPassDesc().setFramebuffer(mFb).setAttachmentsLoadOp({alina::RenderPassLoadOp::CLEAR}).setAttachmentsClearColors({{0,0,0,0}}));
-        mCmd->beginSubPass(alina::SubPassDesc().setAttachments({alina::SubPassAttachment::COLOR}));
+        //Disabling this until alina support referencing the default framebuffer
+        //mCmd->beginRenderPass(alina::RenderPassDesc().setFramebuffer(mFb).setAttachmentsLoadOp({alina::RenderPassLoadOp::CLEAR}).setAttachmentsClearColors({{0,0,0,0}}));
+        //mCmd->beginSubPass(alina::SubPassDesc().setAttachments({alina::SubPassAttachment::COLOR}));
     }
 }
