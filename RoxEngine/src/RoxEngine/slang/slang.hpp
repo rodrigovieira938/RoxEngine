@@ -98,10 +98,18 @@ namespace RoxEngine {
     class SlangLayer
     {
     public:
+        enum class EntryPointType {
+            VERTEX,
+            FRAGMENT
+        };
+
         static void Init();
         static Slang::ComPtr<slang::IModule> CompileModule(const std::string& filepath);
+        static Slang::ComPtr<slang::IEntryPoint> GetModuleEntryPoint(Slang::ComPtr<slang::IModule> module, EntryPointType type);
+        static Slang::ComPtr<slang::IComponentType> CreateCompositeComponentType(std::span<slang::IComponentType*> components);
+        static Slang::ComPtr<slang::IComponentType> LinkModule(slang::IComponentType* component);
+        static std::string GetModuleCode(slang::IComponentType* component, uint32_t entryPointIndex = 0);
         static ModuleReflection GetModuleReflection(Slang::ComPtr<slang::IModule> module);
-        static std::string LinkModules(std::span<Slang::ComPtr<slang::IModule>> modules, bool vertex_shader = true);
         static void Shutdown();
     };
 };

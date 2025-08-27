@@ -4,6 +4,7 @@
 #include <RoxEngine/slang/slang.hpp>
 #include <cstddef>
 #include <cstring>
+#include <functional>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -314,6 +315,50 @@ namespace RoxEngine {
         }
         return module;
     }
+    Slang::ComPtr<slang::IEntryPoint> SlangLayer::GetModuleEntryPoint(Slang::ComPtr<slang::IModule> module, EntryPointType type) {
+        Slang::ComPtr<slang::IEntryPoint> entryPoint = nullptr;
+        switch (type) {
+        case EntryPointType::VERTEX:
+            module->findEntryPointByName("basic_vmain", entryPoint.writeRef());
+            break;
+        case EntryPointType::FRAGMENT:
+            module->findEntryPointByName("basic_fmain", entryPoint.writeRef());
+            break;
+        }
+        return entryPoint;
+    }
+    Slang::ComPtr<slang::IComponentType> SlangLayer::CreateCompositeComponentType(std::span<slang::IComponentType*> components) {
+        Slang::ComPtr<slang::IComponentType> program;
+        sSession->createCompositeComponentType(components.data(), components.size(), program.writeRef());
+        return program;
+    }
+    Slang::ComPtr<slang::IComponentType> SlangLayer::LinkModule(slang::IComponentType* component) {
+        Slang::ComPtr<slang::IBlob> diagnosticBlob = nullptr;
+        Slang::ComPtr<slang::IComponentType> linkedProgram = nullptr;
+        component->link(linkedProgram.writeRef(), diagnosticBlob.writeRef());
+
+        if (diagnosticBlob)
+        {
+            log::error("Failed to link the program: {}", static_cast<const char*>(diagnosticBlob->getBufferPointer()));
+            return 0;
+        }
+        return linkedProgram;
+    }
+    std::string SlangLayer::GetModuleCode(slang::IComponentType* linkedProgram, uint32_t entryPointIndex) {
+        Slang::ComPtr<slang::IBlob> diagnostic;
+        Slang::ComPtr<slang::IBlob> code;
+
+
+        linkedProgram->getEntryPointCode(entryPointIndex, 0, code.writeRef(), diagnostic.writeRef());
+
+        if (diagnostic)
+        {
+            log::error("Shader error: {}", static_cast<const char*>(diagnostic->getBufferPointer()));
+            return 0;
+        }
+
+        return std::string((char*)code->getBufferPointer());
+    }
     const ShaderReflection::Type* ExtractTypeRecursive(
     slang::TypeReflection* slangType,
     slang::TypeLayoutReflection* slangTypeLayout,
@@ -445,7 +490,6 @@ namespace RoxEngine {
             ModuleReflection::UniformBuffer ubo;
             for(unsigned int i = 0; i < innerType->getFieldCount(); i++) {
                 auto field = innerType->getFieldByIndex(i);
-                
                 const char* field_name = field->getName();
                 for(int x = 0; x < field->getUserAttributeCount(); x++) {
                     auto attr = field->getUserAttributeByIndex(x);
@@ -509,65 +553,6 @@ namespace RoxEngine {
             std::move(ubos),
             std::move(shared_ubos)
         };
-    }
-    std::string SlangLayer::LinkModules(std::span<Slang::ComPtr<slang::IModule>> modules, bool vertex_shader) {
-        if(modules.size() == 0) {
-            return "";
-        }
-        Slang::ComPtr<slang::IEntryPoint> vertex_entrypoint = nullptr;
-        Slang::ComPtr<slang::IEntryPoint> fragment_entrypoint = nullptr;
-
-        for(auto& module : modules) {
-            //TODO: get the chosen entry point from the main module (modules[0])
-            if(!vertex_entrypoint)
-                module->findEntryPointByName("basic_vmain", vertex_entrypoint.writeRef());
-            if(!fragment_entrypoint)
-                module->findEntryPointByName("basic_fmain", fragment_entrypoint.writeRef());
-
-            if(vertex_entrypoint && fragment_entrypoint)
-                break;
-        }
-
-        std::vector<slang::IComponentType*> components(modules.size() + 1);
-        for(int i = 0; i < modules.size(); i++) {
-            components[i] = modules[i];
-        }
-        if(vertex_shader) {
-            components[components.size()-1] = vertex_entrypoint;
-        } else {
-            components[components.size()-1] = fragment_entrypoint;
-        }
-
-        Slang::ComPtr<slang::IComponentType> program;
-        sSession->createCompositeComponentType(components.data(), components.size(), program.writeRef());
-        Slang::ComPtr<slang::IBlob> diagnosticBlob = nullptr;
-        Slang::ComPtr<slang::IComponentType> linkedProgram = nullptr;
-        program->link(linkedProgram.writeRef(), diagnosticBlob.writeRef());
-
-        if (diagnosticBlob)
-        {
-            log::error("Failed to link the program: {}", static_cast<const char*>(diagnosticBlob->getBufferPointer()));
-            return 0;
-        }
-
-        Slang::ComPtr<slang::IBlob> diagnostic;
-        Slang::ComPtr<slang::IBlob> code;
-
-
-        linkedProgram->getEntryPointCode(0, 0, code.writeRef(), diagnostic.writeRef());
-
-        if (diagnostic)
-        {
-            if (vertex_shader) {
-                log::error("Vertex shader error: {}", static_cast<const char*>(diagnostic->getBufferPointer()));
-            }
-            else {
-                log::error("Fragment shader error: {}", static_cast<const char*>(diagnostic->getBufferPointer()));
-            }
-            return 0;
-        }
-
-        return std::string((char*)code->getBufferPointer());
     }
     void SlangLayer::Shutdown()
     {

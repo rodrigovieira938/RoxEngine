@@ -36,9 +36,15 @@ struct TestGame final : public Game {
         SlangLayer::Init();
         auto module = SlangLayer::CompileModule("res://shaders/basic.slang");
         auto moduleReflection = CreateRef<ModuleReflection>(SlangLayer::GetModuleReflection(module));
-        std::array<Slang::ComPtr<slang::IModule>, 1> modules = {module}; 
-        auto vertex_shader_src = SlangLayer::LinkModules(modules);
-        auto fragment_shader_src = SlangLayer::LinkModules(modules, false);
+        std::array<slang::IComponentType*, 3> components = {
+            module, 
+            SlangLayer::GetModuleEntryPoint(module, SlangLayer::EntryPointType::VERTEX), 
+            SlangLayer::GetModuleEntryPoint(module, SlangLayer::EntryPointType::FRAGMENT)
+        };
+        auto compositeComponent = SlangLayer::CreateCompositeComponentType(components);
+        auto linkedProgram = SlangLayer::LinkModule(compositeComponent);
+        auto vertex_shader_src = SlangLayer::GetModuleCode(linkedProgram);
+        auto fragment_shader_src = SlangLayer::GetModuleCode(linkedProgram, 1);
         auto device = Engine::Get()->GetWindow()->GetDevice();
         vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_shader_src.data(), vertex_shader_src.size());
         fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_shader_src.data(), fragment_shader_src.size()); 
