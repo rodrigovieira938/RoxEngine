@@ -74,6 +74,7 @@ namespace RoxEngine {
             std::string name;
             size_t size;
             std::vector<Field> fields;
+            uint32_t binding_index, binding_space;
         };
         struct SharedUniformBuffer : public UniformBuffer{
             SharedUniformBuffer(UniformBuffer&& other){

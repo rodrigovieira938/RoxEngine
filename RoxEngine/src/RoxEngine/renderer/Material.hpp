@@ -14,7 +14,7 @@ namespace RoxEngine {
             mFragmentShader = fragment_shader; 
             mModuleReflection = moduleReflection;
             mUbos.reserve(moduleReflection->ubos.size());
-            mShaderResources.uboBinding.reserve(moduleReflection->ubos.size());
+            mShaderResources.uboBinding.reserve(moduleReflection->ubos.size()+moduleReflection->shared_ubos.size());
             auto device = vertex_shader->getDevice();
             auto cmd = device->createCommandList();
             cmd->begin();
@@ -22,8 +22,13 @@ namespace RoxEngine {
                 auto ubo = device->createBuffer(alina::BufferDesc().setType(alina::BufferType::UNIFORM));
                 cmd->writeBuffer(ubo, nullptr, reflection_ubo.size, 0);
                 mUbos.push_back(ubo);
-                //TODO: extract binding and use it
-                mShaderResources.uboBinding.push_back(alina::UniformBufferBinding().setBuffer(ubo));
+                mShaderResources.uboBinding.push_back(alina::UniformBufferBinding().setBuffer(ubo).setBinding(reflection_ubo.binding_index).setSet(reflection_ubo.binding_space));
+            }
+            for(auto& reflection_ubo : moduleReflection->shared_ubos) {
+                auto ubo = device->createBuffer(alina::BufferDesc().setType(alina::BufferType::UNIFORM));
+                cmd->writeBuffer(ubo, nullptr, reflection_ubo.size, 0);
+                mUbos.push_back(ubo);
+                mShaderResources.uboBinding.push_back(alina::UniformBufferBinding().setBuffer(ubo).setBinding(reflection_ubo.binding_index).setSet(reflection_ubo.binding_space));
             }
             cmd->end();
             device->execute(cmd);

@@ -492,6 +492,8 @@ namespace RoxEngine {
             if(auto semanticName = varLayout->getSemanticName();semanticName) {
                 ubo.name = semanticName;
             }
+            ubo.binding_index = varLayout->getBindingIndex();
+            ubo.binding_space = varLayout->getBindingSpace();
             if(shared_name) {
                 ModuleReflection::SharedUniformBuffer shared_ubo = std::move(ubo);
                 shared_ubo.index_name = std::format("{}::{}", module->getFilePath(), (char*)type_name->getBufferPointer());
