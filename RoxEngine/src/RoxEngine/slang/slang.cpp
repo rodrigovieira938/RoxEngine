@@ -73,7 +73,7 @@ namespace RoxEngine {
     };
 
     std::optional<ModuleReflection::LookupResult> ModuleReflection::lookup(std::string_view path) {
-        auto lookupUbo = [](std::string_view name,const ShaderReflection::Type** currentField,size_t& offset, std::vector<ModuleReflection::UniformBuffer>& ubos) -> size_t{
+        auto lookupUbo = [&](std::string_view name,const ShaderReflection::Type** currentField,size_t& offset, bool& isShared) -> size_t{
             for (auto it = ubos.begin(); it != ubos.end(); ++it)
             {
                 if (it->name == name)
@@ -86,9 +86,22 @@ namespace RoxEngine {
                     }
                 }
             }
+            for (auto it = shared_ubos.begin(); it != shared_ubos.end(); ++it)
+            {
+                if (it->name == name)
+                    return shared_ubos.end() - it - 1;
+                for(auto field = it->fields.begin(); field != it->fields.end(); ++field) {
+                    if(field->name == name) {
+                        offset+=field->offset;
+                        *currentField = field->type;
+                        isShared = true;
+                        return shared_ubos.end() - it - 1;
+                    }
+                }
+            }
             return -1;
         };
-        auto lookupFieldUbo = [](std::string_view name, ModuleReflection::UniformBuffer* ubo, size_t& offset) -> const ShaderReflection::Type*{
+        auto lookupFieldUbo = [&](std::string_view name, ModuleReflection::UniformBuffer* ubo, size_t& offset) -> const ShaderReflection::Type*{
             for(auto it = ubo->fields.begin(); it != ubo->fields.end(); ++it) {
                 if(it->name == name) {
                     offset+=it->offset;
@@ -164,6 +177,7 @@ namespace RoxEngine {
         size_t ubo_index = -1;
         const ShaderReflection::Type* currentField = nullptr;
         size_t offset = 0;
+        bool isShared = false;
         while(!path.empty()) {
             auto it =  path.find('.');
             segment = path.substr(0,it);
@@ -173,7 +187,7 @@ namespace RoxEngine {
                 segment = segment.substr(0, begin_dimensions);
             }
             if(!ubo) {
-                ubo_index = lookupUbo(segment, &currentField,offset, ubos);
+                ubo_index = lookupUbo(segment, &currentField,offset, isShared);
                 if(ubo_index == -1) {
                     return std::nullopt;
                 }
@@ -239,7 +253,7 @@ namespace RoxEngine {
             }
 
         }
-        return LookupResult{offset,ubo_index, currentField};
+        return LookupResult{offset,ubo_index,isShared, currentField};
     }
 
 	void SlangLayer::Init()
@@ -455,6 +469,7 @@ namespace RoxEngine {
 
         std::unordered_set<ShaderReflection::Type> typeSet;
         std::vector<ModuleReflection::UniformBuffer> ubos;
+        std::vector<ModuleReflection::SharedUniformBuffer> shared_ubos;
         for (int i = 0; i < layout->getParameterCount(); i++)
         {
             slang::VariableLayoutReflection* varLayout = layout->getParameterByIndex(i);
@@ -480,6 +495,7 @@ namespace RoxEngine {
             if(shared_name) {
                 ModuleReflection::SharedUniformBuffer shared_ubo = std::move(ubo);
                 shared_ubo.index_name = std::format("{}::{}", module->getFilePath(), (char*)type_name->getBufferPointer());
+                shared_ubos.push_back(shared_ubo);
             } else {
                 ubos.push_back(ubo);
             }
@@ -488,7 +504,8 @@ namespace RoxEngine {
 
         return {
             std::move(typeSet),
-            std::move(ubos)
+            std::move(ubos),
+            std::move(shared_ubos)
         };
     }
     std::string SlangLayer::LinkModules(std::span<Slang::ComPtr<slang::IModule>> modules, bool vertex_shader) {

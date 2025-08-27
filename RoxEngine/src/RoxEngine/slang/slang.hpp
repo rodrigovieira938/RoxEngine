@@ -86,12 +86,13 @@ namespace RoxEngine {
         struct LookupResult {
             size_t offset;
             size_t ubo_index;
+            bool is_shared = false;
             const ShaderReflection::Type* type;
         };
         std::optional<LookupResult> lookup(std::string_view path);
         std::unordered_set<ShaderReflection::Type> types;
         std::vector<ModuleReflection::UniformBuffer> ubos;
-        std::vector<ModuleReflection::UniformBuffer> shared_ubos;
+        std::vector<ModuleReflection::SharedUniformBuffer> shared_ubos;
     };
     class SlangLayer
     {
