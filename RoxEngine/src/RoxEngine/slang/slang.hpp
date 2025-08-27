@@ -75,6 +75,14 @@ namespace RoxEngine {
             size_t size;
             std::vector<Field> fields;
         };
+        struct SharedUniformBuffer : public UniformBuffer{
+            SharedUniformBuffer(UniformBuffer&& other){
+                this->name = std::move(other.name);
+                this->size = std::move(other.size);
+                this->fields = std::move(other.fields);
+            }
+            std::string index_name;
+        };
         struct LookupResult {
             size_t offset;
             size_t ubo_index;
@@ -83,6 +91,7 @@ namespace RoxEngine {
         std::optional<LookupResult> lookup(std::string_view path);
         std::unordered_set<ShaderReflection::Type> types;
         std::vector<ModuleReflection::UniformBuffer> ubos;
+        std::vector<ModuleReflection::UniformBuffer> shared_ubos;
     };
     class SlangLayer
     {

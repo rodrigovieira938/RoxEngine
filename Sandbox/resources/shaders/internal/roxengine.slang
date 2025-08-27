@@ -17,8 +17,7 @@ struct ColorPickerAttribute {}
 
 [__AttributeUsage(_AttributeTargets.Var)]
 struct SharedUboAttribute {
-    int index;
-    string type = "custom";
+    string name = "custom";
 };
 
 public struct VertexStageOutput

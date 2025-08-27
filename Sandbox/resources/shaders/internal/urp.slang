@@ -1,7 +1,7 @@
 import "res://shaders/internal/roxengine";
 
 namespace urp {
-    [SharedUbo(0, "URP")]
+    [SharedUbo("RoxEngine.URP.Globals")]
     cbuffer UrpGlobals
     {
         float4x4 viewMatrix;

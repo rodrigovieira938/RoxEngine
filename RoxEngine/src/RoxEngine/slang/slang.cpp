@@ -457,14 +457,32 @@ namespace RoxEngine {
         std::vector<ModuleReflection::UniformBuffer> ubos;
         for (int i = 0; i < layout->getParameterCount(); i++)
         {
-            slang::VariableLayoutReflection* var = layout->getParameterByIndex(i);
-            if (var->getType()->getKind() != slang::TypeReflection::Kind::ConstantBuffer)
+            slang::VariableLayoutReflection* varLayout = layout->getParameterByIndex(i);
+            slang::VariableReflection* var = varLayout->getVariable();
+            if (varLayout->getType()->getKind() != slang::TypeReflection::Kind::ConstantBuffer)
                 continue;
-            auto ubo = walkContantBuffer(var, typeSet);
-            if(auto semanticName = var->getSemanticName();semanticName) {
+            const char* shared_name = nullptr;
+            Slang::ComPtr<slang::IBlob> type_name;
+            varLayout->getType()->getElementType()->getFullName(type_name.writeRef());
+            for(int x = 0; x < var->getUserAttributeCount(); x++) {
+                auto attr = var->getUserAttributeByIndex(x);
+                if(strcmp(attr->getName(), "SharedUbo") == 0) {
+                    size_t size;
+                    if(attr->getArgumentCount() != 1) continue;
+                    if(attr->getArgumentType(0) != layout->findTypeByName("string")) continue;
+                    shared_name = attr->getArgumentValueString(0, &size);
+                }
+            }
+            auto ubo = walkContantBuffer(varLayout, typeSet);
+            if(auto semanticName = varLayout->getSemanticName();semanticName) {
                 ubo.name = semanticName;
-            } 
-            ubos.push_back(ubo);
+            }
+            if(shared_name) {
+                ModuleReflection::SharedUniformBuffer shared_ubo = std::move(ubo);
+                shared_ubo.index_name = std::format("{}::{}", module->getFilePath(), (char*)type_name->getBufferPointer());
+            } else {
+                ubos.push_back(ubo);
+            }
         }
 
 
