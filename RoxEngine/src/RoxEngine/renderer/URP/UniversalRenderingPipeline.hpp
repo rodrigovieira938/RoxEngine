@@ -11,6 +11,14 @@ namespace RoxEngine {
         void Render();
     private:
         void begin();
+        struct Globals {
+            glm::mat4 viewMatrix = glm::mat4(1.0f), projMatrix = glm::mat4(1.0f);
+            glm::vec3 camPos = glm::vec3(0,0,-1);
+            glm::vec3 camDir = glm::vec3(0,0,1);
+        };
+
+        Globals mGlobals;
+        alina::Buffer mGlobalsUbo;
 
         AlinaGlue::InputLayoutPool mInputLayoutPool;
         AlinaGlue::GraphicsPipelinePool mGraphicsPipelinePool;

@@ -15,6 +15,12 @@ struct FloatSliderAttribute
 [__AttributeUsage(_AttributeTargets.Var)]
 struct ColorPickerAttribute {}
 
+[__AttributeUsage(_AttributeTargets.Var)]
+struct SharedUboAttribute {
+    int index;
+    string type = "custom";
+};
+
 public struct VertexStageOutput
 {
     public float4 sv_position : SV_Position;

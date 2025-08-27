@@ -52,6 +52,10 @@ namespace RoxEngine {
     }
     void UniversalRenderingPipeline::begin() {
         mCmd->begin();
+        //TODO: Update the globals ubo. How should this get the offsets?
+        mCmd->end();
+        mDevice->execute(mCmd);
+        mCmd->begin();
         mCmd->beginRenderPass(alina::RenderPassDesc().setFramebuffer(mFb).setAttachmentsLoadOp({alina::RenderPassLoadOp::CLEAR}).setAttachmentsClearColors({{0,0,0,0}}));
         mCmd->beginSubPass(alina::SubPassDesc().setAttachments({alina::SubPassAttachment::COLOR}));
     }
