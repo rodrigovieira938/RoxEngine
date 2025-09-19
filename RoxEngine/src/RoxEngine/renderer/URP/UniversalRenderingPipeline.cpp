@@ -1,6 +1,7 @@
 #include "RoxEngine/renderer/Material.hpp"
 #include "alina/alina.hpp"
 #include <RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp>
+#include <alina/opengl.hpp>
 #include <cstring>
 
 namespace RoxEngine {
@@ -18,6 +19,8 @@ namespace RoxEngine {
                 })
                 .setDebugName("URP Framebuffer")
         );
+        //TODO: replace this with a proper default framebuffer reference when alina supports it
+        mOutputFb = ((alina::opengl::IGlDevice*)device.get())->createUnmanagedFramebuffer(0);
 
         auto module = SlangLayer::CompileModule("res://shaders/internal/urp.slang");
         mGlobalsUboReflection = SlangLayer::GetModuleReflection(module);
@@ -39,26 +42,26 @@ namespace RoxEngine {
         if(mesh.GetIndices().size() == 0 || mesh.GetPosition().size() == 0) return;
         auto meshData = mesh.GetData();
         if(mesh.NeedChange()) {
-            meshData.BakeGPUResources(mDevice, &mInputLayoutPool);
+            meshData->BakeGPUResources(mDevice, &mInputLayoutPool);
             mesh.SetNeedChange(false);
         }
-        if(!meshData.position_vb || !meshData.indices_vb) {
+        if(!meshData->position_vb || !meshData->indices_vb) {
             return;
         }
-        std::vector<alina::BindVertexBuffer> bindVBs = {alina::BindVertexBuffer().setBuffer(meshData.position_vb).setStride(sizeof(glm::vec3))};
-        if(meshData.uvs_vb)
-            bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData.uvs_vb).setStride(sizeof(glm::vec2)));
-        if(meshData.normals_vb)
-            bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData.normals_vb).setStride(sizeof(glm::vec3)));
+        std::vector<alina::BindVertexBuffer> bindVBs = {alina::BindVertexBuffer().setBuffer(meshData->position_vb).setStride(sizeof(glm::vec3))};
+        if(meshData->uvs_vb)
+            bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->uvs_vb).setStride(sizeof(glm::vec2)));
+        if(meshData->normals_vb)
+            bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->normals_vb).setStride(sizeof(glm::vec3)));
         auto pipeline_desc = alina::GraphicsPipelineDesc()
-            .setInputLayout(meshData.inputLayout)
+            .setInputLayout(meshData->inputLayout)
             .setVertexShader(material.GetVertexShader())
             .setFragmentShader(material.GetFragmentShader());
         auto pipeline = mGraphicsPipelinePool.Get(pipeline_desc);
         mCmd->bindGraphicsPipeline(pipeline);
         mCmd->bindShaderResources(material.GetShaderResources());
         mCmd->bindVertexBuffers(bindVBs);
-        mCmd->bindIndexBuffer(meshData.indices_vb);
+        mCmd->bindIndexBuffer(meshData->indices_vb);
         mCmd->drawIndexed(alina::DrawArguments().setVertexCount(mesh.GetIndices().size()));
     }
     void UniversalRenderingPipeline::Render() {
@@ -98,7 +101,7 @@ namespace RoxEngine {
         }
         mCmd->begin();
         //Disabling this until alina support referencing the default framebuffer
-        //mCmd->beginRenderPass(alina::RenderPassDesc().setFramebuffer(mFb).setAttachmentsLoadOp({alina::RenderPassLoadOp::CLEAR}).setAttachmentsClearColors({{0,0,0,0}}));
-        //mCmd->beginSubPass(alina::SubPassDesc().setAttachments({alina::SubPassAttachment::COLOR}));
+        mCmd->beginRenderPass(alina::RenderPassDesc().setFramebuffer(mOutputFb).setAttachmentsLoadOp({alina::RenderPassLoadOp::CLEAR}).setAttachmentsClearColors({{0,0,0,0}}));
+        mCmd->beginSubPass(alina::SubPassDesc().setAttachments({alina::SubPassAttachment::COLOR}));
     }
 }

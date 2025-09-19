@@ -27,6 +27,8 @@ namespace RoxEngine {
         ModuleReflection mGlobalsUboReflection;
         size_t mGlobalUboIndex;
 
+        alina::Framebuffer mOutputFb;
+
         AlinaGlue::InputLayoutPool mInputLayoutPool;
         AlinaGlue::GraphicsPipelinePool mGraphicsPipelinePool;
         alina::Device mDevice;
