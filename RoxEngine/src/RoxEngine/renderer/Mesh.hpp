@@ -54,7 +54,7 @@ namespace RoxEngine {
         inline std::vector<glm::vec2>& GetUvs() {return mData->uvs;}
         inline std::vector<glm::vec3>& GetNormals() {return mData->normals;}
         inline std::vector<uint32_t>& GetIndices() {return mData->indices;}
-        inline Data& GetData() {return *mData.get();};
+        inline Data* GetData() {return mData.get();};
         inline void ChangedData() {mNeedChange = true;}
         inline bool NeedChange() {return mNeedChange;}
         inline void SetNeedChange(bool value) {mNeedChange = value;}
