@@ -289,7 +289,7 @@ namespace RoxEngine {
                 static constexpr const char* search_paths[] = {
                     "" //allow for absolute include path
                 };
-
+                session_desc.defaultMatrixLayoutMode = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR;
                 session_desc.searchPaths = search_paths;
                 session_desc.searchPathCount = 1;
             }
