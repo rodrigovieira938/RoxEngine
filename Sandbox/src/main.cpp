@@ -5,6 +5,7 @@
 #include "RoxEngine/renderer/Mesh.hpp"
 #include "RoxEngine/renderer/URP/MeshRendererer.hpp"
 #include "RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp"
+#include <RoxEngine/renderer/Transform.hpp>
 #include "RoxEngine/slang/slang.hpp"
 #include "RoxEngine/utils/Utils.hpp"
 #include "alina/alina.hpp"
@@ -21,27 +22,6 @@
 #include <glm/gtx/string_cast.hpp>
 
 using namespace RoxEngine;
-
-struct Transform
-{
-    glm::vec3 translation = { 0.0f, 0.0f, 0.0f };
-    glm::vec3 rotation = { 0.0f, 0.0f, 0.0f };
-    glm::vec3 scale = { 1.0f, 1.0f, 1.0f };
-
-    Transform() = default;
-    Transform(const Transform&) = default;
-    Transform(const glm::vec3& translation)
-        : translation(translation) {}
-
-    glm::mat4 GetMatrix() const
-    {
-        glm::mat4 rotation = glm::toMat4(glm::quat(rotation));
-
-        return glm::translate(glm::mat4(1.0f), translation)
-            * rotation
-            * glm::scale(glm::mat4(1.0f), scale);
-    }
-};
 
 struct SimpleCamera {
     static constexpr glm::vec3 front = glm::vec3(0.f,0.f,-1.f);
