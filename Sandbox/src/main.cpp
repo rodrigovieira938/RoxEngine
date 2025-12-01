@@ -3,6 +3,7 @@
 #include "RoxEngine/input/Input.hpp"
 #include "RoxEngine/renderer/Material.hpp"
 #include "RoxEngine/renderer/Mesh.hpp"
+#include "RoxEngine/renderer/URP/MeshRendererer.hpp"
 #include "RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp"
 #include "RoxEngine/slang/slang.hpp"
 #include "RoxEngine/utils/Utils.hpp"
@@ -120,6 +121,11 @@ struct TestGame final : public Game {
     std::optional<Material> material;
     alina::Shader vertex_shader, fragment_shader;
     SimpleCamera camera;
+    Scene scene;
+    Query meshRendererQuery;
+
+    TestGame() : scene(World::createScene("TestGame")), meshRendererQuery(QueryBuilder().with<MeshRenderer>().build()) {
+    }
 
     void Init() override {
         pipeline = CreateRef<UniversalRenderingPipeline>(Engine::Get()->GetWindow()->GetDevice());
@@ -152,6 +158,8 @@ struct TestGame final : public Game {
         fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_shader_src.data(), fragment_shader_src.size()); 
         material = Material(vertex_shader, fragment_shader, moduleReflection);
         material->Set("color", glm::vec3(1,2,3));
+    
+        scene.entity("Cube").addComponent<MeshRenderer>(mesh, &material.value());
     }
     void Update() override {
         camera.ProcessInput();
@@ -159,7 +167,10 @@ struct TestGame final : public Game {
         material->Set("matrix", viewProj);
     }
     void Render() override {
-        pipeline->DrawMesh(mesh, material.value());
+        meshRendererQuery.each([this](Entity entity, QueryIter& iter){
+            auto meshRenderer = (MeshRenderer*)iter.get(0);
+            pipeline->DrawMesh(meshRenderer->mesh, *meshRenderer->material);
+        });
         pipeline->Render();
         World::debugView();
         ImGui::Begin("Camera info");
