@@ -123,7 +123,6 @@ struct TestGame final : public Game {
         mesh.ChangedData();
         SlangLayer::Init();
         auto module = SlangLayer::CompileModule("res://shaders/basic.slang");
-        auto moduleReflection = CreateRef<ModuleReflection>(SlangLayer::GetModuleReflection(module));
         std::array<slang::IComponentType*, 3> components = {
             module, 
             SlangLayer::GetModuleEntryPoint(module, SlangLayer::EntryPointType::VERTEX), 
@@ -131,6 +130,7 @@ struct TestGame final : public Game {
         };
         auto compositeComponent = SlangLayer::CreateCompositeComponentType(components);
         auto linkedProgram = SlangLayer::LinkModule(compositeComponent);
+        auto moduleReflection = CreateRef<ModuleReflection>(SlangLayer::GetProgramReflection(linkedProgram));
         auto vertex_shader_src = SlangLayer::GetModuleCode(linkedProgram);
         auto fragment_shader_src = SlangLayer::GetModuleCode(linkedProgram, 1);
         auto device = Engine::Get()->GetWindow()->GetDevice();

@@ -111,7 +111,7 @@ namespace RoxEngine {
         static Slang::ComPtr<slang::IComponentType> CreateCompositeComponentType(std::span<slang::IComponentType*> components);
         static Slang::ComPtr<slang::IComponentType> LinkModule(slang::IComponentType* component);
         static std::string GetModuleCode(slang::IComponentType* component, uint32_t entryPointIndex = 0);
-        static ModuleReflection GetModuleReflection(Slang::ComPtr<slang::IModule> module);
+        static ModuleReflection GetProgramReflection(Slang::ComPtr<slang::IComponentType> program);
         static void Shutdown();
     };
 };

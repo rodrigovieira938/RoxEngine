@@ -480,8 +480,8 @@ namespace RoxEngine {
         auto [it, inserted] = typeSet.insert(std::move(t));
         return &(*it);
     }
-    ModuleReflection SlangLayer::GetModuleReflection(Slang::ComPtr<slang::IModule> module) {
-        auto layout = module->getLayout();
+    ModuleReflection SlangLayer::GetProgramReflection(Slang::ComPtr<slang::IComponentType> program) {
+        auto layout = program->getLayout();
         auto walkContantBuffer = [layout](slang::VariableLayoutReflection* cbuffer, std::unordered_set<ShaderReflection::Type>& typeSet){
             auto innerTypeLayout = cbuffer->getTypeLayout()->getElementTypeLayout();
             auto innerType = cbuffer->getTypeLayout()->getType()->getElementType();
