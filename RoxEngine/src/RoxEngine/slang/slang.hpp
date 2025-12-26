@@ -81,6 +81,8 @@ namespace RoxEngine {
                 this->name = std::move(other.name);
                 this->size = std::move(other.size);
                 this->fields = std::move(other.fields);
+                this->binding_index = other.binding_index;
+                this->binding_space = other.binding_space;
             }
             std::string index_name;
         };
