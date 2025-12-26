@@ -143,10 +143,9 @@ struct TestGame final : public Game {
     }
     void Update() override {
         camera.ProcessInput();
-        glm::mat4 viewProj = camera.GetProjectionMatrix(1.0f) * camera.GetViewMatrix();
-        material->Set("matrix", viewProj);
     }
     void Render() override {
+        pipeline->Begin(camera.GetViewMatrix(), camera.GetProjectionMatrix(1.0f));
         meshRendererQuery.each([this](Entity entity, QueryIter& iter){
             auto meshRenderer = (MeshRenderer*)iter.get(0);
             pipeline->DrawMesh(meshRenderer->mesh, *meshRenderer->material);

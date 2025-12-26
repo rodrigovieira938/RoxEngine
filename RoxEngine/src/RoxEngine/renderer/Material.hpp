@@ -25,10 +25,8 @@ namespace RoxEngine {
                 mShaderResources.uboBinding.push_back(alina::UniformBufferBinding().setBuffer(ubo).setBinding(reflection_ubo.binding_index).setSet(reflection_ubo.binding_space));
             }
             for(auto& reflection_ubo : moduleReflection->shared_ubos) {
-                auto ubo = device->createBuffer(alina::BufferDesc().setType(alina::BufferType::UNIFORM));
-                cmd->writeBuffer(ubo, nullptr, reflection_ubo.size, 0);
-                mUbos.push_back(ubo);
-                mShaderResources.uboBinding.push_back(alina::UniformBufferBinding().setBuffer(ubo).setBinding(reflection_ubo.binding_index).setSet(reflection_ubo.binding_space));
+                //TODO: get the ubo from some sort of global list
+                mShaderResources.uboBinding.push_back(alina::UniformBufferBinding().setBuffer(nullptr).setBinding(reflection_ubo.binding_index).setSet(reflection_ubo.binding_space));
             }
             cmd->end();
             device->execute(cmd);
@@ -43,6 +41,7 @@ namespace RoxEngine {
         inline alina::Shader GetVertexShader() {return mVertexShader;}    
         inline alina::Shader GetFragmentShader() {return mFragmentShader;}
         alina::ShaderResources& GetShaderResources() {return mShaderResources;}
+        Ref<ModuleReflection> GetModuleReflection() {return mModuleReflection;}
     private:
         bool Set(std::string_view path, std::string_view type, const void* data, size_t size) {
             auto lookupResult = mModuleReflection->lookup(path);
