@@ -1,4 +1,5 @@
 #include "RoxEngine/renderer/Material.hpp"
+#include "RoxEngine/slang/slang.hpp"
 #include "alina/alina.hpp"
 #include <RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp>
 #include <alina/opengl.hpp>
@@ -23,7 +24,8 @@ namespace RoxEngine {
         mOutputFb = ((alina::opengl::IGlDevice*)device.get())->createUnmanagedFramebuffer(0);
 
         auto module = SlangLayer::CompileModule("res://shaders/internal/urp.slang");
-        mGlobalsUboReflection = SlangLayer::GetModuleReflection(module);
+        auto program = SlangLayer::LinkModule(module);
+        mGlobalsUboReflection = SlangLayer::GetProgramReflection(program);
         mGlobalsUbo = mDevice->createBuffer(alina::BufferDesc().setDebugName("URP Globals UBO"));
         int i = 0;
         for(auto& ubo : mGlobalsUboReflection.shared_ubos) {
