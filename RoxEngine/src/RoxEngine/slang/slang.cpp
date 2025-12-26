@@ -540,7 +540,7 @@ namespace RoxEngine {
             ubo.binding_space = varLayout->getBindingSpace();
             if(shared_name) {
                 ModuleReflection::SharedUniformBuffer shared_ubo = std::move(ubo);
-                shared_ubo.index_name = std::format("{}::{}", module->getFilePath(), (char*)type_name->getBufferPointer());
+                shared_ubo.index_name = std::string((char*)type_name->getBufferPointer());
                 shared_ubos.push_back(shared_ubo);
             } else {
                 ubos.push_back(ubo);
