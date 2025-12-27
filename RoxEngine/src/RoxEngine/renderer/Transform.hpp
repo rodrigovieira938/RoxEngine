@@ -26,3 +26,10 @@ struct Transform
         return translation == other.translation && rotation == other.rotation && scale == other.scale;
     }
 };
+struct WorldTransform : public glm::mat4 {};
+
+//Component to tell that the transform has been modified
+struct DirtyTransform {
+    
+    bool operator ==(const DirtyTransform& other) const { return true;};
+};

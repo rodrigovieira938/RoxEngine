@@ -100,12 +100,13 @@ struct TestGame final : public Game {
     Ref<UniversalRenderingPipeline> pipeline;
     Mesh mesh;
     std::optional<Material> material;
+    std::optional<Material> material2;
     alina::Shader vertex_shader, fragment_shader;
     SimpleCamera camera;
     Scene scene;
     Query meshRendererQuery;
 
-    TestGame() : scene(World::createScene("TestGame")), meshRendererQuery(QueryBuilder().with<MeshRenderer>().with<Transform>().build()) {
+    TestGame() : scene(World::createScene("TestGame")), meshRendererQuery(QueryBuilder().with<MeshRenderer>().build()) {
     }
 
     void Init() override {
@@ -138,21 +139,59 @@ struct TestGame final : public Game {
         vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_shader_src.data(), vertex_shader_src.size());
         fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_shader_src.data(), fragment_shader_src.size()); 
         material = Material(vertex_shader, fragment_shader, moduleReflection);
-        material->Set("color", glm::vec3(1,2,3));
-    
+        material->Set("color", glm::vec3(0.5,1,0.3));
+        material2 = Material(vertex_shader, fragment_shader, moduleReflection);
+        material2->Set("color", glm::vec3(1, 0.5,0.3));
         auto cube = scene.entity("Cube");
-        cube.addComponent<Transform>();
+        cube.addComponent<Transform>(glm::vec3{0,0,0});
+        cube.addComponent<DirtyTransform>();
         cube.addComponent<MeshRenderer>(mesh, &material.value());
+
+        auto cube2 = scene.entity("Cube2");
+        cube2.childOf(cube);
+        cube2.addComponent<Transform>(glm::vec3{0.5,0,0});
+        cube2.addComponent<DirtyTransform>();
+        cube2.addComponent<MeshRenderer>(mesh, &material2.value());
     }
+    WorldTransform GetWorldTransform(Entity e) {
+        // If entity has no transform, return identity
+        if (!e.hasComponent<Transform>()) 
+            return WorldTransform(1.0f);
+
+        // Ensure the entity has a WorldTransform component
+        if (!e.hasComponent<WorldTransform>()) 
+            e.addComponent<WorldTransform>(e.getComponent<Transform>()->GetMatrix());
+
+        // If the transform is not dirty, return cached WorldTransform
+        if (!e.hasComponent<DirtyTransform>()) 
+            return *e.getComponent<WorldTransform>();
+
+        // Remove dirty flag since we are updating
+        e.removeComponent<DirtyTransform>();
+
+        // Get parent world transform
+        WorldTransform parentWT(1.0f);
+        auto parent = e.parent();
+        if (parent.exists()) {
+            parentWT = GetWorldTransform(parent);
+        }
+
+        // Update entity's world transform
+        *e.getComponent<WorldTransform>() = WorldTransform(parentWT * e.getComponent<Transform>()->GetMatrix());
+
+        return *e.getComponent<WorldTransform>();
+    };
     void Update() override {
         camera.ProcessInput();
     }
     void Render() override {
+        int times = 0;
         pipeline->Begin(camera.GetViewMatrix(), camera.GetProjectionMatrix(1.0f));
-        meshRendererQuery.each([this](Entity entity, QueryIter& iter){
+        meshRendererQuery.each([&](Entity entity, QueryIter& iter){
             auto meshRenderer = (MeshRenderer*)iter.get(0);
-            auto transform = (Transform*)iter.get(1);
-            pipeline->DrawMesh(meshRenderer->mesh, *meshRenderer->material, *transform);
+            auto worldTransform = GetWorldTransform(entity);
+            //FIXME: since the transform is passed by a ubo for the whole frame it gets overriden with the last transform
+            pipeline->DrawMesh(meshRenderer->mesh, *meshRenderer->material, worldTransform);
         });
         pipeline->Render();
         World::debugView();
@@ -173,6 +212,7 @@ struct TestGame final : public Game {
                 ImGui::SliderFloat3("Rotation", &transform->rotation.x, -180.0f, 180.0f);
                 ImGui::DragFloat3("Scale", &transform->scale.x);
                 ImGui::Text("%s", std::string(selectedEntity.name()).c_str());
+                selectedEntity.addComponent<DirtyTransform>();
             }
         }
         ImGui::End();
