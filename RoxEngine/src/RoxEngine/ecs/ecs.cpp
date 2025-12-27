@@ -195,6 +195,9 @@ namespace RoxEngine {
             ImGui::End();
         }
     }
+    Entity World::getSelectedEntity() {
+        return Entity(selected_entity.raw_id());
+    }
     struct QueryIter::Impl {
         ecs_iter_t iter;
         uint32_t row;

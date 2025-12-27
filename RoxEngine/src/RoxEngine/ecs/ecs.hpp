@@ -57,6 +57,7 @@ namespace RoxEngine {
         void removeComponent(UntypedComponent component);
     protected:
         friend class Scene;
+        friend class World;
         friend class Query;
         friend class QueryBuilder;
         friend class UntypedRelation;
@@ -209,6 +210,7 @@ namespace RoxEngine {
             return c;
         }
         static void debugView();
+        static Entity getSelectedEntity();
     };
     class Query;
     class QueryIter {
