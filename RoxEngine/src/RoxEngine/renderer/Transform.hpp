@@ -22,4 +22,7 @@ struct Transform
             * glm::toMat4(glm::quat(rotation))
             * glm::scale(glm::mat4(1.0f), scale);
     }
+    bool operator ==(const Transform& other) const {
+        return translation == other.translation && rotation == other.rotation && scale == other.scale;
+    }
 };
