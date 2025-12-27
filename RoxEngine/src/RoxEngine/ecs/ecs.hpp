@@ -2,6 +2,7 @@
 #include "RoxEngine/utils/Utils.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <string>
 #include <type_traits>
@@ -75,7 +76,7 @@ namespace RoxEngine {
         struct Hooks {
             using xtor = void(*)(void* obj, uint32_t count, void* _);
             //Hook with 2 params
-            using hook2 = void(*)(const void *src,void *dest, uint32_t count, void* _);
+            using hook2 = void(*)(void *dest,void *src, uint32_t count, void* _);
             using equals_hook = bool(*)(const void *lhs,const void *rhs, void* _);
             xtor ctor = nullptr, dtor = nullptr;
             hook2 move = nullptr, copy = nullptr, copy_ctor = nullptr, move_ctor = nullptr;
@@ -172,28 +173,28 @@ namespace RoxEngine {
                     ptr[i].~T();
                 }
             };
-            hooks.copy_ctor = [](const void* src, void* dest, uint32_t count, void*) {
+            hooks.copy_ctor = [](void* dest, void* src, uint32_t count, void*) {
                 const T* s = static_cast<const T*>(src);
                 T* d = static_cast<T*>(dest);
                 for (uint32_t i = 0; i < count; ++i) {
                     new (&d[i]) T(s[i]);
                 }
             };
-            hooks.move_ctor = [](const void* src, void* dest, uint32_t count, void*) {
+            hooks.move_ctor = [](void* dest, void* src, uint32_t count, void*) {
                 const T* s = static_cast<const T*>(src);
                 T* d = static_cast<T*>(dest);
                 for (uint32_t i = 0; i < count; ++i) {
                     new (&d[i]) T(std::move(s[i]));
                 }
             };
-            hooks.copy = [](const void* src, void* dest, uint32_t count, void*) {
+            hooks.copy = [](void* dest, void* src, uint32_t count, void*) {
                 const T* s = static_cast<const T*>(src);
                 T* d = static_cast<T*>(dest);
                 for (uint32_t i = 0; i < count; ++i) {
                     d[i] = s[i];
                 }
             };
-            hooks.move = [](const void* src, void* dest, uint32_t count, void*) {
+            hooks.move = [](void* dest, void* src, uint32_t count, void*) {
                 const T* s = static_cast<const T*>(src);
                 T* d = static_cast<T*>(dest);
                 for (uint32_t i = 0; i < count; ++i) {
