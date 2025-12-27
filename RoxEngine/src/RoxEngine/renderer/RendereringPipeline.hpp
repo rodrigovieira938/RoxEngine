@@ -9,7 +9,8 @@ namespace RoxEngine {
     public:
         virtual ~RenderingPipeline() = default;
         //TODO: add transform
-        virtual void DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, const Transform& transform = Transform()) = 0;
+        virtual void DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, const glm::mat4& transform = glm::mat4(1.0f));
+        void DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, const Transform& transform = Transform()) {DrawMesh(mesh, material, transform.GetMatrix());}
         virtual void Render() = 0;
     };
 }

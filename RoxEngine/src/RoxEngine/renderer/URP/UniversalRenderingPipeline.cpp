@@ -40,7 +40,7 @@ namespace RoxEngine {
         mCmd->end();
         mDevice->execute(mCmd);
     }
-    void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, const Transform& transform) {
+    void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, const glm::mat4& transform) {
         if(mesh.GetIndices().size() == 0 || mesh.GetPosition().size() == 0) return;
         auto meshData = mesh.GetData();
         if(mesh.NeedChange()) {
@@ -77,10 +77,9 @@ namespace RoxEngine {
         {
             auto cmd = mDevice->createCommandList();
             cmd->begin();
-            auto transform_matrix = transform.GetMatrix();
             auto lookup = mGlobalsUboReflection.lookup("transformMatrix");
             if(lookup) {
-                cmd->writeBuffer(mGlobalsUbo, &transform_matrix[0][0], sizeof(glm::mat4), lookup->offset);
+                cmd->writeBuffer(mGlobalsUbo, &transform[0][0], sizeof(glm::mat4), lookup->offset);
             }
             cmd->end();
             mDevice->execute(cmd); //Gotta execute now since writebuffer takes a ptr into the stack
