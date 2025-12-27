@@ -18,10 +18,8 @@ struct Transform
 
     glm::mat4 GetMatrix() const
     {
-        glm::mat4 rotation = glm::toMat4(glm::quat(rotation));
-
         return glm::translate(glm::mat4(1.0f), translation)
-            * rotation
+            * glm::toMat4(glm::quat(rotation))
             * glm::scale(glm::mat4(1.0f), scale);
     }
 };

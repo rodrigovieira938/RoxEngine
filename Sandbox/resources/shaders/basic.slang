@@ -11,7 +11,7 @@ cbuffer Uniforms {
 VertexStageOutput basic_vmain(float3 position : POSITION)
 {
     VertexStageOutput output;
-    output.sv_position = mul(matrix, float4(position, 1.0));
+    output.sv_position = mul(urp::transformMatrix, mul(urp::viewProjMatrix, float4(position, 1.0)));
     return output;
 }
 

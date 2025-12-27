@@ -1,4 +1,5 @@
 #include "RoxEngine/renderer/Material.hpp"
+#include "RoxEngine/renderer/Transform.hpp"
 #include "RoxEngine/slang/slang.hpp"
 #include "alina/alina.hpp"
 #include <RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp>
@@ -39,7 +40,7 @@ namespace RoxEngine {
         mCmd->end();
         mDevice->execute(mCmd);
     }
-    void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material) {
+    void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, const Transform& transform) {
         if(mesh.GetIndices().size() == 0 || mesh.GetPosition().size() == 0) return;
         auto meshData = mesh.GetData();
         if(mesh.NeedChange()) {
@@ -73,7 +74,17 @@ namespace RoxEngine {
                 break;
             }
         }
-
+        {
+            auto cmd = mDevice->createCommandList();
+            cmd->begin();
+            auto transform_matrix = transform.GetMatrix();
+            auto lookup = mGlobalsUboReflection.lookup("transformMatrix");
+            if(lookup) {
+                cmd->writeBuffer(mGlobalsUbo, &transform_matrix[0][0], sizeof(glm::mat4), lookup->offset);
+            }
+            cmd->end();
+            mDevice->execute(cmd); //Gotta execute now since writebuffer takes a ptr into the stack
+        }
         mCmd->bindShaderResources(shaderResources);
         mCmd->bindVertexBuffers(bindVBs);
         mCmd->bindIndexBuffer(meshData->indices_vb);
