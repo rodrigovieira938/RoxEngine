@@ -7,6 +7,7 @@
 #include "RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp"
 #include <RoxEngine/renderer/Transform.hpp>
 #include "RoxEngine/slang/slang.hpp"
+#include <iostream>
 #include "RoxEngine/utils/Utils.hpp"
 #include "alina/alina.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
@@ -104,7 +105,7 @@ struct TestGame final : public Game {
     Scene scene;
     Query meshRendererQuery;
 
-    TestGame() : scene(World::createScene("TestGame")), meshRendererQuery(QueryBuilder().with<MeshRenderer>().build()) {
+    TestGame() : scene(World::createScene("TestGame")), meshRendererQuery(QueryBuilder().with<MeshRenderer>().with<Transform>().build()) {
     }
 
     void Init() override {
@@ -139,7 +140,9 @@ struct TestGame final : public Game {
         material = Material(vertex_shader, fragment_shader, moduleReflection);
         material->Set("color", glm::vec3(1,2,3));
     
-        scene.entity("Cube").addComponent<MeshRenderer>(mesh, &material.value());
+        auto cube = scene.entity("Cube");
+        cube.addComponent<Transform>();
+        cube.addComponent<MeshRenderer>(mesh, &material.value());
     }
     void Update() override {
         camera.ProcessInput();
@@ -148,7 +151,8 @@ struct TestGame final : public Game {
         pipeline->Begin(camera.GetViewMatrix(), camera.GetProjectionMatrix(1.0f));
         meshRendererQuery.each([this](Entity entity, QueryIter& iter){
             auto meshRenderer = (MeshRenderer*)iter.get(0);
-            pipeline->DrawMesh(meshRenderer->mesh, *meshRenderer->material);
+            auto transform = (Transform*)iter.get(1);
+            pipeline->DrawMesh(meshRenderer->mesh, *meshRenderer->material, *transform);
         });
         pipeline->Render();
         World::debugView();
@@ -157,6 +161,20 @@ struct TestGame final : public Game {
         ImGui::SliderFloat3("Rotation", &camera.transform.rotation.x, -180.0f, 180.0f);
         ImGui::SliderFloat("FOV", &camera.fov, 1.0f, 90.0f);
         ImGui::SliderFloat("Camera Speed", &camera.cameraSpeed, 0.1f, 10.0f);
+        ImGui::End();
+
+        auto selectedEntity = World::getSelectedEntity();
+        ImGui::Begin("Transform Info");
+        if(selectedEntity.exists()) {
+            if(selectedEntity.hasComponent<Transform>())
+            {
+                auto transform = selectedEntity.getComponent<Transform>();
+                ImGui::DragFloat3("Translation", &transform->translation.x);
+                ImGui::SliderFloat3("Rotation", &transform->rotation.x, -180.0f, 180.0f);
+                ImGui::DragFloat3("Scale", &transform->scale.x);
+                ImGui::Text("%s", std::string(selectedEntity.name()).c_str());
+            }
+        }
         ImGui::End();
     }
 };
