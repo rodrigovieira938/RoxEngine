@@ -42,6 +42,13 @@ namespace RoxEngine {
     void Entity::destroy() {
         return flecs::entity(world, mId).destruct();
     }
+    Entity Entity::parent() {
+        return flecs::entity(world, mId).parent().raw_id();
+    }
+    void Entity::childOf(Entity e) {
+        flecs::entity(world, mId).child_of(flecs::entity(world, e.mId));
+    }
+
     UntypedRelation Entity::addRelation(UntypedComponent tag, Entity target) {
         flecs::entity(world, mId).add(world.pair(tag.mId, target.mId));
         return getRelation(tag, target);

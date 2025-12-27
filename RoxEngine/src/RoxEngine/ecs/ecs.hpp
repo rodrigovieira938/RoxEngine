@@ -30,6 +30,9 @@ namespace RoxEngine {
         bool exists();
         void destroy();
 
+        Entity parent();
+        void childOf(Entity);
+
         UntypedRelation addRelation(UntypedComponent tag, Entity target);
         bool hasRelation(UntypedComponent tag, Entity target) const;
         UntypedRelation getRelation(UntypedComponent tag, Entity target);
