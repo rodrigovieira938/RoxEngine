@@ -534,7 +534,7 @@ namespace RoxEngine {
                     }
                     auto binding_point = ShaderReflection::VertexBindingPoint::fromString(binding_name, param->getSemanticIndex());
                     binding_point.binding_index = param->getBindingIndex();
-                    log::info("{}: name = {} type = {} semantic_name = {}, binding={}", entryPoint->getName(), param->getName(), param->getType()->getName(), binding_point.getName(), binding_point.binding_index);
+                    vertex_inputs.push_back(binding_point);
                 }
             }
         }
