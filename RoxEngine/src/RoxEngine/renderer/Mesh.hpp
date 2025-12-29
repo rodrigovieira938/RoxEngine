@@ -37,9 +37,7 @@ namespace RoxEngine {
                 std::array<T, size> data;  
             };
         public:
-            Data() {
-                new(&uv) FieldAliasWorkaround<std::vector<glm::vec2>, ShaderReflection::VertexBindingPoint::UV_MAX, 0>();
-            }
+            Data();
             ~Data() {
                 uv.~FieldAliasWorkaround();
             }
@@ -76,10 +74,10 @@ namespace RoxEngine {
         };
         Mesh() : mData(CreateRef<Data>()) {}
         inline Mesh clone() {return Mesh(mData); };
-        inline void SetPosition(std::vector<glm::vec3> data) {mData->position = data;}
-        inline void SetUvs(std::vector<glm::vec2> data) {mData->uv = data;}
-        inline void SetNormals(std::vector<glm::vec3> data) {mData->normals = data;}
-        inline void SetIndices(std::vector<uint32_t> data) {mData->indices = data;}
+        inline void SetPosition(const std::vector<glm::vec3>& data) {mData->position = data;}
+        inline void SetUvs(const std::vector<glm::vec2>& data) {mData->uv = data;}
+        inline void SetNormals(const std::vector<glm::vec3>& data) {mData->normals = data;}
+        inline void SetIndices(const std::vector<uint32_t>& data) {mData->indices = data;}
         inline std::vector<glm::vec3>& GetPosition() {return mData->position;}
         inline std::vector<glm::vec2>& GetUvs() {return mData->uv;}
         inline std::vector<glm::vec3>& GetNormals() {return mData->normals;}
@@ -89,7 +87,7 @@ namespace RoxEngine {
         inline bool NeedChange() {return mNeedChange;}
         inline void SetNeedChange(bool value) {mNeedChange = value;}
     private:
-        Mesh(Ref<Data>& data){
+        inline Mesh(Ref<Data>& data){
             mData = CreateRef<Data>();
             mData->position = data->position;
             mData->uv = data->uv;
