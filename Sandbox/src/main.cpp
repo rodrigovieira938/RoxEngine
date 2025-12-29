@@ -185,7 +185,6 @@ struct TestGame final : public Game {
         camera.ProcessInput();
     }
     void Render() override {
-        int times = 0;
         pipeline->Begin(camera.GetViewMatrix(), camera.GetProjectionMatrix(1.0f));
         meshRendererQuery.each([&](Entity entity, QueryIter& iter){
             auto meshRenderer = (MeshRenderer*)iter.get(0);

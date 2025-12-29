@@ -1,7 +1,11 @@
 #pragma once
+#include <cstddef>
+#include <format>
+#include <limits>
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <vector>
 #include <RoxEngine/utils/Utils.hpp>
@@ -41,6 +45,108 @@ namespace RoxEngine {
                     innerType == other.innerType &&
                     fields == other.fields;
             }
+        };
+        struct VertexBindingPoint
+        {
+        public:
+            enum Value : int
+            {
+                POSITION,
+                UV0,
+                UV1,
+                NORMAL,
+                TANGENT,
+                BITANGENT,
+                COLOR0,
+                INSTANCE_DATA,
+            };
+        private:
+            Value value;
+        public:
+            //The same as layout(location = x)
+            uint32_t binding_index;
+
+            constexpr VertexBindingPoint(Value v, uint32_t binding_index = 0) : value(v), binding_index(binding_index) {}
+
+            static constexpr size_t POSITION_MAX      = 1;
+            static constexpr size_t UV_MAX            = 2;
+            static constexpr size_t NORMAL_MAX        = 1;
+            static constexpr size_t TANGENT_MAX       = 1;
+            static constexpr size_t BITANGENT_MAX     = 1;
+            static constexpr size_t COLOR_MAX         = 1;
+            static constexpr size_t INSTANCE_DATA_MAX = std::numeric_limits<size_t>::max();
+
+            constexpr std::string_view getName(bool withIndex = true) const
+            {
+                if(withIndex) {
+                    switch (value)
+                    {
+                        case POSITION:      return "POSITION";
+                        case UV0:           return "UV0";
+                        case UV1:           return "UV1";
+                        case NORMAL:        return "NORMAL";
+                        case TANGENT:       return "TANGENT";
+                        case BITANGENT:     return "BITANGENT";
+                        case COLOR0:        return "COLOR0";
+                        case INSTANCE_DATA: return "INSTANCE_DATA";
+                    }
+                } else {
+                    switch (value)
+                    {
+                        case POSITION:      return "POSITION";
+                        case UV0:;
+                        case UV1:           return "UV";
+                        case NORMAL:        return "NORMAL";
+                        case TANGENT:       return "TANGENT";
+                        case BITANGENT:     return "BITANGENT";
+                        case COLOR0:        return "COLOR";
+                        case INSTANCE_DATA: return "INSTANCE_DATA";
+                    }
+                }
+                return "";
+            }
+
+            constexpr size_t getMax() const
+            {
+                switch (value)
+                {
+                    case POSITION:      return POSITION_MAX;
+                    case UV0:           return UV_MAX;
+                    case UV1:           return UV_MAX;
+                    case NORMAL:        return NORMAL_MAX;
+                    case TANGENT:       return TANGENT_MAX;
+                    case BITANGENT:     return BITANGENT_MAX;
+                    case COLOR0:        return COLOR_MAX;
+                    case INSTANCE_DATA: return INSTANCE_DATA_MAX;
+                }
+                return 0;
+            }
+            static constexpr VertexBindingPoint fromString(std::string_view str, size_t index = 0)
+            {
+                VertexBindingPoint base = VertexBindingPoint::POSITION;
+                if (str == "POSITION")           base = VertexBindingPoint(POSITION);
+                else if (str == "UV")            base = VertexBindingPoint(UV0);
+                else if (str == "NORMAL")        base = VertexBindingPoint(NORMAL);
+                else if (str == "TANGENT")       base = VertexBindingPoint(TANGENT);
+                else if (str == "BITANGENT")     base = VertexBindingPoint(BITANGENT);
+                else if (str == "COLOR")         base = VertexBindingPoint(COLOR0);
+                else if (str == "INSTANCE_DATA") base = VertexBindingPoint(INSTANCE_DATA);
+                else                             throw std::invalid_argument(std::format("Unknown BindingPoint string: \"{}\"", str));
+
+                auto max = base.getMax();
+                if(index >= max) {
+                    throw std::invalid_argument(
+                        std::format("Binding index {} exceeds maximum allowed for {}", 
+                            index, base.getName(false))
+                    );
+                }
+                
+                return static_cast<VertexBindingPoint::Value>(static_cast<size_t>(base.value) + index);
+            } 
+            bool operator==(const VertexBindingPoint& other) const { return value == other.value; }
+            bool operator!=(const VertexBindingPoint& other) const { return value != other.value; }
+
+            operator int() const { return static_cast<int>(value); }
         };
     };
 }
@@ -96,6 +202,7 @@ namespace RoxEngine {
         std::unordered_set<ShaderReflection::Type> types;
         std::vector<ModuleReflection::UniformBuffer> ubos;
         std::vector<ModuleReflection::SharedUniformBuffer> shared_ubos;
+        std::vector<ShaderReflection::VertexBindingPoint> vertex_inputs;
     };
     class SlangLayer
     {

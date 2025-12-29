@@ -293,7 +293,6 @@ namespace RoxEngine {
                 session_desc.searchPaths = search_paths;
                 session_desc.searchPathCount = 1;
             }
-
             sGlobalSession->createSession(session_desc, sSession.writeRef());
         }
         if(!sGlobalSession)
@@ -514,6 +513,32 @@ namespace RoxEngine {
         std::unordered_set<ShaderReflection::Type> typeSet;
         std::vector<ModuleReflection::UniformBuffer> ubos;
         std::vector<ModuleReflection::SharedUniformBuffer> shared_ubos;
+        std::vector<ShaderReflection::VertexBindingPoint> vertex_inputs;
+
+        {
+            for(int i = 0; i < layout->getEntryPointCount(); i++){
+                auto entryPoint = layout->getEntryPointByIndex(i);
+                //XXX: should this not validate other stages?
+                if(entryPoint->getStage() != SLANG_STAGE_VERTEX) {
+                    continue;
+                }
+                for(int x = 0; x < entryPoint->getParameterCount(); x++) {
+                    auto param = entryPoint->getParameterByIndex(x);
+                    auto binding_name = std::string_view(param->getSemanticName());
+                    if(binding_name.data() == nullptr) {
+                        //TODO: figure out what to do with this
+                        continue;
+                    }
+                    if(binding_name.starts_with("SV")) {
+                        continue;
+                    }
+                    auto binding_point = ShaderReflection::VertexBindingPoint::fromString(binding_name, param->getSemanticIndex());
+                    binding_point.binding_index = param->getBindingIndex();
+                    log::info("{}: name = {} type = {} semantic_name = {}, binding={}", entryPoint->getName(), param->getName(), param->getType()->getName(), binding_point.getName(), binding_point.binding_index);
+                }
+            }
+        }
+
         for (int i = 0; i < layout->getParameterCount(); i++)
         {
             slang::VariableLayoutReflection* varLayout = layout->getParameterByIndex(i);
@@ -551,7 +576,8 @@ namespace RoxEngine {
         return {
             std::move(typeSet),
             std::move(ubos),
-            std::move(shared_ubos)
+            std::move(shared_ubos),
+            std::move(vertex_inputs)
         };
     }
     void SlangLayer::Shutdown()
