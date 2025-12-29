@@ -55,12 +55,7 @@ namespace RoxEngine {
             bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->uvs_vb).setStride(sizeof(glm::vec2)));
         if(meshData->normals_vb)
             bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->normals_vb).setStride(sizeof(glm::vec3)));
-        auto pipeline_desc = alina::GraphicsPipelineDesc()
-            .setInputLayout(meshData->inputLayout)
-            .setVertexShader(material.GetVertexShader())
-            .setFragmentShader(material.GetFragmentShader());
-        auto pipeline = mGraphicsPipelinePool.Get(pipeline_desc);
-        mCmd->bindGraphicsPipeline(pipeline);
+        mCmd->bindGraphicsPipeline(material.GetGraphicsPipeline(mInputLayoutPool, mGraphicsPipelinePool));
         auto shaderResources = material.GetShaderResources();
         auto moduleReflection = material.GetModuleReflection();
         for(auto& reflection_ubo : moduleReflection->shared_ubos) {

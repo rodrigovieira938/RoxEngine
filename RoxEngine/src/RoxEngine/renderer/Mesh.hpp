@@ -15,8 +15,7 @@ namespace RoxEngine {
             std::vector<uint32_t> indices;
 
             alina::Buffer position_vb, uvs_vb, normals_vb, indices_vb;
-            alina::InputLayout inputLayout;
-
+            
             void BakeGPUResources(alina::Device device, AlinaGlue::InputLayoutPool* inputLayoutPool = nullptr) {
                 auto cmd = device->createCommandList();
                 size_t vertexCount = position.size();
@@ -35,13 +34,6 @@ namespace RoxEngine {
                 }
                 cmd->end();
                 device->execute(cmd);
-
-                std::vector<alina::VertexAttributeDesc> attrs = {alina::VertexAttributeDesc().setFormat(alina::VertexAttributeFormat::Float).setArraySize(3).setStride(sizeof(glm::vec3))};
-                if(uvs_vb)
-                    attrs.push_back(alina::VertexAttributeDesc().setFormat(alina::VertexAttributeFormat::Float).setArraySize(2).setStride(sizeof(glm::vec2)).setBufferIndex(1));
-                if(normals_vb)
-                    attrs.push_back(alina::VertexAttributeDesc().setFormat(alina::VertexAttributeFormat::Float).setArraySize(3).setStride(sizeof(glm::vec3)).setBufferIndex(uvs_vb?2:1));
-                inputLayout = inputLayoutPool->Get(attrs);
             }
         };
         Mesh() : mData(CreateRef<Data>()) {}

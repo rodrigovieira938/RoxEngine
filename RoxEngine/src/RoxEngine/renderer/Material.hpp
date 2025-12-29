@@ -17,8 +17,9 @@ namespace RoxEngine {
         inline bool Set(std::string_view path, glm::mat4 value) { return Set(path, "matrix<float,4,4>", &value[0][0], sizeof(glm::mat4));}
         inline alina::Shader GetVertexShader() {return mVertexShader;}    
         inline alina::Shader GetFragmentShader() {return mFragmentShader;}
-        inline alina::ShaderResources& GetShaderResources() {return mShaderResources;}
         inline Ref<ModuleReflection> GetModuleReflection() {return mModuleReflection;}
+        inline alina::ShaderResources& GetShaderResources() {return mShaderResources;}
+        alina::GraphicsPipeline GetGraphicsPipeline(AlinaGlue::InputLayoutPool& inputLayoutPool, AlinaGlue::GraphicsPipelinePool& pipelinePool);     
     private:
         bool Set(std::string_view path, std::string_view type, const void* data, size_t size);
         alina::IDevice* mDevice;
@@ -26,5 +27,6 @@ namespace RoxEngine {
         Ref<ModuleReflection> mModuleReflection;
         std::vector<alina::Buffer> mUbos;
         alina::ShaderResources mShaderResources;
+        alina::GraphicsPipeline mGraphicsPipeline;
     };
 }
