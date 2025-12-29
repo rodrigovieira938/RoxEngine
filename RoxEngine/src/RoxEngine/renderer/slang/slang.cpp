@@ -2,11 +2,10 @@
 #include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/filesystem/Filesystem.hpp"
 #include <RoxEngine/renderer/slang/slang.hpp>
+#include <cassert>
 #include <cstddef>
 #include <cstring>
-#include <functional>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -170,6 +169,7 @@ namespace RoxEngine {
             case ShaderReflection::Type::Array:
                 return true;
             }
+            assert(false);
         };
 
         std::string_view segment;
@@ -397,6 +397,7 @@ namespace RoxEngine {
                 case slang::TypeReflection::UInt16:
                     return 2;
             }
+            assert(false);
         };
         ShaderReflection::Type t;
         t.kind = ShaderReflection::Type::TypeKind::Unknown;
