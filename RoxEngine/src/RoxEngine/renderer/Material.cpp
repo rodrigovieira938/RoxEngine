@@ -1,4 +1,4 @@
-#include "RoxEngine/slang/slang.hpp"
+#include <RoxEngine/renderer/slang/slang.hpp>
 #include "alina/alina.hpp"
 #include <RoxEngine/renderer/Material.hpp>
 #include <format>

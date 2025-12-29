@@ -1,7 +1,7 @@
 #include "slang.h"
 #include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/filesystem/Filesystem.hpp"
-#include <RoxEngine/slang/slang.hpp>
+#include <RoxEngine/renderer/slang/slang.hpp>
 #include <cstddef>
 #include <cstring>
 #include <functional>

@@ -1,5 +1,5 @@
 #pragma once
-#include "RoxEngine/slang/slang.hpp"
+#include <RoxEngine/renderer/slang/slang.hpp>
 #include "alina/alina.hpp"
 #include <RoxEngine/utils/Utils.hpp>
 #include <glm/glm.hpp>

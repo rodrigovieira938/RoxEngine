@@ -1,6 +1,6 @@
 #include "RoxEngine/renderer/Material.hpp"
 #include "RoxEngine/renderer/Transform.hpp"
-#include "RoxEngine/slang/slang.hpp"
+#include <RoxEngine/renderer/slang/slang.hpp>
 #include "alina/alina.hpp"
 #include <RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp>
 #include <alina/opengl.hpp>

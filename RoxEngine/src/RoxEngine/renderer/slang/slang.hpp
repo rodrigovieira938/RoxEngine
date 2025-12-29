@@ -146,7 +146,7 @@ namespace RoxEngine {
             bool operator==(const VertexBindingPoint& other) const { return value == other.value; }
             bool operator!=(const VertexBindingPoint& other) const { return value != other.value; }
 
-            operator int() const { return static_cast<int>(value); }
+            operator Value() const {return value;}
         };
     };
 }

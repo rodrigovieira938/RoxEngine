@@ -6,7 +6,7 @@
 #include "RoxEngine/renderer/URP/MeshRendererer.hpp"
 #include "RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp"
 #include <RoxEngine/renderer/Transform.hpp>
-#include "RoxEngine/slang/slang.hpp"
+#include <RoxEngine/renderer/slang/slang.hpp>
 #include <iostream>
 #include "RoxEngine/utils/Utils.hpp"
 #include "alina/alina.hpp"
