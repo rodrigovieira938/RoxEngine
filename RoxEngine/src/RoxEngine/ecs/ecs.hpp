@@ -32,6 +32,8 @@ namespace RoxEngine {
 
         Entity parent();
         void childOf(Entity);
+        //Calls callback for every children
+        void children(std::function<void(Entity)>);
 
         UntypedRelation addRelation(UntypedComponent tag, Entity target);
         bool hasRelation(UntypedComponent tag, Entity target) const;

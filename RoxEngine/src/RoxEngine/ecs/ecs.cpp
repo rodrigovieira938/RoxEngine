@@ -48,6 +48,11 @@ namespace RoxEngine {
     void Entity::childOf(Entity e) {
         flecs::entity(world, mId).child_of(flecs::entity(world, e.mId));
     }
+    void Entity::children(std::function<void(Entity)> callback) {
+        flecs::entity(world, mId).children([&](flecs::entity e){
+            callback(Entity(e.raw_id()));
+        });
+    }
 
     UntypedRelation Entity::addRelation(UntypedComponent tag, Entity target) {
         flecs::entity(world, mId).add(world.pair(tag.mId, target.mId));
