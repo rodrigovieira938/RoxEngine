@@ -5,3 +5,4 @@ file(GLOB_RECURSE roxengine_src
 add_library(roxengine ${roxengine_src})
 target_include_directories(roxengine PUBLIC src)
 target_link_libraries(roxengine PUBLIC glfw slang flecs::flecs_static glm imgui-lib spdlog alina)
+add_dependencies(roxengine slang-glslang) # This dll is needed to compile shader to spirv

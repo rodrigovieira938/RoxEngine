@@ -270,7 +270,7 @@ namespace RoxEngine {
                 static slang::TargetDesc targets[] = {
                     {
                             sizeof(slang::TargetDesc),
-                            SLANG_GLSL,
+                            SLANG_SPIRV,
                             SLANG_PROFILE_UNKNOWN,
                             kDefaultTargetFlags,
                             SLANG_FLOATING_POINT_MODE_DEFAULT,
@@ -280,7 +280,7 @@ namespace RoxEngine {
                             0,
                     }
                 };
-                targets[0].profile = sGlobalSession->findProfile("glsl_450");
+                targets[0].profile = sGlobalSession->findProfile("spirv_1_5");
 
                 session_desc.targets = targets;
                 session_desc.targetCount = sizeof(slang::TargetDesc) / sizeof(targets);
@@ -356,7 +356,7 @@ namespace RoxEngine {
             return 0;
         }
 
-        return std::string((char*)code->getBufferPointer());
+        return std::string((char*)code->getBufferPointer(), code->getBufferSize());
     }
     const ShaderReflection::Type* ExtractTypeRecursive(
     slang::TypeReflection* slangType,
