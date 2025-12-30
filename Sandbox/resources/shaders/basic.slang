@@ -4,14 +4,13 @@ import "res://shaders/internal/urp";
 
 cbuffer Uniforms {
     float3 color;
-    float4x4 matrix;
 }
 
 [shader("vertex")]
-VertexStageOutput basic_vmain(float3 position : POSITION)
+VertexStageOutput basic_vmain(float3 position : POSITION, float4x4 transformMatrix : INSTANCE_DATA)
 {
     VertexStageOutput output;
-    output.sv_position = mul(urp::transformMatrix, mul(urp::viewProjMatrix, float4(position, 1.0)));
+    output.sv_position = mul(transformMatrix, mul(urp::viewProjMatrix, float4(position, 1.0)));
     return output;
 }
 

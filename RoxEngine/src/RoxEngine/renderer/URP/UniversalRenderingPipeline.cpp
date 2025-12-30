@@ -43,6 +43,7 @@ namespace RoxEngine {
     void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, const glm::mat4& transform) {
         if(mesh.GetIndices().size() == 0 || mesh.GetPosition().size() == 0) return;
         auto meshData = mesh.GetData();
+        auto moduleReflection = material.GetModuleReflection();
         if(mesh.NeedChange()) {
             meshData->BakeGPUResources(mDevice, &mInputLayoutPool);
             mesh.SetNeedChange(false);
@@ -55,9 +56,14 @@ namespace RoxEngine {
             bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->uvs_vb).setStride(sizeof(glm::vec2)));
         if(meshData->normals_vb)
             bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->normals_vb).setStride(sizeof(glm::vec3)));
+        if(moduleReflection->instance_data.has_value()) {
+            bindVBs.push_back(alina::BindVertexBuffer()
+            .setBuffer(material.GetBuffers()[material.GetBuffers().size()-1])
+            .setStride(moduleReflection->instance_data->type->size));
+        }
+
         mCmd->bindGraphicsPipeline(material.GetGraphicsPipeline(mInputLayoutPool, mGraphicsPipelinePool));
         auto shaderResources = material.GetShaderResources();
-        auto moduleReflection = material.GetModuleReflection();
         for(auto& reflection_ubo : moduleReflection->shared_ubos) {
             if(reflection_ubo.index_name == mGlobalsUboReflection.shared_ubos[mGlobalUboIndex].index_name) {
                 for(auto& binding: shaderResources.uboBinding) {

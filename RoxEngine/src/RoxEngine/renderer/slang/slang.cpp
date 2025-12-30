@@ -13,7 +13,6 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -186,6 +185,7 @@ namespace RoxEngine {
         const ShaderReflection::Type* currentField = nullptr;
         size_t offset = 0;
         bool isShared = false;
+        bool isInstanceData = false;
         while(!path.empty()) {
             auto it =  path.find('.');
             segment = path.substr(0,it);
@@ -194,7 +194,15 @@ namespace RoxEngine {
                 dimensions = segment.substr(begin_dimensions);
                 segment = segment.substr(0, begin_dimensions);
             }
-            if(!ubo) {
+            if(!isInstanceData && !ubo) {
+                //XXX: maybe lower both?
+                if(segment == "@InstanceData" && instance_data.has_value()) {
+                    isInstanceData = true;
+                    currentField = instance_data->type;
+                    continue;
+                }
+            }
+            if(!ubo && !isInstanceData) {
                 ubo_index = lookupUbo(segment, &currentField,offset, isShared);
                 if(ubo_index == -1) {
                     return std::nullopt;
@@ -261,7 +269,7 @@ namespace RoxEngine {
             }
 
         }
-        return LookupResult{offset,ubo_index,isShared, currentField};
+        return LookupResult{offset,ubo_index,isShared, isInstanceData, currentField};
     }
 
 	void SlangLayer::Init()
@@ -411,10 +419,11 @@ namespace RoxEngine {
             auto it = std::find(types.begin(), types.end(), type);
             size_t index = types.size();
             if(it != types.end()) {
-                index = it - types.begin();
+                index = std::distance(types.begin(), it)+1;
+            } else {
+                types.push_back(type);
             }
-            types.push_back(type);
-            return (ShaderReflection::Type*)index+1; //Index start at 1, so 0 = nullptr
+            return (ShaderReflection::Type*)index; //Index start at 1, so 0 = nullptr
         };
         ShaderReflection::Type t;
         t.kind = ShaderReflection::Type::TypeKind::Unknown;
@@ -426,7 +435,6 @@ namespace RoxEngine {
                 t.name.assign(data);
             nameBlob->release();
         }
-
         using Kind = slang::TypeReflection::Kind;
         Kind k = slangType->getKind();
 
@@ -610,6 +618,7 @@ namespace RoxEngine {
         std::vector<ModuleReflection::UniformBuffer> ubos;
         std::vector<ModuleReflection::SharedUniformBuffer> shared_ubos;
         std::vector<ShaderReflection::VertexBindingPoint> vertex_inputs;
+        std::optional<ModuleReflection::InstanceData> instance_data;
 
         /*WalkParametersTypeRecursive(layout, [](slang::VariableReflection* var, slang::VariableLayoutReflection*, int depth, ParameterType parameter_type){
             std::string tabs(depth, '\t');
@@ -696,25 +705,29 @@ namespace RoxEngine {
             });
             types_size = types_vec.size();
             types = new ShaderReflection::Type[types_size];
-            int i = 0;
-            for(auto& type : types_vec) {
-                types[i] = type;
-                i++;
-            }
             std::function<void(ShaderReflection::Type* type)> repoint;
             repoint = [&](ShaderReflection::Type* type){
-                if(type->innerType != 0) {
-                    type->innerType = &types[(size_t)type->innerType];
+                auto index = (size_t)type->innerType; 
+                assert(index <= types_size);
+                if(index != 0) {
+                    type->innerType = types + size_t(index-1);
                     repoint(type->innerType);
                 }
                 for(int i = 0; i < type->fields.size(); i++) {
-                    auto& field = type->fields[i].second;
-                    if(field != 0) {
-                        field = &types[(size_t)field];
-                        repoint(field);
+                    auto index = (size_t)type->fields[i].second;
+                    assert(index <= types_size);
+                    if(index != 0) {
+                        type->fields[i].second = types + size_t(index-1);
+                        repoint(type->fields[i].second);
                     }
                 }
             };
+            int i = 0;
+            for(auto& type : types_vec) {
+                repoint(&types_vec[i]);
+                types[i] = type;
+                i++;
+            }
         };
         WalkParametersTypeRecursive(layout, [&](slang::VariableReflection* var, slang::VariableLayoutReflection* var_layout, int, ParameterType parameter_type){
             switch(parameter_type) {
@@ -741,17 +754,34 @@ namespace RoxEngine {
                 break;
             }
             case ParameterType::VertexShaderInput: {
-                auto binding_name = std::string_view(var_layout->getSemanticName());
-                if(binding_name.data() == nullptr) {
+                auto binding_name_raw = var_layout->getSemanticName();
+                if(binding_name_raw == nullptr) {
                     //TODO: figure out what to do with this
                     break;
                 }
+                if(var_layout->getType()->getScalarType() == slang::TypeReflection::ScalarType::None) {
+                    //TODO: figure out what to do with structs
+                    break;
+                }
+                
+                auto binding_name = std::string_view(binding_name_raw);
                 if(binding_name.starts_with("SV")) {
                     break;
                 }
-                auto binding_point = ShaderReflection::VertexBindingPoint::fromString(binding_name, var_layout->getSemanticIndex());
-                binding_point.binding_index = var_layout->getBindingIndex();
-                vertex_inputs.push_back(binding_point);
+                if(binding_name == "INSTANCE_DATA") {
+                    if(instance_data.has_value()) {
+                        throw std::runtime_error("Shader pipeline only supports 1 instance data for now!");
+                    }
+                    auto type = var_layout->getType();
+                    auto type_layout = var_layout->getTypeLayout();
+                    auto reflectionType = findType(type);
+                    instance_data.emplace(ShaderReflection::VertexBindingPoint::POSITION, reflectionType);
+                    instance_data->bindingPoint.binding_index = var_layout->getBindingIndex();
+                } else {
+                    auto binding_point = ShaderReflection::VertexBindingPoint::fromString(binding_name, var_layout->getSemanticIndex());
+                    binding_point.binding_index = var_layout->getBindingIndex();
+                    vertex_inputs.push_back(binding_point);
+                }
                 break;
             }
             default:
@@ -764,7 +794,8 @@ namespace RoxEngine {
             types_size,
             std::move(ubos),
             std::move(shared_ubos),
-            std::move(vertex_inputs)
+            std::move(vertex_inputs),
+            instance_data
         };
     }
     void SlangLayer::Shutdown()

@@ -19,6 +19,7 @@ namespace RoxEngine {
         inline alina::Shader GetFragmentShader() {return mFragmentShader;}
         inline Ref<ModuleReflection> GetModuleReflection() {return mModuleReflection;}
         inline alina::ShaderResources& GetShaderResources() {return mShaderResources;}
+        inline const std::vector<alina::Buffer>& GetBuffers() {return mUbos;}
         alina::GraphicsPipeline GetGraphicsPipeline(AlinaGlue::InputLayoutPool& inputLayoutPool, AlinaGlue::GraphicsPipelinePool& pipelinePool);     
     private:
         bool Set(std::string_view path, std::string_view type, const void* data, size_t size);

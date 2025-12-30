@@ -34,10 +34,15 @@ namespace RoxEngine {
             }
             std::string index_name;
         };
+        struct InstanceData {
+            ShaderReflection::VertexBindingPoint bindingPoint;
+            const ShaderReflection::Type* type;
+        };
         struct LookupResult {
             size_t offset;
             size_t ubo_index;
             bool is_shared = false;
+            bool is_instancedata = false;
             const ShaderReflection::Type* type;
         };
         std::optional<LookupResult> lookup(std::string_view path);
@@ -45,7 +50,9 @@ namespace RoxEngine {
         size_t types_size;
         std::vector<ModuleReflection::UniformBuffer> ubos;
         std::vector<ModuleReflection::SharedUniformBuffer> shared_ubos;
+        //All vertex inputs except instance data
         std::vector<ShaderReflection::VertexBindingPoint> vertex_inputs;
+        std::optional<InstanceData> instance_data;
     };
     class SlangLayer
     {

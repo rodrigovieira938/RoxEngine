@@ -53,7 +53,6 @@ namespace RoxEngine {
                 TANGENT,
                 BITANGENT,
                 COLOR0,
-                INSTANCE_DATA,
             };
         private:
             Value value;
@@ -69,7 +68,6 @@ namespace RoxEngine {
             static constexpr size_t TANGENT_MAX       = 1;
             static constexpr size_t BITANGENT_MAX     = 1;
             static constexpr size_t COLOR_MAX         = 1;
-            static constexpr size_t INSTANCE_DATA_MAX = std::numeric_limits<size_t>::max();
 
             constexpr std::string_view getName(bool withIndex = true) const
             {
@@ -83,7 +81,6 @@ namespace RoxEngine {
                         case TANGENT:       return "TANGENT";
                         case BITANGENT:     return "BITANGENT";
                         case COLOR0:        return "COLOR0";
-                        case INSTANCE_DATA: return "INSTANCE_DATA";
                     }
                 } else {
                     switch (value)
@@ -95,7 +92,6 @@ namespace RoxEngine {
                         case TANGENT:       return "TANGENT";
                         case BITANGENT:     return "BITANGENT";
                         case COLOR0:        return "COLOR";
-                        case INSTANCE_DATA: return "INSTANCE_DATA";
                     }
                 }
                 return "";
@@ -112,7 +108,6 @@ namespace RoxEngine {
                     case TANGENT:       return TANGENT_MAX;
                     case BITANGENT:     return BITANGENT_MAX;
                     case COLOR0:        return COLOR_MAX;
-                    case INSTANCE_DATA: return INSTANCE_DATA_MAX;
                 }
                 return 0;
             }
@@ -125,7 +120,6 @@ namespace RoxEngine {
                 else if (str == "TANGENT")       base = VertexBindingPoint(TANGENT);
                 else if (str == "BITANGENT")     base = VertexBindingPoint(BITANGENT);
                 else if (str == "COLOR")         base = VertexBindingPoint(COLOR0);
-                else if (str == "INSTANCE_DATA") base = VertexBindingPoint(INSTANCE_DATA);
                 else                             throw std::invalid_argument(std::format("Unknown BindingPoint string: \"{}\"", str));
 
                 auto max = base.getMax();
@@ -140,6 +134,9 @@ namespace RoxEngine {
             } 
             bool operator==(const VertexBindingPoint& other) const { return value == other.value; }
             bool operator!=(const VertexBindingPoint& other) const { return value != other.value; }
+
+            bool operator==(const Value& other) const { return value == other; }
+            bool operator!=(const Value& other) const { return value != other; }
 
             operator Value() const {return value;}
         };

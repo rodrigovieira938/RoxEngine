@@ -7,6 +7,7 @@
 #include "RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp"
 #include <RoxEngine/renderer/Transform.hpp>
 #include <RoxEngine/renderer/slang/slang.hpp>
+#include <cstdlib>
 #include <iostream>
 #include "RoxEngine/utils/Utils.hpp"
 #include "alina/alina.hpp"
@@ -139,9 +140,11 @@ struct TestGame final : public Game {
         vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_shader_src.data(), vertex_shader_src.size());
         fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_shader_src.data(), fragment_shader_src.size()); 
         material = Material(vertex_shader, fragment_shader, moduleReflection);
+        material->Set("@InstanceData", glm::mat4(1.0f));
         material->Set("color", glm::vec3(0.5,1,0.3));
         material2 = Material(vertex_shader, fragment_shader, moduleReflection);
         material2->Set("color", glm::vec3(1, 0.5,0.3));
+        material2->Set("@InstanceData", glm::mat4(1.0f));
         auto cube = scene.entity("Cube");
         cube.addComponent<Transform>(glm::vec3{0,0,0});
         cube.addComponent<DirtyTransform>();
