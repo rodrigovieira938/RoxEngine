@@ -1,7 +1,9 @@
 #include "slang.h"
 #include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/filesystem/Filesystem.hpp"
+#include "RoxEngine/renderer/ShaderReflection.hpp"
 #include <RoxEngine/renderer/slang/slang.hpp>
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstring>
@@ -362,7 +364,7 @@ namespace RoxEngine {
 
         return std::string((char*)code->getBufferPointer(), code->getBufferSize());
     }
-    const ShaderReflection::Type* ExtractTypeRecursive(
+    ShaderReflection::Type* ExtractTypeRecursive(
     slang::TypeReflection* slangType,
     slang::TypeLayoutReflection* slangTypeLayout,
     std::unordered_set<ShaderReflection::Type>& typeSet) 
@@ -471,7 +473,7 @@ namespace RoxEngine {
                 for (int i = 0; i < fieldCount; i++) {
                     slang::VariableReflection* fieldVar = slangType->getFieldByIndex(i);
                     auto fieldVarLayout = slangTypeLayout->getFieldByIndex(i);
-                    const ShaderReflection::Type* inner = ExtractTypeRecursive(fieldVar->getType(),fieldVarLayout->getTypeLayout(), typeSet);
+                    ShaderReflection::Type* inner = ExtractTypeRecursive(fieldVar->getType(),fieldVarLayout->getTypeLayout(), typeSet);
                     t.fields.emplace_back(fieldVar->getName(), inner);
                 }
                 break;
@@ -482,7 +484,7 @@ namespace RoxEngine {
                 break;
         }
         auto [it, inserted] = typeSet.insert(std::move(t));
-        return &(*it);
+        return (RoxEngine::ShaderReflection::Type*)&(*it);
     }
     enum class ParameterType {
         None,
@@ -593,6 +595,12 @@ namespace RoxEngine {
     };
     ModuleReflection SlangLayer::GetProgramReflection(Slang::ComPtr<slang::IComponentType> program) {
         auto layout = program->getLayout();
+        ShaderReflection::Type* types = nullptr;
+        size_t types_size = 0;
+        std::vector<ModuleReflection::UniformBuffer> ubos;
+        std::vector<ModuleReflection::SharedUniformBuffer> shared_ubos;
+        std::vector<ShaderReflection::VertexBindingPoint> vertex_inputs;
+
         /*WalkParametersTypeRecursive(layout, [](slang::VariableReflection* var, slang::VariableLayoutReflection*, int depth, ParameterType parameter_type){
             std::string tabs(depth, '\t');
             const char* name = var->getName();
@@ -602,7 +610,22 @@ namespace RoxEngine {
             log::info("{}{}({}) of type {}", tabs, name?name:"", ParameterTypeToStr(parameter_type), type_name?type_name:"");
             return true;
         });*/
-        auto walkContantBuffer = [layout](slang::TypeReflection* innerType, slang::TypeLayoutReflection* innerTypeLayout, std::unordered_set<ShaderReflection::Type>& typeSet){
+        auto findTypeByName = [&](std::string_view type_name) -> ShaderReflection::Type*{
+            for(int i = 0; i < types_size; i++) {
+                if(types[i].name == type_name) {
+                    return types + i;
+                }
+            }
+            throw std::runtime_error(std::format("Could not find type {}", type_name));
+        };
+        auto findType = [&](slang::TypeReflection* type) -> ShaderReflection::Type*{
+            Slang::ComPtr<slang::IBlob> type_name_blob;
+            type->getFullName(type_name_blob.writeRef());
+            if(type_name_blob->getBufferPointer() == nullptr)
+                throw std::runtime_error("slang::TypeReflection was no name");
+            return findTypeByName(std::string_view((const char*)type_name_blob->getBufferPointer()));
+        };
+        auto walkContantBuffer = [&](slang::TypeReflection* innerType, slang::TypeLayoutReflection* innerTypeLayout){
             auto type_name = innerType->getName();
             ModuleReflection::UniformBuffer ubo;
             for(unsigned int i = 0; i < innerType->getFieldCount(); i++) {
@@ -621,13 +644,13 @@ namespace RoxEngine {
 
                 auto var_layout = innerTypeLayout->getFieldByIndex(i);
                 auto field_layout = var_layout->getTypeLayout();
-                auto reflectionType = ExtractTypeRecursive(field->getType(),field_layout, typeSet);
+                auto reflectionType = findType(field->getType());
                 ubo.fields.push_back({field_name,var_layout->getOffset(),reflectionType});
             }
             ubo.size = innerTypeLayout->getSize();
             return ubo;
         };
-        auto getSharedConstantBufferName = [layout](slang::VariableLayoutReflection* var_layout){
+        auto getSharedConstantBufferName = [&](slang::VariableLayoutReflection* var_layout){
             const char* shared_name = nullptr;
             auto var = var_layout->getVariable();
 
@@ -642,12 +665,6 @@ namespace RoxEngine {
             }
             return shared_name;
         };
-
-        std::unordered_set<ShaderReflection::Type> typeSet;
-        ShaderReflection::Type* types = nullptr;
-        std::vector<ModuleReflection::UniformBuffer> ubos;
-        std::vector<ModuleReflection::SharedUniformBuffer> shared_ubos;
-        std::vector<ShaderReflection::VertexBindingPoint> vertex_inputs;
 
         // Extract all types that will be needed
         {
@@ -667,10 +684,28 @@ namespace RoxEngine {
                 return true;
             });
             types = new ShaderReflection::Type[typeSet.size()];
+            //Make sure we can get the same order when iterating the typeSet
+            auto types_ptrs = new ShaderReflection::Type const*[typeSet.size()];
+            types_size = typeSet.size();
             int i = 0;
             for(auto& type : typeSet) {
                 types[i] = type;
+                types_ptrs[i] = &type;
                 i++;
+            }
+            std::function<void(ShaderReflection::Type* type, const ShaderReflection::Type * set_type)> repoint;
+            repoint = [&](ShaderReflection::Type* type, const ShaderReflection::Type * set_type){
+                if(type->innerType) {
+                    type->innerType = findTypeByName(set_type->innerType->name);
+                    repoint(type->innerType, set_type->innerType);
+                }
+                for(int i = 0; i < type->fields.size(); i++) {
+                    type->fields[i].second = findTypeByName(set_type->fields[i].second->name);
+                    repoint(type->fields[i].second, set_type->fields[i].second);
+                }
+            };
+            for(int i = 0; i < types_size; i++) {
+                repoint(&types[i], types_ptrs[i]);
             }
         };
         WalkParametersTypeRecursive(layout, [&](slang::VariableReflection* var, slang::VariableLayoutReflection* var_layout, int, ParameterType parameter_type){
@@ -680,7 +715,7 @@ namespace RoxEngine {
             case ParameterType::CBuffer: {
                 auto type = var->getType()->getElementType();
                 auto type_layout = var_layout->getTypeLayout()->getElementTypeLayout();
-                auto ubo = walkContantBuffer(type, type_layout, typeSet);
+                auto ubo = walkContantBuffer(type, type_layout);
                 if(auto semanticName = var_layout->getSemanticName();semanticName) {
                     ubo.name = semanticName;
                 }
@@ -717,7 +752,8 @@ namespace RoxEngine {
             return false; //Only need the parameters not the types within
         });
         return {
-            std::move(typeSet),
+            std::move(types),
+            types_size,
             std::move(ubos),
             std::move(shared_ubos),
             std::move(vertex_inputs)

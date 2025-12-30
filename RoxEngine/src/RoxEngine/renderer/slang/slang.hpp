@@ -41,7 +41,8 @@ namespace RoxEngine {
             const ShaderReflection::Type* type;
         };
         std::optional<LookupResult> lookup(std::string_view path);
-        std::unordered_set<ShaderReflection::Type> types;
+        ShaderReflection::Type* types;
+        size_t types_size;
         std::vector<ModuleReflection::UniformBuffer> ubos;
         std::vector<ModuleReflection::SharedUniformBuffer> shared_ubos;
         std::vector<ShaderReflection::VertexBindingPoint> vertex_inputs;
