@@ -49,9 +49,10 @@ namespace RoxEngine {
         flecs::entity(world, mId).child_of(flecs::entity(world, e.mId));
     }
     void Entity::children(std::function<void(Entity)> callback) {
-        flecs::entity(world, mId).children([&](flecs::entity e){
-            callback(Entity(e.raw_id()));
-        });
+        ecs_iter_t it = ecs_children(world, mId);
+        while (ecs_children_next(&it)) {
+            callback(Entity(mId));
+        }
     }
 
     UntypedRelation Entity::addRelation(UntypedComponent tag, Entity target) {
