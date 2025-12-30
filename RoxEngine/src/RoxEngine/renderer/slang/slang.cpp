@@ -14,6 +14,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace RoxEngine {    
@@ -364,10 +365,11 @@ namespace RoxEngine {
 
         return std::string((char*)code->getBufferPointer(), code->getBufferSize());
     }
+    //Do not use this unless you preprocess the ShaderReflection::Type* (which are actually indices)
     ShaderReflection::Type* ExtractTypeRecursive(
     slang::TypeReflection* slangType,
     slang::TypeLayoutReflection* slangTypeLayout,
-    std::unordered_set<ShaderReflection::Type>& typeSet) 
+    std::vector<ShaderReflection::Type>& types) 
     {
         auto getScalarTypeSize = [](slang::TypeReflection* type) -> size_t {
             using namespace slang;
@@ -405,6 +407,15 @@ namespace RoxEngine {
             }
             assert(false);
         };
+        auto insertType = [&](const ShaderReflection::Type& type) -> ShaderReflection::Type* {
+            auto it = std::find(types.begin(), types.end(), type);
+            size_t index = types.size();
+            if(it != types.end()) {
+                index = it - types.begin();
+            }
+            types.push_back(type);
+            return (ShaderReflection::Type*)index+1; //Index start at 1, so 0 = nullptr
+        };
         ShaderReflection::Type t;
         t.kind = ShaderReflection::Type::TypeKind::Unknown;
         ISlangBlob* nameBlob = nullptr;
@@ -432,7 +443,7 @@ namespace RoxEngine {
                 t.rowCount = slangType->getElementCount();
                 t.colCount = 1;
                 t.size = slangTypeLayout->getSize();
-                t.innerType = ExtractTypeRecursive(slangType->getElementType(), slangTypeLayout->getElementTypeLayout(), typeSet);
+                t.innerType = ExtractTypeRecursive(slangType->getElementType(), slangTypeLayout->getElementTypeLayout(), types);
                 t.stride = slangTypeLayout->getElementTypeLayout()->getStride();
                 break;
             }
@@ -441,7 +452,7 @@ namespace RoxEngine {
                 t.colCount = slangType->getColumnCount();
                 t.rowCount = slangType->getRowCount();
                 t.size = slangTypeLayout->getSize();
-                t.innerType = ExtractTypeRecursive(slangType->getElementType(), slangTypeLayout->getElementTypeLayout(), typeSet);
+                t.innerType = ExtractTypeRecursive(slangType->getElementType(), slangTypeLayout->getElementTypeLayout(), types);
                 switch (slangTypeLayout->getMatrixLayoutMode()) {
                 case SLANG_MATRIX_LAYOUT_MODE_UNKNOWN:
                     //Resort to this method if layout mode is unknown
@@ -460,7 +471,7 @@ namespace RoxEngine {
                 t.kind = ShaderReflection::Type::TypeKind::Array;
                 t.rowCount = slangType->getElementCount();
                 t.size = slangTypeLayout->getSize();
-                t.innerType = ExtractTypeRecursive(slangType->getElementType(), slangTypeLayout->getElementTypeLayout(), typeSet);
+                t.innerType = ExtractTypeRecursive(slangType->getElementType(), slangTypeLayout->getElementTypeLayout(), types);
                 //t.stride = slangTypeLayout->getElementTypeLayout()->getStride();
                 //FIXME: try to not do this and use the api. This is here because of std140 errors
                 t.stride = slangTypeLayout->getStride() / t.rowCount;
@@ -473,7 +484,7 @@ namespace RoxEngine {
                 for (int i = 0; i < fieldCount; i++) {
                     slang::VariableReflection* fieldVar = slangType->getFieldByIndex(i);
                     auto fieldVarLayout = slangTypeLayout->getFieldByIndex(i);
-                    ShaderReflection::Type* inner = ExtractTypeRecursive(fieldVar->getType(),fieldVarLayout->getTypeLayout(), typeSet);
+                    ShaderReflection::Type* inner = ExtractTypeRecursive(fieldVar->getType(),fieldVarLayout->getTypeLayout(), types);
                     t.fields.emplace_back(fieldVar->getName(), inner);
                 }
                 break;
@@ -483,8 +494,7 @@ namespace RoxEngine {
                 t.kind = ShaderReflection::Type::TypeKind::Unknown;
                 break;
         }
-        auto [it, inserted] = typeSet.insert(std::move(t));
-        return (RoxEngine::ShaderReflection::Type*)&(*it);
+        return insertType(t);
     }
     enum class ParameterType {
         None,
@@ -668,7 +678,8 @@ namespace RoxEngine {
 
         // Extract all types that will be needed
         {
-            std::unordered_set<ShaderReflection::Type> typeSet;
+            std::vector<ShaderReflection::Type> types_vec;
+
             WalkParametersTypeRecursive(layout, [&](slang::VariableReflection* var, slang::VariableLayoutReflection* var_layout, int, ParameterType parameter_type){
                 if(parameter_type == ParameterType::CBuffer) {
                     return true; // Type of cbuffer isn't needed but its fields are
@@ -680,33 +691,30 @@ namespace RoxEngine {
                     return false;
                 auto type = var->getType();
                 auto type_layout = var_layout->getTypeLayout();
-                ExtractTypeRecursive(type, type_layout, typeSet);
+                ExtractTypeRecursive(type, type_layout, types_vec);
                 return true;
             });
-            types = new ShaderReflection::Type[typeSet.size()];
-            //Make sure we can get the same order when iterating the typeSet
-            auto types_ptrs = new ShaderReflection::Type const*[typeSet.size()];
-            types_size = typeSet.size();
+            types_size = types_vec.size();
+            types = new ShaderReflection::Type[types_size];
             int i = 0;
-            for(auto& type : typeSet) {
+            for(auto& type : types_vec) {
                 types[i] = type;
-                types_ptrs[i] = &type;
                 i++;
             }
-            std::function<void(ShaderReflection::Type* type, const ShaderReflection::Type * set_type)> repoint;
-            repoint = [&](ShaderReflection::Type* type, const ShaderReflection::Type * set_type){
-                if(type->innerType) {
-                    type->innerType = findTypeByName(set_type->innerType->name);
-                    repoint(type->innerType, set_type->innerType);
+            std::function<void(ShaderReflection::Type* type)> repoint;
+            repoint = [&](ShaderReflection::Type* type){
+                if(type->innerType != 0) {
+                    type->innerType = &types[(size_t)type->innerType];
+                    repoint(type->innerType);
                 }
                 for(int i = 0; i < type->fields.size(); i++) {
-                    type->fields[i].second = findTypeByName(set_type->fields[i].second->name);
-                    repoint(type->fields[i].second, set_type->fields[i].second);
+                    auto& field = type->fields[i].second;
+                    if(field != 0) {
+                        field = &types[(size_t)field];
+                        repoint(field);
+                    }
                 }
             };
-            for(int i = 0; i < types_size; i++) {
-                repoint(&types[i], types_ptrs[i]);
-            }
         };
         WalkParametersTypeRecursive(layout, [&](slang::VariableReflection* var, slang::VariableLayoutReflection* var_layout, int, ParameterType parameter_type){
             switch(parameter_type) {

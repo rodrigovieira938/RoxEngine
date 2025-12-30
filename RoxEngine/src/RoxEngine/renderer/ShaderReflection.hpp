@@ -27,9 +27,9 @@ namespace RoxEngine {
             uint32_t size = 0;
             uint32_t stride = 0;
 
-            const Type* innerType = nullptr;  // element type for arrays, vectors, matrices
+            Type* innerType = nullptr;  // element type for arrays, vectors, matrices
 
-            std::vector<std::pair<std::string, const Type*>> fields; // for structs
+            std::vector<std::pair<std::string, Type*>> fields; // for structs
 
             bool operator==(const Type& other) const {
                 return kind == other.kind &&
