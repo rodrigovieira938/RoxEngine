@@ -51,7 +51,10 @@ namespace RoxEngine {
     void Entity::children(std::function<void(Entity)> callback) {
         ecs_iter_t it = ecs_children(world, mId);
         while (ecs_children_next(&it)) {
-            callback(Entity(mId));
+            for (int i = 0; i < it.count; i++) {
+                ecs_entity_t child = it.entities[i];
+                callback(Entity(child));
+            }
         }
     }
 
