@@ -3,6 +3,7 @@
 #include <RoxEngine/renderer/slang/slang.hpp>
 #include "alina/alina.hpp"
 #include <RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp>
+#include <RoxEngine/core/Logger.hpp>
 #include <alina/opengl.hpp>
 #include <cstring>
 
@@ -40,7 +41,7 @@ namespace RoxEngine {
         mCmd->end();
         mDevice->execute(mCmd);
     }
-    void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, const glm::mat4& transform) {
+    void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, std::optional<glm::mat4> transform) {
         if(mesh.GetIndices().size() == 0 || mesh.GetPosition().size() == 0) return;
         auto meshData = mesh.GetData();
         auto moduleReflection = material.GetModuleReflection();
@@ -75,15 +76,9 @@ namespace RoxEngine {
                 break;
             }
         }
-        {
-            auto cmd = mDevice->createCommandList();
-            cmd->begin();
-            auto lookup = mGlobalsUboReflection.lookup("transformMatrix");
-            if(lookup) {
-                cmd->writeBuffer(mGlobalsUbo, &transform[0][0], sizeof(glm::mat4), lookup->offset);
-            }
-            cmd->end();
-            mDevice->execute(cmd); //Gotta execute now since writebuffer takes a ptr into the stack
+        if(transform.has_value()){
+            //TODO: 
+            log::warn(__FILE__":{}  TODO: implement renderer updating transform", __LINE__);
         }
         mCmd->bindShaderResources(shaderResources);
         mCmd->bindVertexBuffers(bindVBs);

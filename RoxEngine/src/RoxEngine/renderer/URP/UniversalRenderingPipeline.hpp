@@ -9,7 +9,7 @@ namespace RoxEngine {
     class UniversalRenderingPipeline : public RenderingPipeline{
     public:
         UniversalRenderingPipeline(alina::Device device);
-        void DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, const glm::mat4& transform = glm::mat4(1.0f));
+        void DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, std::optional<glm::mat4> transform = std::nullopt);
         void Begin(glm::mat4 viewMatrix = glm::mat4(1.0f), glm::mat4 projMatrix = glm::mat4(1.0f));
         void Render();
     private:

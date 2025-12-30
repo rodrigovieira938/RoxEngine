@@ -140,11 +140,9 @@ struct TestGame final : public Game {
         vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_shader_src.data(), vertex_shader_src.size());
         fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_shader_src.data(), fragment_shader_src.size()); 
         material = Material(vertex_shader, fragment_shader, moduleReflection);
-        material->Set("@InstanceData", glm::mat4(1.0f));
         material->Set("color", glm::vec3(0.5,1,0.3));
         material2 = Material(vertex_shader, fragment_shader, moduleReflection);
         material2->Set("color", glm::vec3(1, 0.5,0.3));
-        material2->Set("@InstanceData", glm::mat4(1.0f));
         auto cube = scene.entity("Cube");
         cube.addComponent<Transform>(glm::vec3{0,0,0});
         cube.addComponent<DirtyTransform>();
@@ -179,8 +177,16 @@ struct TestGame final : public Game {
             parentWT = GetWorldTransform(parent);
         }
 
+        auto worldTransform = WorldTransform(parentWT * e.getComponent<Transform>()->GetMatrix());
+
         // Update entity's world transform
-        *e.getComponent<WorldTransform>() = WorldTransform(parentWT * e.getComponent<Transform>()->GetMatrix());
+        *e.getComponent<WorldTransform>() = worldTransform;
+
+        if(e.hasComponent<MeshRenderer>()) {
+            auto mr = e.getComponent<MeshRenderer>();
+            mr->material->Set("@InstanceData", worldTransform);
+        }
+
 
         return *e.getComponent<WorldTransform>();
     };
@@ -193,7 +199,7 @@ struct TestGame final : public Game {
             auto meshRenderer = (MeshRenderer*)iter.get(0);
             auto worldTransform = GetWorldTransform(entity);
             //FIXME: since the transform is passed by a ubo for the whole frame it gets overriden with the last transform
-            pipeline->DrawMesh(meshRenderer->mesh, *meshRenderer->material, worldTransform);
+            pipeline->DrawMesh(meshRenderer->mesh, *meshRenderer->material);
         });
         pipeline->Render();
         World::debugView();
