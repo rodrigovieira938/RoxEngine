@@ -5,8 +5,12 @@
 #include <cassert>
 #include <cstddef>
 #include <cstring>
+#include <functional>
+#include <new>
 #include <optional>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <vector>
 
@@ -480,12 +484,125 @@ namespace RoxEngine {
         auto [it, inserted] = typeSet.insert(std::move(t));
         return &(*it);
     }
+    enum class ParameterType {
+        None,
+        CBuffer,
+        VertexShaderInput
+    };
+    const char* ParameterTypeToStr(ParameterType type) {
+        switch(type) {
+        case ParameterType::None:
+            return "None";
+        case ParameterType::CBuffer:
+            return "CBuffer";
+        case ParameterType::VertexShaderInput:
+            return "VertexShaderInput";
+        }
+        return "<unknowed>";
+    }
+
+    //Walks through every shader parameter (Ubos, vertex shader inputs) type recursively
+    //Callback return false to skip the fields 
+    void WalkParametersTypeRecursive(slang::ProgramLayout* layout, std::function<bool(slang::VariableReflection*, slang::VariableLayoutReflection*, int depth, ParameterType)> callback) {
+        auto impl = [callback](auto impl, slang::VariableReflection* var, slang::VariableLayoutReflection* varLayout, int depth = 0, ParameterType parameter_type = ParameterType::None){
+            auto type = var->getType();
+            auto type_layout = varLayout->getTypeLayout();
+
+            //Check supported parameters and unpack needed ones
+            switch(var->getType()->getKind()) {
+            case slang::TypeReflection::Kind::ConstantBuffer:
+                type = type->getElementType();
+                type_layout = type_layout->getElementTypeLayout();
+                break;
+            case slang::TypeReflection::Kind::Array:
+            case slang::TypeReflection::Kind::Matrix:
+            case slang::TypeReflection::Kind::Vector:
+            case slang::TypeReflection::Kind::Struct:
+            case slang::TypeReflection::Kind::Scalar:
+                break;
+            case slang::TypeReflection::Kind::None:
+            case slang::TypeReflection::Kind::Resource:
+            case slang::TypeReflection::Kind::SamplerState:
+            case slang::TypeReflection::Kind::TextureBuffer:
+            case slang::TypeReflection::Kind::ShaderStorageBuffer:
+            case slang::TypeReflection::Kind::ParameterBlock:
+            case slang::TypeReflection::Kind::GenericTypeParameter:
+            case slang::TypeReflection::Kind::Interface:
+            case slang::TypeReflection::Kind::OutputStream:
+            case slang::TypeReflection::Kind::Specialized:
+            case slang::TypeReflection::Kind::Feedback:
+            case slang::TypeReflection::Kind::Pointer:
+            case slang::TypeReflection::Kind::DynamicResource:
+                throw std::runtime_error(std::format("Uninmplemented support for slang::TypeReflection::Kind({})", (int)var->getType()->getKind()));
+            }
+
+            bool ret = callback(var, varLayout, depth, parameter_type);
+            if(!ret)
+                return;
+            switch (type->getKind()) {
+            case slang::TypeReflection::Kind::Scalar:
+            case slang::TypeReflection::Kind::Array:
+            case slang::TypeReflection::Kind::Vector:
+            case slang::TypeReflection::Kind::Matrix:
+                break;
+            case slang::TypeReflection::Kind::Struct: {
+                for(int field_index = 0; field_index < type->getFieldCount(); field_index++) {
+                    auto field_type = type->getFieldByIndex(field_index);
+                    auto field_type_layout = type_layout->getFieldByIndex(field_index);
+                    impl(impl, field_type, field_type_layout, depth+1);
+                }
+                break;
+            }
+            case slang::TypeReflection::Kind::None:
+            case slang::TypeReflection::Kind::ConstantBuffer:
+            case slang::TypeReflection::Kind::Resource:
+            case slang::TypeReflection::Kind::SamplerState:
+            case slang::TypeReflection::Kind::TextureBuffer:
+            case slang::TypeReflection::Kind::ShaderStorageBuffer:
+            case slang::TypeReflection::Kind::ParameterBlock:
+            case slang::TypeReflection::Kind::GenericTypeParameter:
+            case slang::TypeReflection::Kind::Interface:
+            case slang::TypeReflection::Kind::OutputStream:
+            case slang::TypeReflection::Kind::Specialized:
+            case slang::TypeReflection::Kind::Feedback:
+            case slang::TypeReflection::Kind::Pointer:
+            case slang::TypeReflection::Kind::DynamicResource:
+                throw std::runtime_error("");
+            }
+        };
+        for (int i = 0; i < layout->getParameterCount(); i++)
+        {
+            slang::VariableLayoutReflection* varLayout = layout->getParameterByIndex(i);
+            slang::VariableReflection* var = varLayout->getVariable();
+            if (varLayout->getType()->getKind() != slang::TypeReflection::Kind::ConstantBuffer)
+                continue;
+            impl(impl, var, varLayout, 0, ParameterType::CBuffer);
+        }
+        for(int i = 0; i < layout->getEntryPointCount(); i++){
+            auto entryPoint = layout->getEntryPointByIndex(i);
+            //XXX: should this not validate other stages?
+            if(entryPoint->getStage() != SLANG_STAGE_VERTEX) {
+                continue;
+            }
+            for(int x = 0; x < entryPoint->getParameterCount(); x++) {
+                auto varLayout = entryPoint->getParameterByIndex(x);
+                auto var = varLayout->getVariable();
+                impl(impl, var, varLayout, 0, ParameterType::VertexShaderInput);
+            }
+        }
+    };
     ModuleReflection SlangLayer::GetProgramReflection(Slang::ComPtr<slang::IComponentType> program) {
         auto layout = program->getLayout();
-        auto walkContantBuffer = [layout](slang::VariableLayoutReflection* cbuffer, std::unordered_set<ShaderReflection::Type>& typeSet){
-            auto innerTypeLayout = cbuffer->getTypeLayout()->getElementTypeLayout();
-            auto innerType = cbuffer->getTypeLayout()->getType()->getElementType();
-
+        /*WalkParametersTypeRecursive(layout, [](slang::VariableReflection* var, slang::VariableLayoutReflection*, int depth, ParameterType parameter_type){
+            std::string tabs(depth, '\t');
+            const char* name = var->getName();
+            ISlangBlob * type_name_blob;
+            var->getType()->getFullName(&type_name_blob);
+            const char* type_name = (const char*)type_name_blob->getBufferPointer(); 
+            log::info("{}{}({}) of type {}", tabs, name?name:"", ParameterTypeToStr(parameter_type), type_name?type_name:"");
+            return true;
+        });*/
+        auto walkContantBuffer = [layout](slang::TypeReflection* innerType, slang::TypeLayoutReflection* innerTypeLayout, std::unordered_set<ShaderReflection::Type>& typeSet){
             auto type_name = innerType->getName();
             ModuleReflection::UniformBuffer ubo;
             for(unsigned int i = 0; i < innerType->getFieldCount(); i++) {
@@ -510,45 +627,10 @@ namespace RoxEngine {
             ubo.size = innerTypeLayout->getSize();
             return ubo;
         };
-
-        std::unordered_set<ShaderReflection::Type> typeSet;
-        std::vector<ModuleReflection::UniformBuffer> ubos;
-        std::vector<ModuleReflection::SharedUniformBuffer> shared_ubos;
-        std::vector<ShaderReflection::VertexBindingPoint> vertex_inputs;
-
-        {
-            for(int i = 0; i < layout->getEntryPointCount(); i++){
-                auto entryPoint = layout->getEntryPointByIndex(i);
-                //XXX: should this not validate other stages?
-                if(entryPoint->getStage() != SLANG_STAGE_VERTEX) {
-                    continue;
-                }
-                for(int x = 0; x < entryPoint->getParameterCount(); x++) {
-                    auto param = entryPoint->getParameterByIndex(x);
-                    auto binding_name = std::string_view(param->getSemanticName());
-                    if(binding_name.data() == nullptr) {
-                        //TODO: figure out what to do with this
-                        continue;
-                    }
-                    if(binding_name.starts_with("SV")) {
-                        continue;
-                    }
-                    auto binding_point = ShaderReflection::VertexBindingPoint::fromString(binding_name, param->getSemanticIndex());
-                    binding_point.binding_index = param->getBindingIndex();
-                    vertex_inputs.push_back(binding_point);
-                }
-            }
-        }
-
-        for (int i = 0; i < layout->getParameterCount(); i++)
-        {
-            slang::VariableLayoutReflection* varLayout = layout->getParameterByIndex(i);
-            slang::VariableReflection* var = varLayout->getVariable();
-            if (varLayout->getType()->getKind() != slang::TypeReflection::Kind::ConstantBuffer)
-                continue;
+        auto getSharedConstantBufferName = [layout](slang::VariableLayoutReflection* var_layout){
             const char* shared_name = nullptr;
-            Slang::ComPtr<slang::IBlob> type_name;
-            varLayout->getType()->getElementType()->getFullName(type_name.writeRef());
+            auto var = var_layout->getVariable();
+
             for(int x = 0; x < var->getUserAttributeCount(); x++) {
                 auto attr = var->getUserAttributeByIndex(x);
                 if(strcmp(attr->getName(), "SharedUbo") == 0) {
@@ -558,22 +640,82 @@ namespace RoxEngine {
                     shared_name = attr->getArgumentValueString(0, &size);
                 }
             }
-            auto ubo = walkContantBuffer(varLayout, typeSet);
-            if(auto semanticName = varLayout->getSemanticName();semanticName) {
-                ubo.name = semanticName;
-            }
-            ubo.binding_index = varLayout->getBindingIndex();
-            ubo.binding_space = varLayout->getBindingSpace();
-            if(shared_name) {
-                ModuleReflection::SharedUniformBuffer shared_ubo = std::move(ubo);
-                shared_ubo.index_name = std::string((char*)type_name->getBufferPointer());
-                shared_ubos.push_back(shared_ubo);
-            } else {
-                ubos.push_back(ubo);
-            }
-        }
+            return shared_name;
+        };
 
+        std::unordered_set<ShaderReflection::Type> typeSet;
+        ShaderReflection::Type* types = nullptr;
+        std::vector<ModuleReflection::UniformBuffer> ubos;
+        std::vector<ModuleReflection::SharedUniformBuffer> shared_ubos;
+        std::vector<ShaderReflection::VertexBindingPoint> vertex_inputs;
 
+        // Extract all types that will be needed
+        {
+            std::unordered_set<ShaderReflection::Type> typeSet;
+            WalkParametersTypeRecursive(layout, [&](slang::VariableReflection* var, slang::VariableLayoutReflection* var_layout, int, ParameterType parameter_type){
+                if(parameter_type == ParameterType::CBuffer) {
+                    return true; // Type of cbuffer isn't needed but its fields are
+                }
+                ISlangBlob * type_name_blob;
+                var->getType()->getFullName(&type_name_blob);
+                const char* type_name = (const char*)type_name_blob->getBufferPointer();
+                if(type_name == nullptr)
+                    return false;
+                auto type = var->getType();
+                auto type_layout = var_layout->getTypeLayout();
+                ExtractTypeRecursive(type, type_layout, typeSet);
+                return true;
+            });
+            types = new ShaderReflection::Type[typeSet.size()];
+            int i = 0;
+            for(auto& type : typeSet) {
+                types[i] = type;
+                i++;
+            }
+        };
+        WalkParametersTypeRecursive(layout, [&](slang::VariableReflection* var, slang::VariableLayoutReflection* var_layout, int, ParameterType parameter_type){
+            switch(parameter_type) {
+            case ParameterType::None:
+                break;
+            case ParameterType::CBuffer: {
+                auto type = var->getType()->getElementType();
+                auto type_layout = var_layout->getTypeLayout()->getElementTypeLayout();
+                auto ubo = walkContantBuffer(type, type_layout, typeSet);
+                if(auto semanticName = var_layout->getSemanticName();semanticName) {
+                    ubo.name = semanticName;
+                }
+                ubo.binding_index = var_layout->getBindingIndex();
+                ubo.binding_space = var_layout->getBindingSpace();
+                Slang::ComPtr<slang::IBlob> type_name;
+                var_layout->getType()->getElementType()->getFullName(type_name.writeRef());
+                if(auto shared_name = getSharedConstantBufferName(var_layout); shared_name) {
+                    ModuleReflection::SharedUniformBuffer shared_ubo = std::move(ubo);
+                    shared_ubo.index_name = std::string((char*)type_name->getBufferPointer());
+                    shared_ubos.push_back(shared_ubo);
+                } else {
+                    ubos.push_back(ubo);
+                }
+                break;
+            }
+            case ParameterType::VertexShaderInput: {
+                auto binding_name = std::string_view(var_layout->getSemanticName());
+                if(binding_name.data() == nullptr) {
+                    //TODO: figure out what to do with this
+                    break;
+                }
+                if(binding_name.starts_with("SV")) {
+                    break;
+                }
+                auto binding_point = ShaderReflection::VertexBindingPoint::fromString(binding_name, var_layout->getSemanticIndex());
+                binding_point.binding_index = var_layout->getBindingIndex();
+                vertex_inputs.push_back(binding_point);
+                break;
+            }
+            default:
+                throw  std::runtime_error("Implement " __FILE__);
+            }
+            return false; //Only need the parameters not the types within
+        });
         return {
             std::move(typeSet),
             std::move(ubos),
