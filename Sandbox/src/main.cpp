@@ -187,6 +187,9 @@ struct TestGame final : public Game {
             mr->material->Set("@InstanceData", worldTransform);
         }
 
+        e.children([](Entity e){
+            e.addComponent<DirtyTransform>();
+        });
 
         return *e.getComponent<WorldTransform>();
     };
