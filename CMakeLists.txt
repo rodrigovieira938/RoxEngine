@@ -4,11 +4,17 @@ set (CMAKE_CXX_STANDARD 20)
 include(FetchContent)
 
 macro (FetchContent_Declare)
+    if(NOT DEFINED DEPENDENCIES_SOURCE_DIR)
+        set(DEPENDENCIES_SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps")
+    endif()
     _FetchContent_Declare(
         ${ARGV}
         EXCLUDE_FROM_ALL
         GIT_SHALLOW TRUE
         GIT_PROGRESS TRUE
+        SOURCE_DIR     "${DEPENDENCIES_SOURCE_DIR}/${ARGV0}"
+        BINARY_DIR     "${CMAKE_BINARY_DIR}/_deps/${ARGV0}-build"
+        SUBBUILD_DIR   "${CMAKE_BINARY_DIR}/_deps/${ARGV0}-subbuild"
     )
 endmacro()
 
@@ -30,13 +36,6 @@ function(fetch_git_deps)
     endif()
 
     math(EXPR _max "${_arg_count} - 1")
-    set(options OPTIONAL FAST)
-    set(oneValueArgs DESTINATION RENAME)
-    set(multiValueArgs TARGETS CONFIGURATIONS)
-    cmake_parse_arguments(arg_my_special_install
-        "${options}" "${oneValueArgs}" "${multiValueArgs}"
-        ${ARGN}
-    )
     foreach(i RANGE 0 ${_max} 2)
         math(EXPR x "${i} + 1")
         list(GET ARGV ${i} repo)
@@ -54,15 +53,12 @@ function(fetch_git_deps)
             message(WARNING "Could not derive project name from repo '${repo}'")
             continue()
         endif()
-
-        message(STATUS "Fetching ${name} (${tag})")
-
         FetchContent_Declare(
             ${name}
             GIT_REPOSITORY ${repo}
             GIT_TAG        ${tag}
         )
-        message(TRACE Fetching ${name})
+        message(STATUS "Fetching ${name}")
         FetchContent_MakeAvailable(${name})
         set("${name}_SOURCE_DIR" "${${name}_SOURCE_DIR}" PARENT_SCOPE)
     endforeach()
