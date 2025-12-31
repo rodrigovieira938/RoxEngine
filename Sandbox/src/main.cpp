@@ -8,6 +8,7 @@
 #include <RoxEngine/renderer/Transform.hpp>
 #include <RoxEngine/renderer/slang/slang.hpp>
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include "RoxEngine/utils/Utils.hpp"
 #include "alina/alina.hpp"
@@ -176,7 +177,6 @@ struct TestGame final : public Game {
         if (parent.exists()) {
             parentWT = GetWorldTransform(parent);
         }
-
         auto worldTransform = WorldTransform(parentWT * e.getComponent<Transform>()->GetMatrix());
 
         // Update entity's world transform
@@ -237,5 +237,9 @@ Scope<Game> CreateGame()
 
 //todo: move constructor to the engine project
 int main(int, char**) {
+    #ifdef SANDBOX_DEBUG_PWD
+        std::filesystem::current_path(SANDBOX_DEBUG_PWD);
+    #endif
+
     return Engine::Get()->Run(CreateGame());
 }

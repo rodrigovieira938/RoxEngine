@@ -3,6 +3,8 @@ project(RoxEngine VERSION 0.1.0 LANGUAGES C CXX)
 set (CMAKE_CXX_STANDARD 20)
 include(FetchContent)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS true)
+
 macro (FetchContent_Declare)
     if(NOT DEFINED DEPENDENCIES_SOURCE_DIR)
         set(DEPENDENCIES_SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps")
@@ -81,3 +83,36 @@ target_include_directories(imgui-lib PUBLIC ${imgui_SOURCE_DIR})
 
 add_subdirectory(RoxEngine)
 add_subdirectory(Sandbox)
+
+get_cmake_property(all_vars VARIABLES)
+
+# From "*_COMPILER_DEFINITIONS" variables add to target(*) 
+foreach(var ${all_vars})
+    # Check if the variable name ends with "_COMPILER_DEFINITIONS"
+    if(var MATCHES "_COMPILER_DEFINITIONS$")
+    set(var_value "${${var}}")
+        string(REGEX REPLACE "_COMPILER_DEFINITIONS$" "" target_name "${var}")
+        foreach(def ${var_value})
+            target_compile_definitions(${target_name} PRIVATE ${def})
+        endforeach()
+    endif()
+endforeach()
+
+set(COMPILE_COMMANDS_FILE "${CMAKE_BINARY_DIR}/compile_commands.json")
+
+if(EXISTS "${COMPILE_COMMANDS_FILE}")
+    
+    #Gets the path of where the compile_commands.json must be copied to. eg: .../build/debug .../build/ 
+    string(REGEX REPLACE ".*(/build/)" "" COMPILE_COMMAND_DIR "${CMAKE_BINARY_DIR}")
+    string(REGEX REPLACE "^/build/" "" COMPILE_COMMAND_DIR "${COMPILE_COMMAND_DIR}")
+    if(COMPILE_COMMAND_DIR STREQUAL "")
+        set(COMPILE_COMMAND_DIR "${CMAKE_BINARY_DIR}")
+    else()
+        string(REGEX REPLACE "/${COMPILE_COMMAND_DIR}$" "" COMPILE_COMMAND_DIR "${CMAKE_BINARY_DIR}")
+    endif()
+    
+    if(DEFINED COMPILE_COMMAND_DIR)
+        file(MAKE_DIRECTORY "${COMPILE_COMMAND_DIR}")
+        file(COPY "${COMPILE_COMMANDS_FILE}" DESTINATION "${COMPILE_COMMAND_DIR}" FILE_PERMISSIONS OWNER_READ OWNER_WRITE)
+    endif()
+endif()

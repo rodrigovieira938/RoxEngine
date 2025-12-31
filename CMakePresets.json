@@ -6,7 +6,9 @@
       "binaryDir": "${sourceDir}/build/debug",
        "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "DEPENDENCIES_SOURCE_DIR":"${sourceDir}/build/_deps"
+        "DEPENDENCIES_SOURCE_DIR":"${sourceDir}/build/_deps",
+        "COMPILE_COMMANDS_FILE": "${sourceDir}/build",
+        "sandbox_COMPILER_DEFINITIONS": "SANDBOX_DEBUG_PWD=\"${sourceDir}/Sandbox\""
       }
     }
   ],
