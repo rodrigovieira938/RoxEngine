@@ -1,8 +1,7 @@
 #include "RoxEngine/core/Logger.hpp"
 #include "flecs.h"
-#include "imgui.h"
 #include <RoxEngine/ecs/ecs.hpp>
-#include <RoxEngine/imgui/imgui.hpp>
+#include <RoxEngine/ui/ui.hpp>
 #include <cstdint>
 #include <format>
 
@@ -169,46 +168,46 @@ namespace RoxEngine {
         } else {
             tree_name = std::format("{}##{}", name.c_str(), "").c_str();
         }
-        auto c =  *selected == e ? ImGuiTreeNodeFlags_Selected : 0 | ImGuiTreeNodeFlags_OpenOnArrow;
-        bool open = ImGui::TreeNodeEx(tree_name.c_str(),ImGuiTreeNodeFlags_OpenOnDoubleClick);
-        if(ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        auto c =  *selected == e ? UI::ImGuiTreeNodeFlags_Selected : 0 | UI::ImGuiTreeNodeFlags_OpenOnArrow;
+        bool open = UI::TreeNodeEx(tree_name.c_str(),UI::ImGuiTreeNodeFlags_OpenOnDoubleClick);
+        if(UI::IsItemHovered() && UI::IsMouseClicked(UI::ImGuiMouseButton_Left)) {
             *selected = e;
         }
         if(open) {
             e.children([selected](flecs::entity e) {
                 iterate_children(e, selected);
             });
-            ImGui::TreePop();
+            UI::TreePop();
         }
     }
 
     static flecs::entity selected_entity;
     void World::debugView() {
-        if(ImGui::Begin("ECS - Debug View")) {
+        if(UI::Begin("ECS - Debug View")) {
             world.children([](flecs::entity e) {
                 iterate_children(e,&selected_entity);
             });
-            ImGui::End();
+            UI::End();
         }
-        if(ImGui::Begin("Inspector")) {
+        if(UI::Begin("Inspector")) {
             if(selected_entity) {
-                ImGui::Text("%s",selected_entity.name().c_str());
+                UI::Text("%s",selected_entity.name().c_str());
                 selected_entity.each([](flecs::id e){
                     //TODO: skip redundant builtin pairs like Identifier - Name (pair to the entity)
                     if(e.is_pair()) {
-                        ImGui::Text("Pair: ");
-                        ImGui::SameLine();
-                        ImGui::Text("%s", e.first().name().c_str());
-                        ImGui::SameLine();
-                        ImGui::Text("%s", e.second().name().c_str());
+                        UI::Text("Pair: ");
+                        UI::SameLine();
+                        UI::Text("%s", e.first().name().c_str());
+                        UI::SameLine();
+                        UI::Text("%s", e.second().name().c_str());
                         return;
                     }
-                    ImGui::Text("Component: ");
-                    ImGui::SameLine();
-                    ImGui::Text("%s",e.entity().name().c_str());
+                    UI::Text("Component: ");
+                    UI::SameLine();
+                    UI::Text("%s",e.entity().name().c_str());
                 });
             }
-            ImGui::End();
+            UI::End();
         }
     }
     Entity World::getSelectedEntity() {

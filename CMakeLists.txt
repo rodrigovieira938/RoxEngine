@@ -73,13 +73,9 @@ fetch_git_deps(
     https://github.com/g-truc/glm             1.0.1
     https://github.com/SanderMertens/flecs    v4.1.0
     https://github.com/shader-slang/slang     v2025.12.1
-    https://github.com/ocornut/imgui          origin/docking
     https://github.com/gabime/spdlog          v1.15.3
     https://github.com/rodrigovieira938/alina main
 )
-
-add_library(imgui-lib STATIC ${imgui_SOURCE_DIR}/imgui.cpp ${imgui_SOURCE_DIR}/imgui_draw.cpp ${imgui_SOURCE_DIR}/imgui_tables.cpp ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
-target_include_directories(imgui-lib PUBLIC ${imgui_SOURCE_DIR})
 
 add_subdirectory(RoxEngine)
 add_subdirectory(Sandbox)

@@ -2,7 +2,6 @@
 #include <glad/gl.h>
 #include <cstring>
 #include <vector>
-#include <backends/imgui_impl_glfw.h>
 #include "GLFW/glfw3.h"
 #include <memory>
 #include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
@@ -340,7 +339,6 @@ namespace RoxEngine
                 sNeedsUpdate = true;
             }
         }
-        ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
     }
 
     void Input::Init()
@@ -349,14 +347,6 @@ namespace RoxEngine
         glfwSetKeyCallback((GLFWwindow *)window->mWindow, keycallback);
         glfwSetInputMode((GLFWwindow *)window->mWindow, GLFW_LOCK_KEY_MODS, true);
         sKeyMaps.resize(Key::MAX);
-
-        glfwSetWindowFocusCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_WindowFocusCallback);
-        glfwSetCursorEnterCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_CursorEnterCallback);
-        glfwSetCursorPosCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_CursorPosCallback);
-        glfwSetMouseButtonCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_MouseButtonCallback);
-        glfwSetScrollCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_ScrollCallback);
-        glfwSetCharCallback((GLFWwindow *)window->mWindow, ImGui_ImplGlfw_CharCallback);
-        glfwSetMonitorCallback(ImGui_ImplGlfw_MonitorCallback);
     }
     void Input::Update()
     {

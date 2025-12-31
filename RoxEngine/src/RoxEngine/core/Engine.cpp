@@ -3,7 +3,7 @@
 #include <RoxEngine/core/Engine.hpp>
 #include <RoxEngine/input/Input.hpp>
 #include <RoxEngine/platforms/GLFW/GLFWWindow.hpp>
-#include <RoxEngine/imgui/imgui.hpp>
+#include <RoxEngine/ui/ui.hpp>
 namespace RoxEngine {
     static Engine* sEngine = nullptr;
     Engine* Engine::Get() {
@@ -16,7 +16,7 @@ namespace RoxEngine {
         PROFILER_BEGIN_SESSION("RoxEngine");
         if(!glfwInit()) return 1;
         mWindow = CreateRef<GLFW::Window>();
-        ImGuiLayer::Init();
+        UI::Layer::Init();
         Input::Init();
         game->Init();
         while(mWindow->IsOpen()) {
@@ -24,15 +24,15 @@ namespace RoxEngine {
             Input::Update();
             mWindow->PollEvents();
             game->Update();
-            ImGuiLayer::NewFrame();
+            UI::Layer::NewFrame();
             game->Render();
             DrawDebugInfo();
-            ImGuiLayer::Render();
+            UI::Layer::Render();
             glfwSwapBuffers(static_cast<GLFWwindow*>(std::static_pointer_cast<GLFW::Window>(mWindow)->mWindow));
         }
         game.reset();
         Input::Shutdown();
-        ImGuiLayer::Shutdown();
+        UI::Layer::Shutdown();
         glfwTerminate();
         delete sEngine;
         PROFILER_END_SESSION();

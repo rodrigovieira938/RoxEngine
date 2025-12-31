@@ -15,7 +15,6 @@
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
-#include "imgui.h"
 #include "slang-com-ptr.h"
 #include "slang.h"
 #include <RoxEngine/RoxEngine.hpp>
@@ -206,27 +205,27 @@ struct TestGame final : public Game {
         });
         pipeline->Render();
         World::debugView();
-        ImGui::Begin("Camera info");
-        ImGui::Text("Position: %s", glm::to_string(camera.transform.translation).c_str());
-        ImGui::SliderFloat3("Rotation", &camera.transform.rotation.x, -180.0f, 180.0f);
-        ImGui::SliderFloat("FOV", &camera.fov, 1.0f, 90.0f);
-        ImGui::SliderFloat("Camera Speed", &camera.cameraSpeed, 0.1f, 10.0f);
-        ImGui::End();
+        UI::Begin("Camera info");
+        UI::Text("Position: %s", glm::to_string(camera.transform.translation).c_str());
+        UI::SliderFloat3("Rotation", &camera.transform.rotation.x, -180.0f, 180.0f);
+        UI::SliderFloat("FOV", &camera.fov, 1.0f, 90.0f);
+        UI::SliderFloat("Camera Speed", &camera.cameraSpeed, 0.1f, 10.0f);
+        UI::End();
 
         auto selectedEntity = World::getSelectedEntity();
-        ImGui::Begin("Transform Info");
+        UI::Begin("Transform Info");
         if(selectedEntity.exists()) {
             if(selectedEntity.hasComponent<Transform>())
             {
                 auto transform = selectedEntity.getComponent<Transform>();
-                ImGui::DragFloat3("Translation", &transform->translation.x);
-                ImGui::SliderFloat3("Rotation", &transform->rotation.x, -180.0f, 180.0f);
-                ImGui::DragFloat3("Scale", &transform->scale.x);
-                ImGui::Text("%s", std::string(selectedEntity.name()).c_str());
+                UI::DragFloat3("Translation", &transform->translation.x);
+                UI::SliderFloat3("Rotation", &transform->rotation.x, -180.0f, 180.0f);
+                UI::DragFloat3("Scale", &transform->scale.x);
+                UI::Text("%s", std::string(selectedEntity.name()).c_str());
                 selectedEntity.addComponent<DirtyTransform>();
             }
         }
-        ImGui::End();
+        UI::End();
     }
 };
 
