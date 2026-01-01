@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <format>
@@ -95,12 +96,10 @@ namespace RoxEngine::UI {
             decltype(element.width)& remainingHeight,
             bool is_horizontal_flow
         ) {
-            remainingWidth = element.width;
-            remainingHeight = element.height;
+            remainingWidth = element.width - element.padding.left - element.padding.right;
+            remainingHeight = element.height - element.padding.top - element.padding.bottom;
             //Calculate remaining size
             {
-                remainingWidth -= element.padding.left + element.padding.right;
-                remainingHeight -= element.padding.top + element.padding.bottom;
                 for (uint32_t child_index = 0; child_index < element.children_count; child_index++) {
                     auto& child = tree.at(child_index+1);
                     if(is_horizontal_flow) {
@@ -109,32 +108,56 @@ namespace RoxEngine::UI {
                         remainingHeight -= child.height;
                     }
                 }
+                auto child_gap = (element.children_count - 1) * element.childGap;
                 if(is_horizontal_flow)
-                    remainingWidth -= (element.children_count - 1) * element.childGap;
+                    remainingWidth -= child_gap;
                 else
-                    remainingHeight -= (element.children_count - 1) * element.childGap;
+                    remainingHeight -= child_gap;
             }
         }
         void GrowElements(size_t index) {
             auto& element = tree.at(index);
-            if(element.width == 0 || element.height == 0)
+            if(element.width == 0 || element.height == 0 || element.children_count == 0)
                 return;
             bool is_horizontal_flow = is_horizontal_flowdirection(element.flowDirection);
-            decltype(element.width) remainingWidth = 0;
-            decltype(element.height) remainingHeight = 0;
-            GrowElements_CalculateRemainingSize(element, remainingWidth, remainingHeight, is_horizontal_flow);
+            decltype(element.width) totalRemainingWidth = 0;
+            decltype(element.height) totalRemainingHeight = 0;
+            GrowElements_CalculateRemainingSize(element, totalRemainingWidth, totalRemainingHeight, is_horizontal_flow);
+
+            double widthDivisions = 0;
+            double heightDivisions = 0;
+
+            double remainingWidth_divided = totalRemainingWidth;
+            double remainingHeight_divided = totalRemainingHeight;
 
             for (uint32_t child_index = 0; child_index < element.children_count; child_index++) {
                 auto& child = tree.at(child_index+1);
-                if(child.sizing.height.type == ElementSizing::GROW) {
+                if(child.sizing.width.type == ElementSizing::GROW)
+                    widthDivisions+=std::abs(child.sizing.width.growth_rate);
+                if(child.sizing.height.type == ElementSizing::GROW)
+                    heightDivisions+=std::abs(child.sizing.height.growth_rate);
+            }
+
+            if(is_horizontal_flow) {
+                remainingWidth_divided = float(totalRemainingWidth) / widthDivisions;
+            } else {
+                remainingHeight_divided = float(totalRemainingHeight) / heightDivisions;
+            }
+
+
+            for (uint32_t child_index = 0; child_index < element.children_count; child_index++) {
+                auto& child = tree.at(child_index+1);
+                if(child.sizing.width.type == ElementSizing::GROW) { 
+                    uint32_t remainingWidth = std::floor(remainingWidth_divided * child.sizing.width.growth_rate);
                     //Get the minimum size needed
                     auto width = std::min(child.sizing.min_width + remainingWidth, child.sizing.max_width);
-                    child.width = std::min(width, remainingWidth);
+                    child.width = std::min(width, totalRemainingWidth);
                 }
                 if(child.sizing.height.type == ElementSizing::GROW) {
+                    uint32_t remainingHeight = std::floor(remainingHeight_divided * child.sizing.height.growth_rate);
                     //Get the minimum size needed
                     auto height = std::min(child.sizing.min_height + remainingHeight, child.sizing.max_height);
-                    child.height = std::min(height, remainingHeight);
+                    child.height = std::min(height, totalRemainingHeight);
                 }
             }
         }
@@ -152,9 +175,9 @@ namespace RoxEngine::UI {
                         parent_axis_size = std::max(parent_axis_size, element_axis_size);
                     }
                 };
-                decltype(element.childGap) childGap;
-                if(parent.children_count > 0) {
-                    childGap = (parent.children_count -1) * parent.childGap;
+                decltype(element.childGap) childGap = 0;
+                if(parent.children_count > 1) {
+                    childGap = parent.childGap;
                 }
                 if(parent.sizing.width.type != ElementSizing::FIXED) {
                     auto width = element.width;
@@ -214,8 +237,9 @@ namespace RoxEngine::UI {
         Tree::Element el;
         el.str = std::string(str);
         
-        el.sizing.width = ElementSizing::grow();
-        el.sizing.height = ElementSizing::grow();
+        //Growth rate = 0 because text doesn't need to grow, only shrink to min size.
+        el.sizing.width = ElementSizing::grow(0);
+        el.sizing.height = ElementSizing::grow(0);
 
         el.sizing.min_width = ElementSizing::fixed(str.size() * fontSize);
         el.sizing.min_height = fontSize;

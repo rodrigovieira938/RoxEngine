@@ -24,13 +24,14 @@ namespace RoxEngine {
             struct Value {
                 Type type = Type::FIT;
                 uint32_t value = 0;
+                float growth_rate = 0;
 
                 operator decltype(value)() const { return value; }
                 operator decltype(value)&() { return value; }
             };
 
             inline constexpr static Value fit() {return {FIT, 0};}
-            inline constexpr static Value grow() {return {GROW, 0};}
+            inline constexpr static Value grow(float growth_rate=1.0) {return {GROW,0, growth_rate};}
             inline constexpr static Value fixed(uint32_t value) {return {FIXED, value};}
         };
         
