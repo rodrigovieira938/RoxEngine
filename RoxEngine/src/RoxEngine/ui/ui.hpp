@@ -1,5 +1,8 @@
 #pragma once
-#define IMGUI_DEFINE_MATH_OPERATORS
+#include <string>
+#include <string_view>
+#include <tuple>
+#include <type_traits>
 namespace RoxEngine {
     class Engine;
     namespace UI {
@@ -12,6 +15,9 @@ namespace RoxEngine {
             static void Render();
             static void Shutdown();
         };
+        void BeginElement();
+        void EndElement();
+        
         #define EMPTY_FUNC(name, return_value) \
             template<typename... Args> \
             auto name(Args&&...) {return return_value;}

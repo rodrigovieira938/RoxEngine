@@ -240,5 +240,45 @@ int main(int, char**) {
         std::filesystem::current_path(SANDBOX_DEBUG_PWD);
     #endif
 
+    UI::BeginElement();
+        UI::BeginElement();
+        UI::EndElement();
+        UI::BeginElement();
+        UI::EndElement();
+        UI::BeginElement();
+        UI::EndElement();
+    UI::EndElement();
+    UI::BeginElement();
+        UI::BeginElement();
+        UI::EndElement();
+        UI::BeginElement();
+        UI::EndElement();
+    UI::EndElement();
+    UI::BeginElement();
+        UI::BeginElement();
+        UI::EndElement();
+        UI::BeginElement();
+        UI::EndElement();
+        UI::BeginElement();
+        UI::EndElement();
+    UI::EndElement();
+    UI::BeginElement();
+        UI::BeginElement();
+        UI::EndElement();
+        UI::BeginElement();
+        UI::EndElement();
+    UI::EndElement();
+    UI::BeginElement();
+        UI::BeginElement();
+        UI::EndElement();
+        UI::BeginElement();
+        UI::EndElement();
+        UI::BeginElement();
+        UI::EndElement();
+    UI::EndElement();
+
+    //For now we dont need to display anything
+    return 0;
+
     return Engine::Get()->Run(CreateGame());
 }
