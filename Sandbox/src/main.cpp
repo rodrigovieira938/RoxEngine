@@ -240,40 +240,21 @@ int main(int, char**) {
         std::filesystem::current_path(SANDBOX_DEBUG_PWD);
     #endif
 
-    UI::BeginElement();
-        UI::BeginElement();
+    UI::BeginElement({
+        .sizing = {.height = UI::ElementSizing::fixed(1600)},
+        .padding = {32, 32, 32, 32},
+        .childGap = 32
+    });
+        UI::TextElement("Hello world!");
+        UI::BeginElement({
+            .sizing = {.width = UI::ElementSizing::grow(), .height = UI::ElementSizing::grow()}
+        });
         UI::EndElement();
-        UI::BeginElement();
-        UI::EndElement();
-        UI::BeginElement();
-        UI::EndElement();
-    UI::EndElement();
-    UI::BeginElement();
-        UI::BeginElement();
-        UI::EndElement();
-        UI::BeginElement();
-        UI::EndElement();
-    UI::EndElement();
-    UI::BeginElement();
-        UI::BeginElement();
-        UI::EndElement();
-        UI::BeginElement();
-        UI::EndElement();
-        UI::BeginElement();
-        UI::EndElement();
-    UI::EndElement();
-    UI::BeginElement();
-        UI::BeginElement();
-        UI::EndElement();
-        UI::BeginElement();
-        UI::EndElement();
-    UI::EndElement();
-    UI::BeginElement();
-        UI::BeginElement();
-        UI::EndElement();
-        UI::BeginElement();
-        UI::EndElement();
-        UI::BeginElement();
+
+        UI::BeginElement({
+            .sizing = {UI::ElementSizing::fixed(350), UI::ElementSizing::fixed(200)}
+        });
+        
         UI::EndElement();
     UI::EndElement();
 

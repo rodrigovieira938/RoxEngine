@@ -1,8 +1,7 @@
 #pragma once
-#include <string>
+#include <cstdint>
+#include <limits>
 #include <string_view>
-#include <tuple>
-#include <type_traits>
 namespace RoxEngine {
     class Engine;
     namespace UI {
@@ -15,8 +14,51 @@ namespace RoxEngine {
             static void Render();
             static void Shutdown();
         };
-        void BeginElement();
+
+        namespace ElementSizing {
+            enum Type {
+                FIT,
+                FIXED,
+                GROW
+            };
+            struct Value {
+                Type type = Type::FIT;
+                uint32_t value = 0;
+
+                operator decltype(value)() const { return value; }
+                operator decltype(value)&() { return value; }
+            };
+
+            inline constexpr static Value fit() {return {FIT, 0};}
+            inline constexpr static Value grow() {return {GROW, 0};}
+            inline constexpr static Value fixed(uint32_t value) {return {FIXED, value};}
+        };
+        
+        enum class FlowDirection {
+            LEFT_TO_RIGHT,
+            RIGHT_TO_LEFT,
+            TOP_TO_BOTTOM,
+            BOTTOM_TO_TOP
+        };
+        struct Element {
+            struct {
+                ElementSizing::Value width;
+                ElementSizing::Value height;
+                uint32_t min_width = 0;
+                uint32_t max_width = std::numeric_limits<decltype(max_width)>::max();
+                uint32_t min_height = 0;
+                uint32_t max_height = std::numeric_limits<decltype(max_height)>::max();
+            } sizing;
+            FlowDirection flowDirection = FlowDirection::LEFT_TO_RIGHT;
+            struct {
+                uint32_t left = 0, right = 0;
+                uint32_t top = 0, bottom = 0;
+            } padding;
+            uint32_t childGap = 0;
+        };
+        void BeginElement(Element);
         void EndElement();
+        void TextElement(std::string_view str);
         
         #define EMPTY_FUNC(name, return_value) \
             template<typename... Args> \
