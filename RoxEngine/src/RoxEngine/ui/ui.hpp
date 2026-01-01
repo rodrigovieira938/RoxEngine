@@ -41,6 +41,10 @@ namespace RoxEngine {
             TOP_TO_BOTTOM,
             BOTTOM_TO_TOP
         };
+        enum class Alignment {
+            AUTO,
+            CENTER,
+        };
         struct Element {
             struct {
                 ElementSizing::Value width;
@@ -51,13 +55,19 @@ namespace RoxEngine {
                 uint32_t max_height = std::numeric_limits<decltype(max_height)>::max();
             } sizing;
             FlowDirection flowDirection = FlowDirection::LEFT_TO_RIGHT;
+            Alignment horizontal_alignment = Alignment::AUTO;
+            Alignment vertical_alignment = Alignment::AUTO;
             struct {
                 uint32_t left = 0, right = 0;
                 uint32_t top = 0, bottom = 0;
             } padding;
+            struct {
+                uint32_t left = 0, right = 0;
+                uint32_t top = 0, bottom = 0;
+            } margin;
             uint32_t childGap = 0;
         };
-        void BeginElement(Element);
+        void BeginElement(const Element&);
         void EndElement();
         void TextElement(std::string_view str);
         

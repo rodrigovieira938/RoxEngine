@@ -214,12 +214,11 @@ namespace RoxEngine::UI {
         auto element_index = tree.insert(el);
         auto& element = tree.at(element_index);
         element.parent_index = currentParentIndex;
-        element.width = el.sizing.width;
-        element.height = el.sizing.height;
-
+        element.width = el.sizing.width + el.margin.left + el.margin.right;
+        element.height = el.sizing.height + el.margin.top + el.margin.bottom;
         currentParentIndex = element_index;
     }
-    void BeginElement(Element el) {
+    void BeginElement(const Element& el) {
         BeginElement(Tree::Element(el));
     }
     void EndElement() {

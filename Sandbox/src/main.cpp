@@ -243,6 +243,7 @@ int main(int, char**) {
     UI::BeginElement({
         .sizing = {.height = UI::ElementSizing::fixed(1600)},
         .padding = {32, 32, 32, 32},
+        .margin = {32,32,32,32},
         .childGap = 32
     });
         UI::TextElement("Hello world!");
