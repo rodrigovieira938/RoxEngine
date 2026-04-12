@@ -72,7 +72,7 @@ fetch_git_deps(
     https://github.com/glfw/glfw.git          3.4
     https://github.com/g-truc/glm             1.0.1
     https://github.com/SanderMertens/flecs    v4.1.0
-    https://github.com/shader-slang/slang     v2025.12.1
+    https://github.com/shader-slang/slang     v2026.5.2
     https://github.com/ocornut/imgui          origin/docking
     https://github.com/gabime/spdlog          v1.15.3
     https://github.com/rodrigovieira938/alina main
