@@ -76,6 +76,7 @@ fetch_git_deps(
     https://github.com/ocornut/imgui          origin/docking
     https://github.com/gabime/spdlog          v1.15.3
     https://github.com/rodrigovieira938/alina main
+    https://github.com/assimp/assimp          v6.0.4
 )
 
 add_library(imgui-lib STATIC ${imgui_SOURCE_DIR}/imgui.cpp ${imgui_SOURCE_DIR}/imgui_draw.cpp ${imgui_SOURCE_DIR}/imgui_tables.cpp ${imgui_SOURCE_DIR}/imgui_widgets.cpp)

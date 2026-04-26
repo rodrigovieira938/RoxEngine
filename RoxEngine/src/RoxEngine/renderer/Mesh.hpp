@@ -79,7 +79,7 @@ namespace RoxEngine {
         inline void SetNormals(const std::vector<glm::vec3>& data) {mData->normals = data;}
         inline void SetIndices(const std::vector<uint32_t>& data) {mData->indices = data;}
         inline std::vector<glm::vec3>& GetPosition() {return mData->position;}
-        inline std::vector<glm::vec2>& GetUvs() {return mData->uv;}
+        inline std::array<std::vector<glm::vec2>, ShaderReflection::VertexBindingPoint::UV_MAX>& GetUvs() {return mData->uvs;}
         inline std::vector<glm::vec3>& GetNormals() {return mData->normals;}
         inline std::vector<uint32_t>& GetIndices() {return mData->indices;}
         inline Data* GetData() {return mData.get();};

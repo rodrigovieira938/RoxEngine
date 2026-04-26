@@ -1,3 +1,5 @@
+#include "RoxEngine/assetmanager/AssetManager.hpp"
+#include "RoxEngine/assetmanager/AssimpDecoder.hpp"
 #include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/ecs/ecs.hpp"
 #include "RoxEngine/input/Input.hpp"
@@ -23,6 +25,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <assimp/scene.h>
 
 using namespace RoxEngine;
 
@@ -100,9 +103,7 @@ struct SimpleCamera {
 
 struct TestGame final : public Game {
     Ref<UniversalRenderingPipeline> pipeline;
-    Mesh mesh;
     std::optional<Material> material;
-    std::optional<Material> material2;
     alina::Shader vertex_shader, fragment_shader;
     SimpleCamera camera;
     Scene scene;
@@ -113,47 +114,31 @@ struct TestGame final : public Game {
 
     void Init() override {
         pipeline = CreateRef<UniversalRenderingPipeline>(Engine::Get()->GetWindow()->GetDevice());
-        //Simple quad mesh
-        mesh.SetPosition({
-            {-1.0f, -1.0f, 0.0f},
-            {-1.0f,  1.0f, 0.0f},
-            { 1.0f,  1.0f, 0.0f},
-            { 1.0f, -1.0f, 0.0f}
-        });
-        mesh.SetIndices({
-            0, 2, 1,
-    	    0, 3, 2
-        });
-        mesh.ChangedData();
         SlangLayer::Init();
-        auto module = SlangLayer::CompileModule("res://shaders/basic.slang");
-        std::array<slang::IComponentType*, 3> components = {
-            module, 
-            SlangLayer::GetModuleEntryPoint(module, SlangLayer::EntryPointType::VERTEX), 
-            SlangLayer::GetModuleEntryPoint(module, SlangLayer::EntryPointType::FRAGMENT)
-        };
-        auto compositeComponent = SlangLayer::CreateCompositeComponentType(components);
-        auto linkedProgram = SlangLayer::LinkModule(compositeComponent);
-        auto moduleReflection = CreateRef<ModuleReflection>(SlangLayer::GetProgramReflection(linkedProgram));
-        auto vertex_shader_src = SlangLayer::GetModuleCode(linkedProgram);
-        auto fragment_shader_src = SlangLayer::GetModuleCode(linkedProgram, 1);
-        auto device = Engine::Get()->GetWindow()->GetDevice();
-        vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_shader_src.data(), vertex_shader_src.size());
-        fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_shader_src.data(), fragment_shader_src.size()); 
-        material = Material(vertex_shader, fragment_shader, moduleReflection);
-        material->Set("color", glm::vec3(0.5,1,0.3));
-        material2 = Material(vertex_shader, fragment_shader, moduleReflection);
-        material2->Set("color", glm::vec3(1, 0.5,0.3));
-        auto cube = scene.entity("Cube");
-        cube.addComponent<Transform>(glm::vec3{0,0,0});
-        cube.addComponent<DirtyTransform>();
-        cube.addComponent<MeshRenderer>(mesh, &material.value());
+        {
+            auto module = SlangLayer::CompileModule("res://shaders/basic.slang");
+            std::array<slang::IComponentType*, 3> components = {
+                module, 
+                SlangLayer::GetModuleEntryPoint(module, SlangLayer::EntryPointType::VERTEX), 
+                SlangLayer::GetModuleEntryPoint(module, SlangLayer::EntryPointType::FRAGMENT)
+            };
+            auto compositeComponent = SlangLayer::CreateCompositeComponentType(components);
+            auto linkedProgram = SlangLayer::LinkModule(compositeComponent);
+            auto moduleReflection = CreateRef<ModuleReflection>(SlangLayer::GetProgramReflection(linkedProgram));
+            auto vertex_shader_src = SlangLayer::GetModuleCode(linkedProgram);
+            auto fragment_shader_src = SlangLayer::GetModuleCode(linkedProgram, 1);
+            auto device = Engine::Get()->GetWindow()->GetDevice();
+            vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_shader_src.data(), vertex_shader_src.size());
+            fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_shader_src.data(), fragment_shader_src.size()); 
+            material = Material(vertex_shader, fragment_shader, moduleReflection);
+        }
 
-        auto cube2 = scene.entity("Cube2");
-        cube2.childOf(cube);
-        cube2.addComponent<Transform>(glm::vec3{0.5,0,0});
-        cube2.addComponent<DirtyTransform>();
-        cube2.addComponent<MeshRenderer>(mesh, &material2.value());
+        AssetManager::AssimpDecoder decoder;
+        if(AssetManager::Load("res://models/cottage_fbx.fbx", decoder)) {
+            decoder.CreateEntities(scene, &material.value());
+        }
+
+        material->Set("color", glm::vec3(0.5,1,0.3));
     }
     WorldTransform GetWorldTransform(Entity e) {
         // If entity has no transform, return identity

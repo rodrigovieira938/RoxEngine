@@ -29,7 +29,11 @@ namespace RoxEngine {
     Entity::Entity(uint64_t id) : mId(id) {
     }
     std::string_view Entity::name() {
-        return ecs_get_name(world, mId);
+        auto name = ecs_get_name(world, mId);
+        if(name == nullptr) {
+            return "";
+        }
+        return name;
     }
     void Entity::name(std::string_view name) {
         ecs_set_name(world, mId, std::string(name).c_str());
@@ -166,11 +170,15 @@ namespace RoxEngine {
         std::string tree_name;
         if(name == "") {
             tree_name = "Unnamed";
+            ImGui::PushID(e.raw_id());
         } else {
             tree_name = std::format("{}##{}", name.c_str(), "").c_str();
         }
         auto c =  *selected == e ? ImGuiTreeNodeFlags_Selected : 0 | ImGuiTreeNodeFlags_OpenOnArrow;
         bool open = ImGui::TreeNodeEx(tree_name.c_str(),ImGuiTreeNodeFlags_OpenOnDoubleClick);
+        if(name == "") {
+            ImGui::PopID();
+        }
         if(ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
             *selected = e;
         }

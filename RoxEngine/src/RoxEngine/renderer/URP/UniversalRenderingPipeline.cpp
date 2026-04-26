@@ -53,10 +53,11 @@ namespace RoxEngine {
             return;
         }
         std::vector<alina::BindVertexBuffer> bindVBs = {alina::BindVertexBuffer().setBuffer(meshData->position_vb).setStride(sizeof(glm::vec3))};
-        if(meshData->uvs_vb)
-            bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->uvs_vb).setStride(sizeof(glm::vec2)));
-        if(meshData->normals_vb)
-            bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->normals_vb).setStride(sizeof(glm::vec3)));
+        //TODO: add way to specify which vertex buffers to use for a mesh, since not all meshes will have the same vertex buffer layout. For now we will just check for the most common ones and use them if they exist.
+        //if(meshData->uvs_vb)
+        //    bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->uvs_vb).setStride(sizeof(glm::vec2)));
+        //if(meshData->normals_vb)
+        //    bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->normals_vb).setStride(sizeof(glm::vec3)));
         if(moduleReflection->instance_data.has_value()) {
             bindVBs.push_back(alina::BindVertexBuffer()
             .setBuffer(material.GetBuffers()[material.GetBuffers().size()-1])

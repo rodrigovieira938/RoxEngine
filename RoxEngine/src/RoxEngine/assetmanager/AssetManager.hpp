@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <RoxEngine/filesystem/Filesystem.hpp>
+#include <RoxEngine/assetmanager/AssimpDecoder.hpp>
 
 namespace RoxEngine::AssetManager {
 	template<typename T>
