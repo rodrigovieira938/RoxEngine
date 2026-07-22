@@ -84,6 +84,7 @@ target_include_directories(imgui-lib PUBLIC ${imgui_SOURCE_DIR})
 
 add_subdirectory(RoxEngine)
 add_subdirectory(Sandbox)
+add_subdirectory(tools)
 
 get_cmake_property(all_vars VARIABLES)
 
