@@ -32,6 +32,9 @@ enum class DepthTestMode
     GreaterEqual,
     Always
 };
+static constexpr const BlendMode kDefaultBlendMode = BlendMode::Opaque;
+static constexpr const CullMode kDefaultCullMode = CullMode::Back;
+static constexpr const DepthTestMode kDefaultDepthTestMode = DepthTestMode::LessEqual;
 
 inline const char* toString(BlendMode m)
 {
@@ -73,9 +76,29 @@ inline const char* toString(DepthTestMode m)
     return "";
 }
 
+enum class PermutationKind
+{
+    Macro,
+    Type
+};
+
+inline const char* toString(PermutationKind k)
+{
+    switch (k)
+    {
+        case PermutationKind::Macro: return "macro";
+        case PermutationKind::Type:  return "type";
+    }
+    return "";
+}
+
 struct PermutationDef
 {
     std::string name;
+    PermutationKind kind = PermutationKind::Macro;
+
+    std::string interfaceName;
+
     std::vector<std::string> values;
 };
 
@@ -152,6 +175,22 @@ namespace detail
             out.push_back(s.substr(start, i - start));
         }
         return out;
+    }
+
+    // Splits off the first whitespace-delimited token; `rest` is
+    // everything after it, trimmed (internal whitespace kept intact).
+    // Returns false if `s` is empty/all-whitespace. Used to pull the
+    // "macro"/"type" kind keyword off the front of a @permutation value.
+    inline bool splitFirstToken(const std::string& s, std::string& first, std::string& rest)
+    {
+        std::string t = trim(s);
+        if (t.empty()) return false;
+        size_t i = 0;
+        size_t n = t.size();
+        while (i < n && !std::isspace(t[i])) ++i;
+        first = t.substr(0, i);
+        rest = trim(t.substr(i));
+        return true;
     }
 
     // Splits on a single delimiter char, trimming each piece.
@@ -277,20 +316,61 @@ namespace detail
         return true;
     }
 
-    // "USE_NORMAL_MAP = 0, 1" -> name="USE_NORMAL_MAP", values=["0","1"]
-    inline PermutationDef parsePermutationValue(const std::string& value)
+    // Macro form:  "USE_NORMAL_MAP = 0, 1"
+    //           -> kind=Macro, name="USE_NORMAL_MAP", values=["0","1"]
+    //
+    // Type form:   "type MATERIAL_MODEL : IMaterialModel = StandardPBR, ClearCoat"
+    //           -> kind=Type, name="MATERIAL_MODEL", interfaceName="IMaterialModel",
+    //              values=["StandardPBR", "ClearCoat"]
+    //
+    // A leading "type" keyword is the only thing that distinguishes the
+    // two - without it, a ':' in the value is a mistake (someone meant a
+    // type permutation and forgot the keyword) rather than being
+    // interpreted as part of a macro name.
+    inline PermutationDef parsePermutationValue(const std::string& rawValue)
     {
         PermutationDef def;
-        std::string name, rest;
-        if (splitOnce(value, '=', name, rest))
+        std::string value = trim(rawValue);
+
+        std::string firstToken, afterFirstToken;
+        if (splitFirstToken(value, firstToken, afterFirstToken) && firstToken == "type")
         {
-            def.name = name;
-            def.values = splitChar(rest, ',');
+            def.kind = PermutationKind::Type;
+            value = afterFirstToken;
+        }
+
+        std::string beforeEquals, afterEquals;
+        if (splitOnce(value, '=', beforeEquals, afterEquals))
+            def.values = splitChar(afterEquals, ',');
+        else
+            beforeEquals = value;
+
+        if (def.kind == PermutationKind::Type)
+        {
+            std::string name, interfaceName;
+            if (splitOnce(beforeEquals, ':', name, interfaceName))
+            {
+                def.name = name;
+                def.interfaceName = interfaceName;
+            }
+            else
+            {
+                // No ':' - name is present but interfaceName stays empty,
+                // which the caller reports as an error. Still capture the
+                // name so the error message can reference it.
+                def.name = trim(beforeEquals);
+            }
         }
         else
         {
-            def.name = trim(value);
+            // Macro form: a stray ':' here almost always means the author
+            // meant a type permutation and forgot "type". Surface it as
+            // part of the name so the caller's error message can point at
+            // exactly what's wrong, rather than silently keeping only the
+            // text before the ':' and losing the rest.
+            def.name = trim(beforeEquals);
         }
+
         return def;
     }
 
@@ -402,10 +482,26 @@ inline MaterialFileMeta parseMaterialComments(const std::string& source)
         else if (directive == "permutation")
         {
             PermutationDef def = parsePermutationValue(value);
+
             if (def.name.empty())
             {
                 meta.errors.push_back({lineNumber, directive,
                     "@permutation requires a name"});
+            }
+            else if (def.kind == PermutationKind::Type && def.interfaceName.empty())
+            {
+                meta.errors.push_back({lineNumber, directive,
+                    "type permutation '" + def.name + "' requires a constraining "
+                    "interface: @permutation type " + def.name + " : IInterfaceName = ..."});
+            }
+            else if (def.kind == PermutationKind::Macro && def.name.find(':') != std::string::npos)
+            {
+                std::string macroName, afterColon;
+                splitOnce(def.name, ':', macroName, afterColon);
+                meta.errors.push_back({lineNumber, directive,
+                    "unexpected ':' in macro permutation '" + macroName + "' "
+                    "- did you mean '@permutation type " + macroName + " : " +
+                    afterColon + "'?"});
             }
             else
             {

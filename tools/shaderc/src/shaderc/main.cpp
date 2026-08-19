@@ -1,4 +1,6 @@
-#include "MaterialCommentParser.hpp"
+#include "BatchCompiler.hpp"
+#include "MaterialBinary.hpp"
+#include <iostream>
  
 static const char* sample = R"SRC(
 // @material Metal_Standard
@@ -13,6 +15,7 @@ static const char* sample = R"SRC(
 // this is just a normal comment, not a directive
 import MaterialCommon;
  
+@permutation QUALITY = LOW, MEDIUM, HIGH
 struct MAT
 {
     float3 baseColor;
@@ -21,7 +24,9 @@ struct MAT
  
 int main()
 {
-    MaterialFileMeta meta = parseMaterialComments(sample);
+    BatchCompiler compiler({SLANG_GLSL});
+    BatchCompileResult result = compiler.compileFile("/home/rv/dev/cpp/roxengine/tools/shaderc/src/shader.slang");
+    writeMaterialBinary("/home/rv/dev/cpp/roxengine/tools/shaderc/src/shader.bin", result);
     return 0;
 }
  
