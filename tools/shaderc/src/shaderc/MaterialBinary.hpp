@@ -33,6 +33,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <fstream>
 #include <optional>
 #include <string>
 #include <vector>
@@ -177,12 +178,14 @@ inline bool writeMaterialBinary(const std::string& path,
         return false;
     }
 
-    BinaryWriter writer(path);
-    if (!writer.isOpen())
+    std::ofstream stream(path, std::ios::binary | std::ios::trunc);
+
+    if (!stream.is_open())
     {
         if (outError) *outError = "could not open output file: " + path;
         return false;
     }
+    BinaryWriter writer(stream);
 
     // --- Header ---
     writer.writeBytes(kMaterialBinaryMagic, sizeof(kMaterialBinaryMagic));
@@ -279,12 +282,13 @@ inline bool readMaterialBinary(const std::string& path,
                                 LoadedMaterial& outMaterial,
                                 std::string* outError = nullptr)
 {
-    BinaryReader reader(path);
-    if (!reader.isOpen())
+    std::ifstream stream(path, std::ios::binary);
+    if (!stream.is_open())
     {
         if (outError) *outError = "could not open input file: " + path;
         return false;
     }
+    BinaryReader reader(stream);
 
     // --- Header ---
     char magic[4] = {};
@@ -446,12 +450,13 @@ inline bool readMaterialBinaryTarget(const std::string& path,
                                       std::vector<std::string>& outVariantNames,
                                       std::string* outError = nullptr)
 {
-    BinaryReader reader(path);
-    if (!reader.isOpen())
+    std::ifstream stream(path, std::ios::binary);
+    if (!stream.is_open())
     {
         if (outError) *outError = "could not open input file: " + path;
         return false;
     }
+    BinaryReader reader(stream);
 
     char magic[4] = {};
     if (!reader.readBytes(magic, sizeof(magic)) ||

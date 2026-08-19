@@ -17,23 +17,22 @@
 class BinaryWriter
 {
 public:
-    explicit BinaryWriter(const std::string& path)
-        : m_stream(path, std::ios::binary | std::ios::trunc)
+    explicit BinaryWriter(std::ostream& stream)
+        : mStream(stream)
     {
     }
 
-    bool isOpen() const { return m_stream.is_open(); }
-    bool good() const { return m_stream.good(); }
+    bool good() const { return mStream.good(); }
 
-    void writeU8(uint8_t v) { m_stream.write(reinterpret_cast<const char*>(&v), sizeof(v)); }
-    void writeU32(uint32_t v) { m_stream.write(reinterpret_cast<const char*>(&v), sizeof(v)); }
-    void writeU64(uint64_t v) { m_stream.write(reinterpret_cast<const char*>(&v), sizeof(v)); }
+    void writeU8(uint8_t v) { mStream.write(reinterpret_cast<const char*>(&v), sizeof(v)); }
+    void writeU32(uint32_t v) { mStream.write(reinterpret_cast<const char*>(&v), sizeof(v)); }
+    void writeU64(uint64_t v) { mStream.write(reinterpret_cast<const char*>(&v), sizeof(v)); }
     void writeBool(bool v) { writeU8(v ? 1 : 0); }
 
     void writeBytes(const void* data, size_t size)
     {
         if (size == 0) return;
-        m_stream.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
+        mStream.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
     }
 
     void writeBytes(const std::vector<uint8_t>& bytes)
@@ -49,23 +48,21 @@ public:
         writeBytes(s.data(), s.size());
     }
 
-    uint64_t tell() { return static_cast<uint64_t>(m_stream.tellp()); }
+    uint64_t tell() { return static_cast<uint64_t>(mStream.tellp()); }
 
-    void seek(uint64_t pos) { m_stream.seekp(static_cast<std::streamoff>(pos)); }
+    void seek(uint64_t pos) { mStream.seekp(static_cast<std::streamoff>(pos)); }
 
 private:
-    std::ofstream m_stream;
+    std::ostream& mStream;
 };
 
 class BinaryReader
 {
 public:
-    explicit BinaryReader(const std::string& path)
-        : mStream(path, std::ios::binary)
+    explicit BinaryReader(std::istream& stream)
+        : mStream(stream)
     {
     }
-
-    bool isOpen() const { return mStream.is_open(); }
 
     bool readU8(uint8_t& out)
     {
@@ -121,5 +118,5 @@ public:
     uint64_t tell() { return static_cast<uint64_t>(mStream.tellg()); }
 
 private:
-    std::ifstream mStream;
+    std::istream& mStream;
 };
