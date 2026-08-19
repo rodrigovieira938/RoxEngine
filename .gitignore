@@ -1,3 +1,5 @@
+tools/shaderc/src/shaderc/shader.bin
+
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles

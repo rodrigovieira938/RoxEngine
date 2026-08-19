@@ -1,5 +1,6 @@
 #include "BatchCompiler.hpp"
 #include "MaterialBinary.hpp"
+#include <filesystem>
 #include <iostream>
  
 static const char* sample = R"SRC(
@@ -24,11 +25,13 @@ struct MAT
  
 int main()
 {
+    
+    std::filesystem::current_path(std::filesystem::path(__FILE__).parent_path());//Point the current path to src directory
     BatchCompiler compiler({SLANG_GLSL});
-    BatchCompileResult result = compiler.compileFile("/home/rv/dev/cpp/roxengine/tools/shaderc/src/shader.slang");
-    writeMaterialBinary("/home/rv/dev/cpp/roxengine/tools/shaderc/src/shader.bin", result);
+    BatchCompileResult result = compiler.compileFile("shader.slang");
+    writeMaterialBinary("shader.bin", result);
     LoadedMaterial material;
-    readMaterialBinary("/home/rv/dev/cpp/roxengine/tools/shaderc/src/shader.bin", material);
+    readMaterialBinary("shader.bin", material);
     return 0;
 }
  
