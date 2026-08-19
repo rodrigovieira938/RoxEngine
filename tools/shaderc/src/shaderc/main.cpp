@@ -27,6 +27,8 @@ int main()
     BatchCompiler compiler({SLANG_GLSL});
     BatchCompileResult result = compiler.compileFile("/home/rv/dev/cpp/roxengine/tools/shaderc/src/shader.slang");
     writeMaterialBinary("/home/rv/dev/cpp/roxengine/tools/shaderc/src/shader.bin", result);
+    LoadedMaterial material;
+    readMaterialBinary("/home/rv/dev/cpp/roxengine/tools/shaderc/src/shader.bin", material);
     return 0;
 }
  
