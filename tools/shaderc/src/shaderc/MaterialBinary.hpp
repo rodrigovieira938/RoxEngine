@@ -92,6 +92,29 @@ struct LoadedMaterial
     DepthTestMode depthTest = DepthTestMode::Less;
     std::optional<bool> depthWrite;
 
+    LoadedVariant& getVariantByName(const std::string& name)
+    {
+        for (LoadedVariant& v : variants)
+        {
+            if (v.variantName == name) return v;
+        }
+        throw std::runtime_error("variant not found: " + name);
+    }
+    LoadedVariantTarget& getTargetByFormat(LoadedVariant& variant, SlangCompileTarget format)
+    {
+        for (LoadedVariantTarget& t : variant.targets)
+        {
+            if (t.format == format) return t;
+        }
+        throw std::runtime_error("target not found: " + std::to_string(static_cast<uint32_t>(format)));
+    }
+    inline LoadedVariantTarget& getTargetByFormat(const std::string& variantName, SlangCompileTarget format)
+    {
+        LoadedVariant& variant = getVariantByName(variantName);
+        return getTargetByFormat(variant, format);
+    }
+
+
     std::vector<MaterialTag> tags;
     std::vector<LoadedVariant> variants;
 };
