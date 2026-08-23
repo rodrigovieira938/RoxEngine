@@ -65,10 +65,12 @@ public:
         : mTargets(std::move(targets))
         , mMacroChoices(std::move(macroChoices))
     {
-        if (SLANG_FAILED(slang::createGlobalSession(mGlobalSession.writeRef())))
-        {
-            mInitError = "failed to create Slang global session";
-            return;
+        if(sGlobalSession == nullptr) {
+            if (SLANG_FAILED(slang::createGlobalSession(sGlobalSession.writeRef())))
+            {
+                mInitError = "failed to create Slang global session";
+                return;
+            }
         }
 
         std::vector<slang::TargetDesc> targetDescs;
@@ -104,7 +106,7 @@ public:
         sessionDesc.preprocessorMacros = macroDescs.data();
         sessionDesc.preprocessorMacroCount = static_cast<SlangInt>(macroDescs.size());
 
-        if (SLANG_FAILED(mGlobalSession->createSession(sessionDesc, mSession.writeRef())))
+        if (SLANG_FAILED(sGlobalSession->createSession(sessionDesc, mSession.writeRef())))
         {
             mInitError = "failed to create Slang session";
         }
@@ -318,7 +320,7 @@ private:
         if (!text.empty()) out += text;
     }
 
-    Slang::ComPtr<slang::IGlobalSession> mGlobalSession;
+    Slang::ComPtr<slang::IGlobalSession> sGlobalSession = nullptr;
     Slang::ComPtr<slang::ISession> mSession;
     std::vector<SlangCompileTarget> mTargets;
     std::vector<PermutationChoice> mMacroChoices;
