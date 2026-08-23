@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MaterialCommentParser.hpp"
+#include "Reflection.hpp"
 
 #include <slang-com-ptr.h>
 #include <slang.h>
@@ -38,6 +39,7 @@ struct TargetCompileResult
 {
     SlangCompileTarget format = SLANG_TARGET_UNKNOWN;
     std::vector<CompiledEntryPoint> entryPoints;
+    std::vector<ReflectedResource> reflection;
 };
 
 struct CompileResult
@@ -277,7 +279,7 @@ private:
         {
             TargetCompileResult targetResult;
             targetResult.format = mTargets[targetIndex];
-
+            targetResult.reflection = extractReflection(compiledProgram->getLayout());
             for (size_t epIndex = 0; epIndex < entryPoints.size(); ++epIndex)
             {
                 Slang::ComPtr<slang::IBlob> code;

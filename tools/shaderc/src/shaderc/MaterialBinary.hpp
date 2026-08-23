@@ -68,6 +68,7 @@ struct LoadedVariantTarget
 {
     SlangCompileTarget format = SLANG_TARGET_UNKNOWN;
     std::vector<LoadedEntryPoint> entryPoints;
+    std::vector<ReflectedResource> reflection;
 };
 
 struct LoadedVariant
@@ -183,6 +184,184 @@ namespace detail
         }
         return true;
     }
+    inline void writeScalarInfo(BinaryWriter& writer, const ScalarInfo& info)
+    {
+        writer.writeU64(static_cast<uint64_t>(info.size));
+        writer.writeU8(static_cast<uint8_t>(info.scalarType));
+        writer.writeU32(info.vectorElementCount);
+        writer.writeU32(info.matrixRowCount);
+        writer.writeU32(info.arrayElementCount);
+        writer.writeU64(static_cast<uint64_t>(info.arrayStride));
+        writer.writeU64(static_cast<uint64_t>(info.matrixStride));
+    }
+    inline bool readScalarInfo(BinaryReader& reader, ScalarInfo& info)
+    {
+        uint64_t size = 0;
+        uint8_t scalarType = 0;
+        uint64_t arrayStride = 0;
+        uint64_t matrixStride = 0;
+
+        if (!reader.readU64(size) ||
+            !reader.readU8(scalarType) ||
+            !reader.readU32(info.vectorElementCount) ||
+            !reader.readU32(info.matrixRowCount) ||
+            !reader.readU32(info.arrayElementCount) ||
+            !reader.readU64(arrayStride) ||
+            !reader.readU64(matrixStride))
+            return false;
+
+        info.size = static_cast<size_t>(size);
+        info.scalarType =
+            static_cast<slang::TypeReflection::ScalarType>(scalarType);
+        info.arrayStride = static_cast<size_t>(arrayStride);
+        info.matrixStride = static_cast<size_t>(matrixStride);
+
+        return true;
+    }
+    inline void writeStructInfo(BinaryWriter& writer, const std::shared_ptr<StructInfo>& info)
+    {
+        writer.writeU64(static_cast<uint64_t>(info->size));
+        writer.writeU32(static_cast<uint32_t>(info->fields.size()));
+
+        for (const FieldNode& field : info->fields)
+        {
+            writer.writeString(field.name);
+            writer.writeU64(static_cast<uint64_t>(field.offset));
+
+            // 0 = scalar/family, 1 = nested struct
+            if (std::holds_alternative<ScalarInfo>(field.data))
+            {
+                writer.writeU8(0);
+                writeScalarInfo(writer, std::get<ScalarInfo>(field.data));
+            }
+            else
+            {
+                writer.writeU8(1);
+                writeStructInfo(writer, std::get<std::shared_ptr<StructInfo>>(field.data));
+            }
+        }
+    }
+    inline bool readStructInfo(BinaryReader& reader, std::shared_ptr<StructInfo>& info)
+    {
+        uint64_t size = 0;
+        uint32_t fieldCount = 0;
+
+        if (!reader.readU64(size) ||
+            !reader.readU32(fieldCount))
+            return false;
+
+        info = std::make_shared<StructInfo>();
+        info->size = static_cast<size_t>(size);
+        info->fields.reserve(fieldCount);
+
+        for (uint32_t i = 0; i < fieldCount; ++i)
+        {
+            FieldNode field;
+            uint64_t offset = 0;
+            uint8_t kind = 0;
+
+            if (!reader.readString(field.name) ||
+                !reader.readU64(offset) ||
+                !reader.readU8(kind))
+                return false;
+
+            field.offset = static_cast<size_t>(offset);
+
+            if (kind == 0)
+            {
+                ScalarInfo scalar;
+                if (!readScalarInfo(reader, scalar))
+                    return false;
+
+                field.data = std::move(scalar);
+            }
+            else if (kind == 1)
+            {
+                std::shared_ptr<StructInfo> nested;
+                if (!readStructInfo(reader, nested))
+                    return false;
+
+                field.data = std::move(nested);
+            }
+            else
+            {
+                return false;
+            }
+
+            info->fields.push_back(std::move(field));
+        }
+
+        return true;
+    }
+    inline void writeReflectedResource(BinaryWriter& writer, const ReflectedResource& resource)
+    {
+        writer.writeString(resource.name);
+        writer.writeU8(static_cast<uint8_t>(resource.kind));
+        writer.writeU32(resource.bindingIndex);
+        writer.writeU32(resource.bindingSpace);
+
+        writer.writeBool(static_cast<bool>(resource.layout));
+
+        if (resource.layout)
+            writeStructInfo(writer, resource.layout);
+    }
+    inline bool readReflectedResource(BinaryReader& reader, ReflectedResource& resource)
+    {
+        uint8_t kind = 0;
+        bool hasLayout = false;
+
+        if (!reader.readString(resource.name) ||
+            !reader.readU8(kind) ||
+            !reader.readU32(resource.bindingIndex) ||
+            !reader.readU32(resource.bindingSpace) ||
+            !reader.readBool(hasLayout))
+            return false;
+
+        resource.kind = static_cast<ResourceKind>(kind);
+
+        if (hasLayout)
+        {
+            if (!readStructInfo(reader, resource.layout))
+                return false;
+        }
+        else
+        {
+            resource.layout.reset();
+        }
+
+        return true;
+    }
+    inline void writeReflectedResources(BinaryWriter& writer, const std::vector<ReflectedResource>& resources)
+    {
+        writer.writeU32(static_cast<uint32_t>(resources.size()));
+
+        for (const ReflectedResource& resource : resources)
+            writeReflectedResource(writer, resource);
+    }
+    inline bool readReflectedResources(
+    BinaryReader& reader,
+    std::vector<ReflectedResource>& resources)
+    {
+        uint32_t count = 0;
+
+        if (!reader.readU32(count))
+            return false;
+
+        resources.clear();
+        resources.reserve(count);
+
+        for (uint32_t i = 0; i < count; ++i)
+        {
+            ReflectedResource resource;
+
+            if (!readReflectedResource(reader, resource))
+                return false;
+
+            resources.push_back(std::move(resource));
+        }
+
+        return true;
+    }
 }
 
 // Refuses to write anything for a batch that didn't fully succeed
@@ -280,6 +459,7 @@ inline bool writeMaterialBinary(const std::string& path,
 
             writer.writeU32(v); // self-check: must equal this entry's position
             writer.writeU32(static_cast<uint32_t>(targetResult.entryPoints.size()));
+            detail::writeReflectedResources(writer, targetResult.reflection);
             for (const CompiledEntryPoint& ep : targetResult.entryPoints)
             {
                 writer.writeString(ep.name);
@@ -439,6 +619,12 @@ inline bool readMaterialBinary(const std::string& path,
 
             LoadedVariantTarget target;
             target.format = entry.format;
+
+            if (!detail::readReflectedResources(
+                    reader,
+                    target.reflection))
+                return false;
+
             target.entryPoints.reserve(entryPointCount);
             for (uint32_t e = 0; e < entryPointCount; ++e)
             {

@@ -51,12 +51,25 @@ struct VertexOutput
     float2 uv       : TEXCOORD0;
 };
 
+cbuffer Globals
+{
+    float4x4 viewMatrix;
+    float4x4 projMatrix;
+    float4x4 viewProjMatrix;
+    float4x4 transformMatrix;
+    float4x4 transformsMatrix[4];
+    float3 cameraPosition;
+    float3 cameraDirection;
+}
+
 [shader("vertex")]
 VertexOutput vsMain(VertexInput input)
 {
     VertexOutput output;
 
-    output.position = float4(input.position, 1.0);
+    float4 worldPos = mul(transformMatrix, float4(input.position, 1.0));
+    
+    output.position = mul(viewProjMatrix, worldPos);
     output.normal = input.normal;
     output.uv = input.uv;
 
