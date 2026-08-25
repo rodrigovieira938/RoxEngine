@@ -2,6 +2,7 @@
 #include "RoxEngine/assetmanager/AssimpDecoder.hpp"
 #include "RoxEngine/core/Logger.hpp"
 #include "RoxEngine/ecs/ecs.hpp"
+#include "RoxEngine/filesystem/Filesystem.hpp"
 #include "RoxEngine/input/Input.hpp"
 #include "RoxEngine/renderer/Material.hpp"
 #include "RoxEngine/renderer/Mesh.hpp"
@@ -26,6 +27,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <assimp/scene.h>
+#include <shaderc/BatchCompiler.hpp>
 
 using namespace RoxEngine;
 
@@ -116,6 +118,15 @@ struct TestGame final : public Game {
         pipeline = CreateRef<UniversalRenderingPipeline>(Engine::Get()->GetWindow()->GetDevice());
         SlangLayer::Init();
         {
+            std::string shaderSource = FileSystem::ReadTextFile("res://shaders/basic.slang");
+            MaterialCompiler::sFilesystem = new SlangLayer::filesystem();
+            BatchCompiler compiler({SLANG_SPIRV}, {""});
+            BatchCompileResult result = compiler.compileSource("res://shaders/basic.slang", shaderSource);
+            if(result.variants[0].diagnostics.size() > 0) {
+                log::error("Shader compilation failed: {}", result.variants[0].diagnostics);
+                exit(1);
+            }
+            //TODO: this is a hack, we should be able to get the reflection from the compiled result
             auto module = SlangLayer::CompileModule("res://shaders/basic.slang");
             std::array<slang::IComponentType*, 3> components = {
                 module, 
@@ -125,11 +136,12 @@ struct TestGame final : public Game {
             auto compositeComponent = SlangLayer::CreateCompositeComponentType(components);
             auto linkedProgram = SlangLayer::LinkModule(compositeComponent);
             auto moduleReflection = CreateRef<ModuleReflection>(SlangLayer::GetProgramReflection(linkedProgram));
-            auto vertex_shader_src = SlangLayer::GetModuleCode(linkedProgram);
-            auto fragment_shader_src = SlangLayer::GetModuleCode(linkedProgram, 1);
             auto device = Engine::Get()->GetWindow()->GetDevice();
-            vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_shader_src.data(), vertex_shader_src.size());
-            fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_shader_src.data(), fragment_shader_src.size()); 
+            
+            auto& vertex_code = result.variants[0].targets[0].entryPoints[0].code;
+            auto& fragment_code = result.variants[0].targets[0].entryPoints[1].code;
+            vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_code.data(), vertex_code.size());
+            fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_code.data(), fragment_code.size()); 
             material = Material(vertex_shader, fragment_shader, moduleReflection);
         }
 

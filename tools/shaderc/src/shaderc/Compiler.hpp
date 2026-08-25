@@ -105,7 +105,8 @@ public:
         sessionDesc.searchPathCount = static_cast<SlangInt>(searchPathPtrs.size());
         sessionDesc.preprocessorMacros = macroDescs.data();
         sessionDesc.preprocessorMacroCount = static_cast<SlangInt>(macroDescs.size());
-
+        sessionDesc.defaultMatrixLayoutMode = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR;
+        sessionDesc.fileSystem = sFilesystem;
         if (SLANG_FAILED(sGlobalSession->createSession(sessionDesc, mSession.writeRef())))
         {
             mInitError = "failed to create Slang session";
@@ -157,6 +158,7 @@ public:
         return compileValidatedSource(path, source, std::move(result.meta),
                                        std::move(typeChoices));
     }
+    inline static Slang::ComPtr<ISlangFileSystem> sFilesystem = nullptr;
 private:
     static std::string blobToString(slang::IBlob* blob)
     {
