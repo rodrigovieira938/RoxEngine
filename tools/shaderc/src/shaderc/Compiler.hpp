@@ -116,8 +116,7 @@ public:
     const std::string& initError() const { return mInitError; }
     const std::vector<PermutationChoice>& macroChoices() const { return mMacroChoices; }
 
-    CompileResult compileFile(const std::string& path,
-                               std::vector<PermutationChoice> typeChoices = {}) const
+    CompileResult compileFile(const std::string& path, std::vector<PermutationChoice> typeChoices = {}) const
     {
         CompileResult result;
         result.macroChoices = mMacroChoices;
@@ -135,6 +134,19 @@ public:
             result.diagnostics = "could not read file: " + path;
             return result;
         }
+        return compileSource(path, source, std::move(typeChoices));
+    }
+    CompileResult compileSource(const std::string& path, const std::string& source, std::vector<PermutationChoice> typeChoices = {}) const
+    {
+        CompileResult result;
+        result.macroChoices = mMacroChoices;
+        result.typeChoices = typeChoices;
+
+        if (!isValid())
+        {
+            result.diagnostics = mInitError;
+            return result;
+        }
 
         result.meta = parseMaterialComments(source);
         if (!result.meta.ok())
@@ -145,7 +157,6 @@ public:
         return compileValidatedSource(path, source, std::move(result.meta),
                                        std::move(typeChoices));
     }
-
 private:
     static std::string blobToString(slang::IBlob* blob)
     {

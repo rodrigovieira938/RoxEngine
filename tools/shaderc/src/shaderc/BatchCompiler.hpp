@@ -61,6 +61,12 @@ public:
             return batch;
         }
 
+        return compileSource(path, source);
+    }
+    BatchCompileResult compileSource(const std::string& path, const std::string& source) const
+    {
+        BatchCompileResult batch;
+
         batch.meta = parseMaterialComments(source);
         if (!batch.meta.ok())
         {
@@ -85,7 +91,7 @@ public:
 
             for (const std::vector<PermutationChoice>& typeCombo : typeCombos)
             {
-                VariantResult result = VariantResult(compiler.compileFile(path, typeCombo));
+                VariantResult result = VariantResult(compiler.compileSource(path, source, typeCombo));
                 result.variantName = makeVariantName(macroCombo, typeCombo);
                 if (!result.success) batch.success = false;
                 batch.variants.push_back(std::move(result));
@@ -94,7 +100,6 @@ public:
 
         return batch;
     }
-
 private:
     static std::vector<std::vector<PermutationChoice>> cartesianProduct(
         const std::vector<const PermutationDef*>& defs)
