@@ -364,10 +364,7 @@ namespace detail
     }
 }
 
-// Refuses to write anything for a batch that didn't fully succeed
-inline bool writeMaterialBinary(const std::string& path,
-                                 const BatchCompileResult& batch,
-                                 std::string* outError = nullptr)
+inline bool writeMaterialBinary(std::ostream& stream, const BatchCompileResult& batch, std::string* outError = nullptr) 
 {
     if (!batch.meta.ok())
     {
@@ -377,14 +374,6 @@ inline bool writeMaterialBinary(const std::string& path,
     if (!batch.success)
     {
         if (outError) *outError = "refusing to write: one or more variants failed to compile";
-        return false;
-    }
-
-    std::ofstream stream(path, std::ios::binary | std::ios::trunc);
-
-    if (!stream.is_open())
-    {
-        if (outError) *outError = "could not open output file: " + path;
         return false;
     }
     BinaryWriter writer(stream);
@@ -481,16 +470,25 @@ inline bool writeMaterialBinary(const std::string& path,
     return writer.good();
 }
 
-inline bool readMaterialBinary(const std::string& path,
+// Refuses to write anything for a batch that didn't fully succeed
+inline bool writeMaterialBinary(const std::string& path,
+                                 const BatchCompileResult& batch,
+                                 std::string* outError = nullptr)
+{
+    std::ofstream stream(path, std::ios::binary | std::ios::trunc);
+
+    if (!stream.is_open())
+    {
+        if (outError) *outError = "could not open output file: " + path;
+        return false;
+    }
+    return writeMaterialBinary(stream, batch, outError);
+}
+
+inline bool readMaterialBinary(std::istream& stream,
                                 LoadedMaterial& outMaterial,
                                 std::string* outError = nullptr)
 {
-    std::ifstream stream(path, std::ios::binary);
-    if (!stream.is_open())
-    {
-        if (outError) *outError = "could not open input file: " + path;
-        return false;
-    }
     BinaryReader reader(stream);
 
     // --- Header ---
@@ -498,21 +496,21 @@ inline bool readMaterialBinary(const std::string& path,
     if (!reader.readBytes(magic, sizeof(magic)) ||
         std::memcmp(magic, kMaterialBinaryMagic, sizeof(magic)) != 0)
     {
-        if (outError) *outError = "not a material binary (bad magic): " + path;
+        if (outError) *outError = "not a material binary (bad magic)";
         return false;
     }
 
     uint32_t version = 0;
     if (!reader.readU32(version))
     {
-        if (outError) *outError = "truncated file (missing version): " + path;
+        if (outError) *outError = "truncated file (missing version)";
         return false;
     }
     if (version != kMaterialBinaryVersion)
     {
         if (outError)
             *outError = "unsupported material binary version " + std::to_string(version) +
-                         " (expected " + std::to_string(kMaterialBinaryVersion) + "): " + path;
+                         " (expected " + std::to_string(kMaterialBinaryVersion) + ")";
         return false;
     }
 
@@ -521,7 +519,7 @@ inline bool readMaterialBinary(const std::string& path,
     // --- Material info ---
     if (!reader.readString(material.name) || !reader.readString(material.domain))
     {
-        if (outError) *outError = "truncated file (name/domain): " + path;
+        if (outError) *outError = "truncated file (name/domain)";
         return false;
     }
     if (!detail::readEnum(reader, material.blend) ||
@@ -529,14 +527,14 @@ inline bool readMaterialBinary(const std::string& path,
         !detail::readEnum(reader, material.depthTest) ||
         !detail::readOptionalEnum(reader, material.depthWrite))
     {
-        if (outError) *outError = "truncated file (render state): " + path;
+        if (outError) *outError = "truncated file (render state)";
         return false;
     }
 
     uint32_t tagCount = 0;
     if (!reader.readU32(tagCount))
     {
-        if (outError) *outError = "truncated file (tag count): " + path;
+        if (outError) *outError = "truncated file (tag count)";
         return false;
     }
     material.tags.reserve(tagCount);
@@ -545,7 +543,7 @@ inline bool readMaterialBinary(const std::string& path,
         MaterialTag tag;
         if (!reader.readString(tag.key) || !reader.readString(tag.value))
         {
-            if (outError) *outError = "truncated file (tag " + std::to_string(i) + "): " + path;
+            if (outError) *outError = "truncated file (tag " + std::to_string(i) + ")";
             return false;
         }
         material.tags.push_back(std::move(tag));
@@ -555,7 +553,7 @@ inline bool readMaterialBinary(const std::string& path,
     uint32_t variantCount = 0;
     if (!reader.readU32(variantCount))
     {
-        if (outError) *outError = "truncated file (variant count): " + path;
+        if (outError) *outError = "truncated file (variant count)";
         return false;
     }
     material.variants.resize(variantCount);
@@ -565,7 +563,7 @@ inline bool readMaterialBinary(const std::string& path,
             !detail::readChoices(reader, material.variants[v].macroChoices) ||
             !detail::readChoices(reader, material.variants[v].typeChoices))
         {
-            if (outError) *outError = "truncated file (variant " + std::to_string(v) + "): " + path;
+            if (outError) *outError = "truncated file (variant " + std::to_string(v) + ")";
             return false;
         }
     }
@@ -574,7 +572,7 @@ inline bool readMaterialBinary(const std::string& path,
     uint32_t targetCount = 0;
     if (!reader.readU32(targetCount))
     {
-        if (outError) *outError = "truncated file (target count): " + path;
+        if (outError) *outError = "truncated file (target count)";
         return false;
     }
 
@@ -586,7 +584,7 @@ inline bool readMaterialBinary(const std::string& path,
         uint64_t offset = 0, size = 0;
         if (!reader.readU32(formatRaw) || !reader.readU64(offset) || !reader.readU64(size))
         {
-            if (outError) *outError = "truncated file (target table entry " + std::to_string(t) + "): " + path;
+            if (outError) *outError = "truncated file (target table entry " + std::to_string(t) + ")";
             return false;
         }
         targetTable[t] = {static_cast<SlangCompileTarget>(formatRaw), offset, size};
@@ -606,14 +604,14 @@ inline bool readMaterialBinary(const std::string& path,
             uint32_t entryPointCount = 0;
             if (!reader.readU32(variantIndex) || !reader.readU32(entryPointCount))
             {
-                if (outError) *outError = "truncated file (target block, variant " + std::to_string(v) + "): " + path;
+                if (outError) *outError = "truncated file (target block, variant " + std::to_string(v) + ")";
                 return false;
             }
             if (variantIndex != v)
             {
                 if (outError)
                     *outError = "corrupt file: expected variant index " + std::to_string(v) +
-                                 " but found " + std::to_string(variantIndex) + " in " + path;
+                                 " but found " + std::to_string(variantIndex);
                 return false;
             }
 
@@ -631,7 +629,7 @@ inline bool readMaterialBinary(const std::string& path,
                 LoadedEntryPoint ep;
                 if (!reader.readString(ep.name) || !reader.readBytes(ep.code))
                 {
-                    if (outError) *outError = "truncated file (entry point " + std::to_string(e) + "): " + path;
+                    if (outError) *outError = "truncated file (entry point " + std::to_string(e) + ")";
                     return false;
                 }
                 target.entryPoints.push_back(std::move(ep));
@@ -643,6 +641,19 @@ inline bool readMaterialBinary(const std::string& path,
 
     outMaterial = std::move(material);
     return true;
+}
+
+inline bool readMaterialBinary(const std::string& path,
+                                LoadedMaterial& outMaterial,
+                                std::string* outError = nullptr)
+{
+    std::ifstream stream(path, std::ios::binary);
+    if (!stream.is_open())
+    {
+        if (outError) *outError = "could not open input file: " + path;
+        return false;
+    }
+    return readMaterialBinary(stream, outMaterial, outError);
 }
 
 // Reads only ONE target's data - skips straight to it via the target

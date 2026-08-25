@@ -19,10 +19,12 @@
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
 #include "imgui.h"
+#include "shaderc/MaterialBinary.hpp"
 #include "slang-com-ptr.h"
 #include "slang.h"
 #include <RoxEngine/RoxEngine.hpp>
 #include <glm/glm.hpp>
+#include <sstream>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -122,10 +124,24 @@ struct TestGame final : public Game {
             MaterialCompiler::sFilesystem = new SlangLayer::filesystem();
             BatchCompiler compiler({SLANG_SPIRV}, {""});
             BatchCompileResult result = compiler.compileSource("res://shaders/basic.slang", shaderSource);
+            
             if(result.variants[0].diagnostics.size() > 0) {
                 log::error("Shader compilation failed: {}", result.variants[0].diagnostics);
                 exit(1);
             }
+            
+            std::stringstream stream(std::ios::in | std::ios::out);
+            std::string error;
+            if(!writeMaterialBinary(stream, result, &error)) {
+                log::error("Failed to write material binary: {}", error);
+                exit(1);
+            }
+            LoadedMaterial loadedMaterial;
+            if(!readMaterialBinary(stream, loadedMaterial, &error)) {
+                log::error("Failed to read material binary: {}", error);
+                exit(1);
+            }
+
             //TODO: this is a hack, we should be able to get the reflection from the compiled result
             auto module = SlangLayer::CompileModule("res://shaders/basic.slang");
             std::array<slang::IComponentType*, 3> components = {
@@ -138,8 +154,10 @@ struct TestGame final : public Game {
             auto moduleReflection = CreateRef<ModuleReflection>(SlangLayer::GetProgramReflection(linkedProgram));
             auto device = Engine::Get()->GetWindow()->GetDevice();
             
-            auto& vertex_code = result.variants[0].targets[0].entryPoints[0].code;
-            auto& fragment_code = result.variants[0].targets[0].entryPoints[1].code;
+            auto& variant = loadedMaterial.getVariantByName("default");
+            auto& vertex_code = variant.targets[0].entryPoints[0].code;
+            auto& fragment_code = variant.targets[0].entryPoints[1].code;
+            
             vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_code.data(), vertex_code.size());
             fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_code.data(), fragment_code.size()); 
             material = Material(vertex_shader, fragment_shader, moduleReflection);
@@ -150,7 +168,7 @@ struct TestGame final : public Game {
             decoder.CreateEntities(scene, &material.value());
         }
 
-        material->Set("color", glm::vec3(0.5,1,0.3));
+        material->Set("color", glm::vec3(0.5,0.2,0.3));
     }
     WorldTransform GetWorldTransform(Entity e) {
         // If entity has no transform, return identity
