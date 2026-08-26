@@ -141,26 +141,8 @@ struct TestGame final : public Game {
                 log::error("Failed to read material binary: {}", error);
                 exit(1);
             }
-
-            //TODO: this is a hack, we should be able to get the reflection from the compiled result
-            auto module = SlangLayer::CompileModule("res://shaders/basic.slang");
-            std::array<slang::IComponentType*, 3> components = {
-                module, 
-                SlangLayer::GetModuleEntryPoint(module, SlangLayer::EntryPointType::VERTEX), 
-                SlangLayer::GetModuleEntryPoint(module, SlangLayer::EntryPointType::FRAGMENT)
-            };
-            auto compositeComponent = SlangLayer::CreateCompositeComponentType(components);
-            auto linkedProgram = SlangLayer::LinkModule(compositeComponent);
-            auto moduleReflection = CreateRef<ModuleReflection>(SlangLayer::GetProgramReflection(linkedProgram));
-            auto device = Engine::Get()->GetWindow()->GetDevice();
             
-            auto& variant = loadedMaterial.getVariantByName("default");
-            auto& vertex_code = variant.targets[0].entryPoints[0].code;
-            auto& fragment_code = variant.targets[0].entryPoints[1].code;
-            
-            vertex_shader = device->createShader(alina::ShaderType::VERTEX, vertex_code.data(), vertex_code.size());
-            fragment_shader = device->createShader(alina::ShaderType::FRAGMENT, fragment_code.data(), fragment_code.size()); 
-            material = Material(vertex_shader, fragment_shader, moduleReflection);
+            material = Material(loadedMaterial, "default");
         }
 
         AssetManager::AssimpDecoder decoder;

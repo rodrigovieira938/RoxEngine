@@ -24,8 +24,8 @@ namespace RoxEngine {
         );
         //TODO: replace this with a proper default framebuffer reference when alina supports it
         mOutputFb = ((alina::opengl::IGlDevice*)device.get())->createUnmanagedFramebuffer(0);
-
-        auto module = SlangLayer::CompileModule("res://shaders/internal/urp.slang");
+        //TODO: remove old reflection abstraction from this file
+        /*auto module = SlangLayer::CompileModule("res://shaders/internal/urp.slang");
         auto program = SlangLayer::LinkModule(module);
         mGlobalsUboReflection = SlangLayer::GetProgramReflection(program);
         mGlobalsUbo = mDevice->createBuffer(alina::BufferDesc().setDebugName("URP Globals UBO"));
@@ -39,12 +39,11 @@ namespace RoxEngine {
         mCmd->begin();
         mCmd->writeBuffer(mGlobalsUbo, nullptr, mGlobalsUboReflection.shared_ubos[mGlobalUboIndex].size, 0);
         mCmd->end();
-        mDevice->execute(mCmd);
+        mDevice->execute(mCmd);*/
     }
     void UniversalRenderingPipeline::DrawMesh(RoxEngine::Mesh& mesh, RoxEngine::Material& material, std::optional<glm::mat4> transform) {
         if(mesh.GetIndices().size() == 0 || mesh.GetPosition().size() == 0) return;
         auto meshData = mesh.GetData();
-        auto moduleReflection = material.GetModuleReflection();
         if(mesh.NeedChange()) {
             meshData->BakeGPUResources(mDevice, &mInputLayoutPool);
             mesh.SetNeedChange(false);
@@ -58,25 +57,10 @@ namespace RoxEngine {
         //    bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->uvs_vb).setStride(sizeof(glm::vec2)));
         //if(meshData->normals_vb)
         //    bindVBs.push_back(alina::BindVertexBuffer().setBuffer(meshData->normals_vb).setStride(sizeof(glm::vec3)));
-        if(moduleReflection->instance_data.has_value()) {
-            bindVBs.push_back(alina::BindVertexBuffer()
-            .setBuffer(material.GetBuffers()[material.GetBuffers().size()-1])
-            .setStride(moduleReflection->instance_data->type->size));
-        }
+        
 
         mCmd->bindGraphicsPipeline(material.GetGraphicsPipeline(mInputLayoutPool, mGraphicsPipelinePool));
         auto shaderResources = material.GetShaderResources();
-        for(auto& reflection_ubo : moduleReflection->shared_ubos) {
-            if(reflection_ubo.index_name == mGlobalsUboReflection.shared_ubos[mGlobalUboIndex].index_name) {
-                for(auto& binding: shaderResources.uboBinding) {
-                    if(binding.binding == reflection_ubo.binding_index && binding.set == reflection_ubo.binding_space) {
-                        binding.setBuffer(mGlobalsUbo);
-                        break;
-                    }
-                }
-                break;
-            }
-        }
         if(transform.has_value()){
             //TODO: 
             log::warn(__FILE__":{}  TODO: implement renderer updating transform", __LINE__);
@@ -95,7 +79,7 @@ namespace RoxEngine {
         mGlobals.viewMatrix = viewMatrix;
         mGlobals.projMatrix = projMatrix;
         glm::mat4 viewProj = mGlobals.projMatrix * mGlobals.viewMatrix;
-        mCmd->begin();
+        /*mCmd->begin();
         static auto setMatrix4 = [&](const char * path, auto& value){
             auto lookup = mGlobalsUboReflection.lookup(path);
             if(lookup) {
@@ -118,7 +102,7 @@ namespace RoxEngine {
         setFloat("cameraDirection[1]", mGlobals.camDir.y);
         setFloat("cameraDirection[2]", mGlobals.camDir.z);
         mCmd->end();
-        mDevice->execute(mCmd);
+        mDevice->execute(mCmd);*/
         mCmd->begin();
         //Disabling this until alina support referencing the default framebuffer
         mCmd->beginRenderPass(alina::RenderPassDesc().setFramebuffer(mOutputFb).setAttachmentsLoadOp({alina::RenderPassLoadOp::CLEAR}).setAttachmentsClearColors({{0,0,0,0}}));
