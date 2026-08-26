@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include <slang.h>
 
 #include <cstddef>
@@ -62,6 +63,7 @@ inline const char* toString(ResourceKind k)
 struct ReflectedResource
 {
     std::string name;
+    std::string sharedName = ""; // for shared resources
     ResourceKind kind = ResourceKind::Other;
     unsigned bindingIndex = 0;
     unsigned bindingSpace = 0;
@@ -185,7 +187,7 @@ namespace detail
 
             slang::TypeLayoutReflection* fieldTypeLayout = fieldLayout->getTypeLayout();
             slang::TypeReflection::Kind fieldKind = fieldTypeLayout->getKind();
-
+            
             if (isResourceKind(fieldKind))
             {
                 std::string fieldName = fieldLayout->getName() ? fieldLayout->getName() : "";
@@ -224,14 +226,25 @@ inline std::vector<ReflectedResource> extractReflection(slang::ProgramLayout* la
 
         slang::TypeLayoutReflection* typeLayout = param->getTypeLayout();
         slang::TypeReflection::Kind kind = typeLayout->getKind();
-
         if (kind == slang::TypeReflection::Kind::ParameterBlock ||
             kind == slang::TypeReflection::Kind::ConstantBuffer ||
             detail::isResourceKind(kind))
         {
-            std::string name = param->getName() ? param->getName() : "";
-            ctx.resources.push_back(detail::reflectResource(
-                name, typeLayout, param->getBindingIndex(), param->getBindingSpace(), ctx));
+            std::string name = param->getSemanticName() ? param->getSemanticName() : "";
+            ReflectedResource res = detail::reflectResource(name, typeLayout, param->getBindingIndex(), param->getBindingSpace(), ctx);
+            if(kind == slang::TypeReflection::Kind::ConstantBuffer) {
+                auto var = param->getVariable();
+                for(int i = 0; i < var->getUserAttributeCount(); ++i) {
+                    auto attr = var->getUserAttributeByIndex(i);
+                    if(std::strcmp(attr->getName(), "SharedUbo") == 0) {
+                        size_t size;
+                        if(attr->getArgumentCount() != 1) continue;
+                        if(attr->getArgumentType(0) != layout->findTypeByName("string")) continue;
+                        res.sharedName = attr->getArgumentValueString(0, &size);
+                    }
+                }
+            }
+            ctx.resources.push_back(res);
         }
     }
 

@@ -32,6 +32,7 @@ struct PermutationChoice
 struct CompiledEntryPoint
 {
     std::string name;
+    SlangStage stage = SLANG_STAGE_NONE;
     std::vector<uint8_t> code;
 };
 
@@ -315,6 +316,7 @@ private:
 
                 CompiledEntryPoint entry;
                 entry.name = entryPointNames[epIndex];
+                entry.stage = compiledProgram->getLayout(targetIndex)->getEntryPointByIndex(epIndex)->getStage();
                 entry.code = blobToBytes(code);
                 targetResult.entryPoints.push_back(std::move(entry));
             }

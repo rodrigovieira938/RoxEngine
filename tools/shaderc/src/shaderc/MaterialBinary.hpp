@@ -61,6 +61,7 @@ inline constexpr uint32_t kMaterialBinaryVersion = MAKE_VERSION(0, 0, 1);
 struct LoadedEntryPoint
 {
     std::string name;
+    SlangStage stage;
     std::vector<uint8_t> code;
 };
 
@@ -296,6 +297,7 @@ namespace detail
     inline void writeReflectedResource(BinaryWriter& writer, const ReflectedResource& resource)
     {
         writer.writeString(resource.name);
+        writer.writeString(resource.sharedName);
         writer.writeU8(static_cast<uint8_t>(resource.kind));
         writer.writeU32(resource.bindingIndex);
         writer.writeU32(resource.bindingSpace);
@@ -311,6 +313,7 @@ namespace detail
         bool hasLayout = false;
 
         if (!reader.readString(resource.name) ||
+            !reader.readString(resource.sharedName) ||
             !reader.readU8(kind) ||
             !reader.readU32(resource.bindingIndex) ||
             !reader.readU32(resource.bindingSpace) ||
@@ -452,6 +455,7 @@ inline bool writeMaterialBinary(std::ostream& stream, const BatchCompileResult& 
             for (const CompiledEntryPoint& ep : targetResult.entryPoints)
             {
                 writer.writeString(ep.name);
+                detail::writeEnum(writer, ep.stage);
                 writer.writeBytes(ep.code);
             }
         }
@@ -627,7 +631,7 @@ inline bool readMaterialBinary(std::istream& stream,
             for (uint32_t e = 0; e < entryPointCount; ++e)
             {
                 LoadedEntryPoint ep;
-                if (!reader.readString(ep.name) || !reader.readBytes(ep.code))
+                if (!reader.readString(ep.name) || !detail::readEnum(reader, ep.stage) || !reader.readBytes(ep.code))
                 {
                     if (outError) *outError = "truncated file (entry point " + std::to_string(e) + ")";
                     return false;
