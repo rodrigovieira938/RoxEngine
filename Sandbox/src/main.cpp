@@ -6,10 +6,10 @@
 #include "RoxEngine/input/Input.hpp"
 #include "RoxEngine/renderer/Material.hpp"
 #include "RoxEngine/renderer/Mesh.hpp"
+#include <RoxEngine/renderer/slang/filesystem.hpp>
 #include "RoxEngine/renderer/URP/MeshRendererer.hpp"
 #include "RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp"
 #include <RoxEngine/renderer/Transform.hpp>
-#include <RoxEngine/renderer/slang/slang.hpp>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
@@ -118,7 +118,6 @@ struct TestGame final : public Game {
 
     void Init() override {
         pipeline = CreateRef<UniversalRenderingPipeline>(Engine::Get()->GetWindow()->GetDevice());
-        SlangLayer::Init();
         {
             std::string shaderSource = FileSystem::ReadTextFile("res://shaders/basic.slang");
             MaterialCompiler::sFilesystem = new SlangLayer::filesystem();

@@ -1,6 +1,5 @@
 #include "RoxEngine/renderer/Material.hpp"
 #include "RoxEngine/renderer/Transform.hpp"
-#include <RoxEngine/renderer/slang/slang.hpp>
 #include "alina/alina.hpp"
 #include <RoxEngine/renderer/URP/UniversalRenderingPipeline.hpp>
 #include <RoxEngine/core/Logger.hpp>
@@ -9,7 +8,6 @@
 
 namespace RoxEngine {
     UniversalRenderingPipeline::UniversalRenderingPipeline(alina::Device device) : mInputLayoutPool(device), mGraphicsPipelinePool(device) {
-        SlangLayer::Init();
         mDevice = device;
         mCmd = mDevice->createCommandList();
         mFbTex = device->createTexture(

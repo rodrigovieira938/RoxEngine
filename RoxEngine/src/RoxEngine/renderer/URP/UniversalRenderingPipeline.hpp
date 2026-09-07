@@ -1,5 +1,4 @@
 #pragma once
-#include <RoxEngine/renderer/slang/slang.hpp>
 #include <alina/alina.hpp>
 #include <RoxEngine/renderer/RendereringPipeline.hpp>
 #include <RoxEngine/renderer/alina/ResourcePool.hpp>
@@ -21,7 +20,6 @@ namespace RoxEngine {
 
         Globals mGlobals;
         alina::Buffer mGlobalsUbo;
-        ModuleReflection mGlobalsUboReflection;
         size_t mGlobalUboIndex;
 
         alina::Framebuffer mOutputFb;

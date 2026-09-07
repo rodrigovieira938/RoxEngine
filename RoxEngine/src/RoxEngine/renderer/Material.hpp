@@ -1,5 +1,4 @@
 #pragma once
-#include <RoxEngine/renderer/slang/slang.hpp>
 #include "alina/alina.hpp"
 #include "shaderc/MaterialBinary.hpp"
 #include <RoxEngine/utils/Utils.hpp>

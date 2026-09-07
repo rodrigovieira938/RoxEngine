@@ -1,4 +1,3 @@
-#include <RoxEngine/renderer/slang/slang.hpp>
 #include "alina/alina.hpp"
 #include "glm/fwd.hpp"
 #include "glm/matrix.hpp"
