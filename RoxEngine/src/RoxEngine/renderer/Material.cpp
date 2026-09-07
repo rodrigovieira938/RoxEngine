@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <RoxEngine/core/Logger.hpp>
 #include <RoxEngine/core/Engine.hpp>
+#include <RoxEngine/renderer/RendereringPipeline.hpp>
 
 namespace RoxEngine {
     Material::Material(LoadedMaterial& loadedMaterial, const std::string& variant) 
@@ -28,15 +29,24 @@ namespace RoxEngine {
         for(auto& resource : mResources) {
             switch(resource.kind) {
             case ResourceKind::ConstantBuffer: {
-                auto ubo = mDevice->createBuffer(alina::BufferDesc().setType(alina::BufferType::UNIFORM));
-                cmd->writeBuffer(ubo, nullptr, resource.layout->size, 0);
-                mUbos.push_back(Ubo{ubo, resource.bindingIndex, resource.bindingSpace});
-                mShaderResources.uboBinding.push_back(
-                    alina::UniformBufferBinding()
-                        .setBuffer(ubo)
-                        .setSet(resource.bindingSpace)
-                        .setBinding(resource.bindingIndex)
-                );
+                if(resource.sharedName.size() > 0) {
+                    mShaderResources.uboBinding.push_back(
+                        alina::UniformBufferBinding()
+                            .setBuffer(Engine::Get()->GetRenderingPipeline()->GetSharedUbo(resource))
+                            .setSet(resource.bindingSpace)
+                            .setBinding(resource.bindingIndex)
+                    );
+                } else {
+                    auto ubo = mDevice->createBuffer(alina::BufferDesc().setType(alina::BufferType::UNIFORM));
+                    cmd->writeBuffer(ubo, nullptr, resource.layout->size, 0);
+                    mUbos.push_back(Ubo{ubo, resource.bindingIndex, resource.bindingSpace});
+                    mShaderResources.uboBinding.push_back(
+                        alina::UniformBufferBinding()
+                            .setBuffer(ubo)
+                            .setSet(resource.bindingSpace)
+                            .setBinding(resource.bindingIndex)
+                    );
+                }
                 break;
             }
             case ResourceKind::StructuredBuffer:

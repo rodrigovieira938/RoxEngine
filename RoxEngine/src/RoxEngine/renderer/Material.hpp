@@ -19,6 +19,7 @@ namespace RoxEngine {
         inline alina::Shader GetVertexShader() {return mVertexShader;}    
         inline alina::Shader GetFragmentShader() {return mFragmentShader;}
         inline alina::ShaderResources& GetShaderResources() {return mShaderResources;}
+        inline std::vector<ReflectedResource>& GetReflectedResources() {return mResources;}
         alina::GraphicsPipeline GetGraphicsPipeline(AlinaGlue::InputLayoutPool& inputLayoutPool, AlinaGlue::GraphicsPipelinePool& pipelinePool);     
     private:
         enum class PathElementKind {

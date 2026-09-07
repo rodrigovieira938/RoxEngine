@@ -118,6 +118,7 @@ struct TestGame final : public Game {
 
     void Init() override {
         pipeline = CreateRef<UniversalRenderingPipeline>(Engine::Get()->GetWindow()->GetDevice());
+        Engine::Get()->SetRenderingPipeline(pipeline.get());
         {
             std::string shaderSource = FileSystem::ReadTextFile("res://shaders/basic.slang");
             MaterialCompiler::sFilesystem = new SlangLayer::filesystem();
